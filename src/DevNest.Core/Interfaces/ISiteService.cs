@@ -1,16 +1,17 @@
 using DevNest.Core.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace DevNest.Core.Interfaces
 {
     public interface ISiteService
     {
         Task<IEnumerable<Site>> GetInstalledSitesAsync();
-        Task<Site> InstallSiteAsync(string siteType, string name);
-        Task RemoveSiteAsync(string siteName);
-        Task OpenSiteAsync(string siteName);
+        Task<IEnumerable<SiteType>> GetAvailableSiteTypesAsync();
+        Task<Site> InstallSiteAsync(string siteType, string name, IProgress<string>? progress = null);
+        Task RemoveSiteAsync(string siteName); Task OpenSiteAsync(string siteName);
         Task ExploreSiteAsync(string siteName);
+        Task OpenSiteInVSCodeAsync(string siteName);
+        Task OpenSiteInTerminalAsync(string siteName);
+        Task OpenSiteInBrowserAsync(string siteName);
         Task<bool> IsSiteInstalledAsync(string siteName);
     }
 }

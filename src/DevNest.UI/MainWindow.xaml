@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Window
-    x:Class="DevNest.MainWindow"
+    x:Class="DevNest.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:DevNest"
+    xmlns:local="using:DevNest.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="DevNest"
     mc:Ignorable="d">
@@ -64,7 +64,7 @@
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="Assets/Icons/hive.svg" />
                     </NavigationViewItem.Icon>
-                </NavigationViewItem>                
+                </NavigationViewItem>
                 <NavigationViewItem Content="Services" Tag="Services">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="Assets/Icons/database.svg" />
@@ -74,7 +74,7 @@
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="Assets/Icons/globe.svg" />
                     </NavigationViewItem.Icon>
-                </NavigationViewItem>                
+                </NavigationViewItem>
                 <NavigationViewItem Content="Dumps" Tag="Dumps">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="Assets/Icons/stack.svg" />

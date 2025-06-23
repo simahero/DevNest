@@ -10,7 +10,7 @@ namespace DevNest.Core.Models
         public bool AutoVirtualHosts { get; set; } = false;
         public bool AutoCreateDatabase { get; set; } = false;
         public string InstallDirectory { get; set; } = @"C:\DevNest";
-        public ObservableCollection<CategoryVersion> Versions { get; set; } = new ObservableCollection<CategoryVersion>();
+        public ObservableCollection<ServiceVersion> Versions { get; set; } = new ObservableCollection<ServiceVersion>();
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
@@ -18,12 +18,12 @@ namespace DevNest.Core.Models
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-
-    public class CategoryVersion : INotifyPropertyChanged
+    public class ServiceVersion : INotifyPropertyChanged
     {
         private string _version = string.Empty;
+        private ObservableCollection<string> _availableVersions = new();
 
-        public required string Category { get; set; }
+        public required string Service { get; set; }
         public string Version
         {
             get => _version;
@@ -33,6 +33,19 @@ namespace DevNest.Core.Models
                 {
                     _version = value;
                     OnPropertyChanged(nameof(Version));
+                }
+            }
+        }
+
+        public ObservableCollection<string> AvailableVersions
+        {
+            get => _availableVersions;
+            set
+            {
+                if (_availableVersions != value)
+                {
+                    _availableVersions = value;
+                    OnPropertyChanged(nameof(AvailableVersions));
                 }
             }
         }

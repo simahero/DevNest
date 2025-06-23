@@ -8,7 +8,10 @@ namespace DevNest.Core.Models
         private string _name = string.Empty;
         private string _path = string.Empty;
         private string _url = string.Empty;
+        private string _type = string.Empty;
         private bool _isInstalled;
+        private bool _isActive;
+        private DateTime _createdDate;
 
         public string Name
         {
@@ -62,8 +65,44 @@ namespace DevNest.Core.Models
             }
         }
 
-        public string Type { get; set; } = string.Empty;
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public string Type
+        {
+            get => _type;
+            set
+            {
+                if (_type != value)
+                {
+                    _type = value;
+                    OnPropertyChanged(nameof(Type));
+                }
+            }
+        }
+
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                if (_isActive != value)
+                {
+                    _isActive = value;
+                    OnPropertyChanged(nameof(IsActive));
+                }
+            }
+        }
+
+        public DateTime CreatedDate
+        {
+            get => _createdDate;
+            set
+            {
+                if (_createdDate != value)
+                {
+                    _createdDate = value;
+                    OnPropertyChanged(nameof(CreatedDate));
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)

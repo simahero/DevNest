@@ -1,0 +1,49 @@
+MVVM Violations Found:
+1. DumpsPage.xaml.cs
+Issue: Direct service instantiation in constructor
+Should move: Service instantiation should be handled through dependency injection
+2. ServicesPage.xaml.cs - Major violations
+Issues:
+Direct service instantiation (_servicesReader, _installationService)
+Business logic for loading and displaying services
+Data manipulation (LoadInstalledServices, LoadAvailableServices)
+UI creation logic (CreateServiceCard, LoadServicesUI)
+Event handling with business logic (InstallButton_Click)
+Error handling mixed with UI updates
+Should move: All service operations, data binding, commands, and properties to ViewModel
+3. SettingsPage.xaml.cs - Major violations
+Issues:
+Direct service instantiation
+Implements INotifyPropertyChanged (should be in ViewModel)
+Business logic for loading/saving settings
+Data manipulation (PopulateAvailableVersions)
+File picking logic
+Should move: All data operations, property change notification, and commands to ViewModel
+4. SitesPage.xaml.cs - Major violations
+Issues:
+Direct service instantiation
+Business logic for loading sites and site types
+UI creation logic (CreateSiteCard, LoadSitesUI)
+Complex event handling with business operations
+Multiple async operations in code-behind
+Should move: All service operations, data binding, commands to ViewModel
+5. DashboardPage.xaml.cs
+Status: ✅ Good - Only contains initialization code
+
+Move to ViewModels:
+
+All service instantiation (use dependency injection)
+Business logic and data operations
+Observable collections and properties
+Command implementations
+Error handling logic
+Keep in Views:
+
+Only UI-specific event handlers
+Navigation logic
+UI state that doesn't affect business logic
+Use Data Binding:
+
+Replace direct UI manipulation with data binding
+Use Commands instead of event handlers where possible
+Implement proper ObservableCollections for lists

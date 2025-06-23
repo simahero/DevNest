@@ -1,12 +1,20 @@
 using Microsoft.UI.Xaml.Controls;
+using DevNest.UI.ViewModels;
 
-namespace DevNest.Views
+namespace DevNest.UI.Views;
+
+public sealed partial class DumpsPage : Page
 {
-    public sealed partial class DumpsPage : Page
+    public DumpsViewModel? ViewModel { get; set; }
+
+    public DumpsPage()
     {
-        public DumpsPage()
-        {
-            this.InitializeComponent();
-        }
+        this.InitializeComponent();
+    }
+
+    public void SetViewModel(DumpsViewModel viewModel)
+    {
+        ViewModel = viewModel;
+        DataContext = viewModel;
     }
 }

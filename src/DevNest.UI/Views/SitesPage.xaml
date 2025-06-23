@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Page
-    x:Class="DevNest.Views.SitesPage"
+    x:Class="DevNest.UI.Views.SitesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:DevNest.Views"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:local="using:DevNest.UI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:DevNest.Core.Models"
     mc:Ignorable="d">
 
+    <i:Interaction.Behaviors>
+        <core:EventTriggerBehavior EventName="Loaded">
+            <core:InvokeCommandAction Command="{x:Bind ViewModel.LoadCommand}" />
+        </core:EventTriggerBehavior>
+    </i:Interaction.Behaviors>
+
     <Grid Padding="32" Background="#111827">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -36,21 +46,23 @@
                 Grid.Column="0"
                 Margin="0,0,12,0"
                 HorizontalAlignment="Stretch"
-                PlaceholderText="Select site type..." />
+                DisplayMemberPath="Name"
+                ItemsSource="{x:Bind ViewModel.AvailableSiteTypes, Mode=OneWay}"
+                PlaceholderText="Select site type..."
+                SelectedItem="{x:Bind ViewModel.SelectedSiteType, Mode=TwoWay}" />
 
             <TextBox
                 x:Name="SiteNameTextBox"
                 Grid.Column="1"
                 Margin="0,0,12,0"
                 HorizontalAlignment="Stretch"
-                PlaceholderText="Enter site name..." />
-
+                PlaceholderText="Enter site name..."
+                Text="{x:Bind ViewModel.SelectedSiteName, Mode=TwoWay}" />
             <Button
                 x:Name="AddSiteButton"
                 Grid.Column="2"
-                Click="AddSiteButton_Click"
+                Command="{x:Bind ViewModel.CreateSiteCommand}"
                 Content="Add Site"
-                IsEnabled="True"
                 Style="{StaticResource AccentButtonStyle}" />
         </Grid>
 
@@ -58,29 +70,105 @@
             x:Name="InstallationPanel"
             Grid.Row="2"
             Margin="0,0,0,24"
-            Visibility="Collapsed">
+            Visibility="{x:Bind ViewModel.ShowInstallationPanel, Mode=OneWay}">
             <TextBlock
                 x:Name="InstallationStatusText"
                 Margin="0,0,0,8"
-                Style="{StaticResource CaptionTextBlockStyle}" />
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind ViewModel.InstallationStatus, Mode=OneWay}" />
             <ProgressBar
                 x:Name="InstallationProgressBar"
                 IsIndeterminate="True"
-                Visibility="Collapsed" />
+                Visibility="{x:Bind ViewModel.IsInstalling, Mode=OneWay}" />
         </StackPanel>
-
         <ScrollViewer Grid.Row="3">
-            <StackPanel x:Name="SitesPanel">
-                <TextBlock
-                    x:Name="NoSitesText"
-                    Margin="0,0,0,16"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="No sites found. Click 'Add Site' to create your first site." />
-                <StackPanel x:Name="SitesContainer" Visibility="Collapsed">
-                    <!--  Site cards will be added here dynamically  -->
-                </StackPanel>
-            </StackPanel>
+            <ListView
+                x:Name="SitesList"
+                Margin="0"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                ItemsSource="{x:Bind ViewModel.Sites, Mode=OneWay}"
+                SelectionMode="None">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Site">
+                        <Grid
+                            Margin="0,8"
+                            Padding="16"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            CornerRadius="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Name}" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind Type}" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind Path}" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <Button
+                                    Padding="8"
+                                    Command="{Binding DataContext.OpenSiteFolderCommand, ElementName=SitesList}"
+                                    CommandParameter="{Binding}">
+                                    <ImageIcon
+                                        Width="16"
+                                        Height="16"
+                                        Source="ms-appx:///Assets/Icons/folder-open.svg" />
+                                </Button>
+                                <Button
+                                    Padding="8"
+                                    Command="{Binding DataContext.OpenInVSCodeCommand, ElementName=SitesList}"
+                                    CommandParameter="{Binding}">
+                                    <ImageIcon
+                                        Width="16"
+                                        Height="16"
+                                        Source="ms-appx:///Assets/Icons/vscode.svg" />
+                                </Button>
+                                <Button
+                                    Padding="8"
+                                    Command="{Binding DataContext.OpenInTerminalCommand, ElementName=SitesList}"
+                                    CommandParameter="{Binding}">
+                                    <ImageIcon
+                                        Width="16"
+                                        Height="16"
+                                        Source="ms-appx:///Assets/Icons/terminal.svg" />
+                                </Button>
+                                <Button
+                                    Padding="8"
+                                    Command="{Binding DataContext.OpenInBrowserCommand, ElementName=SitesList}"
+                                    CommandParameter="{Binding}">
+                                    <ImageIcon
+                                        Width="16"
+                                        Height="16"
+                                        Source="ms-appx:///Assets/Icons/link.svg" />
+                                </Button>
+                                <Button
+                                    Command="{Binding DataContext.OpenSiteSettingsCommand, ElementName=SitesList}"
+                                    CommandParameter="{Binding}"
+                                    Content="Settings" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </ScrollViewer>
     </Grid>
 </Page>
