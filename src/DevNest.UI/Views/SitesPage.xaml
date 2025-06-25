@@ -42,14 +42,14 @@
             </Grid.ColumnDefinitions>
 
             <ComboBox
-                x:Name="SiteTypeComboBox"
+                x:Name="SiteDefinitionComboBox"
                 Grid.Column="0"
                 Margin="0,0,12,0"
                 HorizontalAlignment="Stretch"
                 DisplayMemberPath="Name"
-                ItemsSource="{x:Bind ViewModel.AvailableSiteTypes, Mode=OneWay}"
+                ItemsSource="{x:Bind ViewModel.AvailableSiteDefinitions, Mode=OneWay}"
                 PlaceholderText="Select site type..."
-                SelectedItem="{x:Bind ViewModel.SelectedSiteType, Mode=TwoWay}" />
+                SelectedItem="{x:Bind ViewModel.SelectedSiteDefinition, Mode=TwoWay}" />
 
             <TextBox
                 x:Name="SiteNameTextBox"
@@ -81,6 +81,7 @@
                 IsIndeterminate="True"
                 Visibility="{x:Bind ViewModel.IsInstalling, Mode=OneWay}" />
         </StackPanel>
+
         <ScrollViewer Grid.Row="3">
             <ListView
                 x:Name="SitesList"
@@ -89,6 +90,7 @@
                 HorizontalContentAlignment="Stretch"
                 ItemsSource="{x:Bind ViewModel.Sites, Mode=OneWay}"
                 SelectionMode="None">
+
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -96,11 +98,12 @@
                         <Setter Property="Padding" Value="0" />
                     </Style>
                 </ListView.ItemContainerStyle>
+
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="models:Site">
+                    <DataTemplate x:DataType="models:SiteModel">
                         <Grid
                             Margin="0,8"
-                            Padding="16"
+                            Padding="24, 12"
                             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                             CornerRadius="8">
                             <Grid.ColumnDefinitions>
@@ -112,10 +115,6 @@
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind Name}" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Text="{x:Bind Type}" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Text="{x:Bind Path}" />
                             </StackPanel>

@@ -1,66 +1,96 @@
-using DevNest.Core.Exceptions;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using System.Diagnostics;
 
 namespace DevNest.Services
 {
-    public class ServiceManager : IServiceManager
+    public class ServiceManager
     {
-        private static readonly string DevNestBinPath = @"C:\DevNest\bin";
+        private readonly SettingsManager _settingsManager;
+
         private readonly IServicesReader _servicesReader;
-        private readonly IAppSettingsService _appSettingsService;
         private readonly IFileSystemService _fileSystemService;
-        private readonly List<Service> _services;
+        private readonly IPathService _pathService;
+        private readonly ICommandExecutionService _commandExecutionService;
+        private readonly IUIDispatcher _uiDispatcher;
+
+        private readonly List<ServiceModel> _services;
 
         public ServiceManager(
             IServicesReader servicesReader,
-            IAppSettingsService appSettingsService,
-            IFileSystemService fileSystemService)
+            SettingsManager settingsManager,
+            IFileSystemService fileSystemService,
+            ICommandExecutionService commandExecutionService,
+            IPathService pathService,
+            IUIDispatcher uiDispatcher)
         {
             _servicesReader = servicesReader;
-            _appSettingsService = appSettingsService;
+            _settingsManager = settingsManager;
             _fileSystemService = fileSystemService;
-            _services = new List<Service>();
+            _commandExecutionService = commandExecutionService;
+            _pathService = pathService;
+            _uiDispatcher = uiDispatcher;
+            _services = new List<ServiceModel>();
         }
 
-        public async Task<IEnumerable<Service>> GetServicesAsync()
+        public async Task<IEnumerable<ServiceModel>> GetServicesAsync()
         {
             await RefreshServicesAsync();
             return _services.AsReadOnly();
         }
 
-        public async Task<Service?> GetServiceAsync(string name)
+        public Task<ServiceModel?> GetServiceAsync(string name)
         {
-            await RefreshServicesAsync();
-            return _services.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var service = _services.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            return Task.FromResult(service);
         }
 
-        public async Task StartServiceAsync(string serviceName)
+        public async Task<bool> StartServiceAsync(string serviceName)
         {
             var service = await GetServiceAsync(serviceName);
-            if (service == null)
-                throw new ServiceException(serviceName, $"Service '{serviceName}' not found.");
-
-            if (service.IsLoading || service.IsRunning)
-                return;
-
-            service.IsLoading = true;
-            service.Status = ServiceStatus.Starting;
+            if (service == null) return false;
 
             try
             {
-                var success = await StartServiceInternalAsync(service);
-                if (!success)
+                service.IsLoading = true;
+                service.Status = ServiceStatus.Starting;
+
+                var workingDirectory = GetWorkingDirectoryFromCommand(service.Command);
+
+                var process = await _commandExecutionService.StartProcessAsync(service.Command, workingDirectory);
+
+                if (process != null)
+                {
+                    process.EnableRaisingEvents = true;
+
+                    process.Exited += (sender, e) =>
+                    {
+                        _uiDispatcher.TryEnqueue(() =>
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Process exited event fired for service {service.Name}");
+
+                            service.Status = ServiceStatus.Stopped;
+                            service.Process = null;
+
+                            System.Diagnostics.Debug.WriteLine($"Service {service.Name} status updated to Stopped due to process exit");
+                        });
+                    };
+
+                    service.Process = process;
+                    service.Status = ServiceStatus.Running;
+                    return true;
+                }
+                else
                 {
                     service.Status = ServiceStatus.Stopped;
-                    throw new ServiceException(serviceName, $"Failed to start service '{serviceName}'.");
+                    return false;
                 }
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error starting service {serviceName}: {ex.Message}");
                 service.Status = ServiceStatus.Stopped;
-                throw new ServiceException(serviceName, $"Error starting service '{serviceName}': {ex.Message}", ex);
+                return false;
             }
             finally
             {
@@ -68,349 +98,398 @@ namespace DevNest.Services
             }
         }
 
-        public async Task StopServiceAsync(string serviceName)
+        public async Task<bool> StopServiceAsync(string serviceName)
         {
             var service = await GetServiceAsync(serviceName);
-            if (service == null)
-                throw new ServiceException(serviceName, $"Service '{serviceName}' not found.");
-
-            if (service.IsLoading || !service.IsRunning)
-                return;
-
-            service.IsLoading = true;
-            service.Status = ServiceStatus.Stopping;
+            if (service == null) return false;
 
             try
             {
-                var success = await StopServiceInternalAsync(service);
-                if (!success)
+                service.IsLoading = true;
+                service.Status = ServiceStatus.Stopping;
+
+                // If we have a process attached, try to stop it gracefully
+                if (service.Process != null && !service.Process.HasExited)
                 {
-                    throw new ServiceException(serviceName, $"Failed to stop service '{serviceName}'.");
+                    try
+                    {
+                        // Try to close the main window first (graceful shutdown)
+                        if (!service.Process.CloseMainWindow())
+                        {
+                            // If graceful shutdown doesn't work, force kill
+                            service.Process.Kill();
+                        }
+
+                        // Wait for the process to exit (with timeout)
+                        if (!service.Process.WaitForExit(5000))
+                        {
+                            // Force kill if it doesn't exit within 5 seconds
+                            service.Process.Kill();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error stopping attached process for {serviceName}: {ex.Message}");
+                    }
+                    finally
+                    {
+                        service.Process?.Dispose();
+                        service.Process = null;
+                    }
                 }
+                else
+                {
+                    // Fallback: find and kill processes by name if no process is attached
+                    await StopServiceProcessesByName(service.Name.ToLowerInvariant());
+                }
+
                 service.Status = ServiceStatus.Stopped;
+                return true;
             }
             catch (Exception ex)
             {
-                throw new ServiceException(serviceName, $"Error stopping service '{serviceName}': {ex.Message}", ex);
+                System.Diagnostics.Debug.WriteLine($"Error stopping service {serviceName}: {ex.Message}");
+                return false;
             }
             finally
             {
                 service.IsLoading = false;
             }
+        }
+
+        public async Task<bool> ToggleServiceAsync(string serviceName)
+        {
+            var service = await GetServiceAsync(serviceName);
+            if (service == null)
+            {
+                return false;
+            }
+
+            if (service.IsRunning)
+            {
+                return await StopServiceAsync(serviceName);
+            }
+            else
+            {
+                return await StartServiceAsync(serviceName);
+            }
+        }
+
+        public async Task RefreshServicesAsync()
+        {
+            try
+            {
+                _services.Clear();
+                var installedServices = await _servicesReader.LoadInstalledServicesAsync();
+                var settings = await _settingsManager.LoadSettingsAsync();
+
+                foreach (var service in installedServices)
+                {
+                    var command = await GetServiceCommandAsync(service, settings);
+                    if (!string.IsNullOrEmpty(command))
+                    {
+                        service.Command = command;
+                        service.IsSelected = IsServiceSelected(service, settings);
+                        service.Status = ServiceStatus.Stopped;
+                        _services.Add(service);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing services: {ex.Message}");
+            }
+        }
+
+        private async Task<string> GetServiceCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            try
+            {
+                return service.ServiceType.ToLowerInvariant() switch
+                {
+                    "apache" => await GetApacheCommandAsync(service, settings),
+                    "mysql" => await GetMySQLCommandAsync(service, settings),
+                    "php" => await GetPHPCommandAsync(service, settings),
+                    "nginx" => await GetNginxCommandAsync(service, settings),
+                    "node" => await GetNodeCommandAsync(service, settings),
+                    "redis" => await GetRedisCommandAsync(service, settings),
+                    "postgresql" => await GetPostgreSQLCommandAsync(service, settings),
+                    _ => await GetGenericCommandAsync(service)
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting command for {service.Name}: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        private async Task<string> GetApacheCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.Apache.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var binPath = Path.Combine(service.Path, "bin");
+                var apacheRoot = service.Path;
+                var httpdPath = Path.Combine(binPath, "httpd.exe");
+
+                if (await _fileSystemService.FileExistsAsync(httpdPath))
+                {
+                    return $"cd /d \"{binPath}\" && \"{httpdPath}\" -d \"{apacheRoot}\" -D FOREGROUND";
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetMySQLCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.MySQL.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var binPath = Path.Combine(service.Path, "bin");
+                var mysqldPath = Path.Combine(binPath, "mysqld.exe");
+
+                if (await _fileSystemService.FileExistsAsync(mysqldPath))
+                {
+                    return $"cd /d \"{binPath}\" && \"{mysqldPath}\"";
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetPHPCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.PHP.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var phpPath = Path.Combine(service.Path, selectedVersion, "php-cgi.exe");
+
+                if (await _fileSystemService.FileExistsAsync(phpPath))
+                {
+                    return $"\"{phpPath}\" -b 127.0.0.1:9000";
+                }
+            }
+
+            // Fallback: look for any php-cgi.exe in the service path
+            var fallbackPhpPath = Path.Combine(service.Path, "php-cgi.exe");
+            if (await _fileSystemService.FileExistsAsync(fallbackPhpPath))
+            {
+                return $"\"{fallbackPhpPath}\" -b 127.0.0.1:9000";
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetNginxCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.Nginx.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var nginxPath = Path.Combine(service.Path, selectedVersion, "nginx.exe");
+
+                if (await _fileSystemService.FileExistsAsync(nginxPath))
+                {
+                    return $"cd /d \"{Path.GetDirectoryName(nginxPath)}\" && \"{nginxPath}\"";
+                }
+            }
+
+            // Fallback: look for any nginx.exe in the service path
+            var fallbackNginxPath = Path.Combine(service.Path, "nginx.exe");
+            if (await _fileSystemService.FileExistsAsync(fallbackNginxPath))
+            {
+                return $"cd /d \"{Path.GetDirectoryName(fallbackNginxPath)}\" && \"{fallbackNginxPath}\"";
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetNodeCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.Node.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var nodePath = Path.Combine(service.Path, selectedVersion, "node.exe");
+
+                if (await _fileSystemService.FileExistsAsync(nodePath))
+                {
+                    return $"\"{nodePath}\"";
+                }
+            }
+
+            // Fallback: look for any node.exe in the service path
+            var fallbackNodePath = Path.Combine(service.Path, "node.exe");
+            if (await _fileSystemService.FileExistsAsync(fallbackNodePath))
+            {
+                return $"\"{fallbackNodePath}\"";
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetRedisCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.Redis.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var redisPath = Path.Combine(service.Path, selectedVersion, "redis-server.exe");
+
+                if (await _fileSystemService.FileExistsAsync(redisPath))
+                {
+                    return $"\"{redisPath}\"";
+                }
+            }
+
+            // Fallback: look for any redis-server.exe in the service path
+            var fallbackRedisPath = Path.Combine(service.Path, "redis-server.exe");
+            if (await _fileSystemService.FileExistsAsync(fallbackRedisPath))
+            {
+                return $"\"{fallbackRedisPath}\"";
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetPostgreSQLCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.PostgreSQL.Version;
+
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var postgresPath = Path.Combine(service.Path, selectedVersion, "bin", "postgres.exe");
+
+                if (await _fileSystemService.FileExistsAsync(postgresPath))
+                {
+                    return $"cd /d \"{Path.GetDirectoryName(postgresPath)}\" && \"{postgresPath}\"";
+                }
+            }
+
+            // Fallback: look for any postgres.exe in the service path
+            var fallbackPostgresPath = Path.Combine(service.Path, "bin", "postgres.exe");
+            if (await _fileSystemService.FileExistsAsync(fallbackPostgresPath))
+            {
+                return $"cd /d \"{Path.GetDirectoryName(fallbackPostgresPath)}\" && \"{fallbackPostgresPath}\"";
+            }
+
+            return string.Empty;
+        }
+
+        private async Task<string> GetGenericCommandAsync(ServiceModel service)
+        {
+            // Try to find common executable names in the service directory
+            var commonExecutables = new[] { "start.exe", "run.exe", "server.exe", "service.exe" };
+
+            foreach (var executable in commonExecutables)
+            {
+                var executablePath = Path.Combine(service.Path, executable);
+                if (await _fileSystemService.FileExistsAsync(executablePath))
+                {
+                    return $"\"{executablePath}\"";
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static bool IsServiceSelected(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = service.ServiceType.ToLowerInvariant() switch
+            {
+                "apache" => settings.Apache.Version,
+                "mysql" => settings.MySQL.Version,
+                "php" => settings.PHP.Version,
+                "nginx" => settings.Nginx.Version,
+                "node" => settings.Node.Version,
+                "redis" => settings.Redis.Version,
+                "postgresql" => settings.PostgreSQL.Version,
+                _ => string.Empty
+            };
+
+            return !string.IsNullOrEmpty(selectedVersion) &&
+                   service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task StopServiceProcessesByName(string serviceName)
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    // Map service names to common process names
+                    var processNames = serviceName switch
+                    {
+                        "apache" => new[] { "httpd", "apache" },
+                        "mysql" => new[] { "mysqld" },
+                        "nginx" => new[] { "nginx" },
+                        "php" => new[] { "php-cgi", "php" },
+                        "node" => new[] { "node" },
+                        "redis" => new[] { "redis-server" },
+                        "postgresql" => new[] { "postgres" },
+                        _ => new[] { serviceName }
+                    };
+
+                    foreach (var processName in processNames)
+                    {
+                        var processes = Process.GetProcessesByName(processName);
+                        foreach (var process in processes)
+                        {
+                            try
+                            {
+                                process.Kill();
+                                process.WaitForExit(5000); // Wait up to 5 seconds
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error killing process {processName}: {ex.Message}");
+                            }
+                            finally
+                            {
+                                process.Dispose();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error stopping processes for {serviceName}: {ex.Message}");
+                }
+            });
+        }
+
+        private static string GetWorkingDirectoryFromCommand(string command)
+        {
+            // Extract working directory from commands that use "cd /d" pattern
+            if (command.Contains("cd /d"))
+            {
+                var startIndex = command.IndexOf("cd /d \"") + 7;
+                if (startIndex > 6)
+                {
+                    var endIndex = command.IndexOf("\"", startIndex);
+                    if (endIndex > startIndex)
+                    {
+                        return command.Substring(startIndex, endIndex - startIndex);
+                    }
+                }
+            }
+
+            // Default to current directory
+            return Environment.CurrentDirectory;
         }
 
         public async Task<bool> IsServiceRunningAsync(string serviceName)
         {
             var service = await GetServiceAsync(serviceName);
-            return service?.IsRunning ?? false;
-        }
+            if (service == null) return false;
 
-        public async Task RefreshServicesAsync()
-        {
-            if (!await _fileSystemService.DirectoryExistsAsync(DevNestBinPath))
-            {
-                await _fileSystemService.CreateDirectoryAsync(DevNestBinPath);
-            }
-
-            _services.Clear();
-
-            var installedServices = await _servicesReader.LoadInstalledServicesAsync();
-
-            foreach (var installedService in installedServices)
-            {
-                var command = await GetServiceCommandAsync(installedService);
-
-                if (!string.IsNullOrEmpty(command))
-                {
-                    var service = new Service
-                    {
-                        Name = installedService.Name,
-                        DisplayName = $"{installedService.ServiceType} - {installedService.Name}",
-                        Command = command,
-                        Status = ServiceStatus.Stopped
-                    };
-
-                    _services.Add(service);
-                }
-            }
-        }
-
-        private async Task<bool> StartServiceInternalAsync(Service service)
-        {
-            return await Task.Run(() =>
-            {
-                var command = service.Command;
-
-                if (string.IsNullOrEmpty(command))
-                {
-                    Debug.WriteLine($"No command found for service: {service.Name}");
-                    return false;
-                }
-
-                try
-                {
-                    ProcessStartInfo processStartInfo = CreateProcessStartInfo(command);
-                    Debug.WriteLine($"Starting service {service.Name} with command: {command}");
-
-                    var process = Process.Start(processStartInfo);
-                    if (process != null)
-                    {
-                        service.Process = process;
-                        service.Status = ServiceStatus.Running;
-
-                        // Monitor the process
-                        MonitorProcess(service, process);
-
-                        Debug.WriteLine($"Service {service.Name} started successfully with PID: {process.Id}");
-                        return true;
-                    }
-
-                    Debug.WriteLine($"Failed to start process for service {service.Name}");
-                    return false;
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error starting service {service.Name}: {ex.Message}");
-                    return false;
-                }
-            });
-        }
-
-        private async Task<bool> StopServiceInternalAsync(Service service)
-        {
-            return await Task.Run(() =>
-            {
-                try
-                {
-                    if (service.Process != null && !service.Process.HasExited)
-                    {
-                        service.Process.Kill();
-                        service.Process.WaitForExit(5000); // Wait up to 5 seconds
-                        service.Process = null;
-                        Debug.WriteLine($"Service {service.Name} stopped successfully");
-                        return true;
-                    }
-                    return true; // Already stopped
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error stopping service {service.Name}: {ex.Message}");
-                    return false;
-                }
-            });
-        }
-
-        private ProcessStartInfo CreateProcessStartInfo(string command)
-        {
-            // Check if command is a batch file
-            if (command.EndsWith(".bat") && File.Exists(command))
-            {
-                return new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c \"{command}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
-            }
-            // Check if command contains cmd.exe wrapper or directory change (cd /d)
-            else if (command.Contains("cmd.exe /c") || command.Contains("cd /d"))
-            {
-                string cmdArgs;
-                if (command.StartsWith("cmd.exe /c"))
-                {
-                    cmdArgs = command.Substring("cmd.exe /c".Length).Trim();
-                }
-                else
-                {
-                    cmdArgs = $"/c {command}";
-                }
-
-                return new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = cmdArgs,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
-            }
-            else
-            {
-                // Parse command and arguments
-                var parts = ParseCommand(command);
-                var executablePath = parts.Item1;
-                var arguments = parts.Item2;
-
-                if (!File.Exists(executablePath))
-                {
-                    throw new FileNotFoundException($"Executable not found: {executablePath}");
-                }
-
-                return new ProcessStartInfo
-                {
-                    FileName = executablePath,
-                    Arguments = arguments,
-                    WorkingDirectory = Path.GetDirectoryName(executablePath),
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
-            }
-        }
-
-        private (string, string) ParseCommand(string command)
-        {
-            // Handle quoted paths
-            if (command.StartsWith("\""))
-            {
-                var endQuoteIndex = command.IndexOf("\"", 1);
-                if (endQuoteIndex > 0)
-                {
-                    var executablePath = command.Substring(1, endQuoteIndex - 1);
-                    var arguments = command.Length > endQuoteIndex + 1 ? command.Substring(endQuoteIndex + 2) : "";
-                    return (executablePath, arguments);
-                }
-            }
-
-            // Handle unquoted paths
-            var parts = command.Split(' ', 2);
-            var executable = parts[0];
-            var args = parts.Length > 1 ? parts[1] : "";
-            return (executable, args);
-        }
-
-        private void MonitorProcess(Service service, Process process)
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Run(() => process.WaitForExit());
-                    service.Status = ServiceStatus.Stopped;
-                    service.Process = null;
-                    Debug.WriteLine($"Service {service.Name} has exited");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error monitoring process for service {service.Name}: {ex.Message}");
-                    service.Status = ServiceStatus.Stopped;
-                    service.Process = null;
-                }
-            });
-        }
-
-        private async Task<string> GetServiceCommandAsync(InstalledService installedService)
-        {
-            var servicePath = installedService.Path;
-            var serviceName = installedService.Name.ToLowerInvariant();
-            var category = installedService.ServiceType.ToLowerInvariant();
-
-            try
-            {
-                return category switch
-                {
-                    "apache" => await GetApacheCommandAsync(servicePath),
-                    "mysql" => await GetMySQLCommandAsync(servicePath),
-                    "redis" => await GetRedisCommandAsync(servicePath),
-                    "nginx" => await GetNginxCommandAsync(servicePath),
-                    "php" => await GetPHPCommandAsync(servicePath),
-                    "postgresql" => await GetPostgreSQLCommandAsync(servicePath),
-                    "node" => await GetNodeCommandAsync(servicePath),
-                    _ => await GetGenericCommandAsync(servicePath, serviceName)
-                };
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error getting command for {installedService.Name}: {ex.Message}");
-                return string.Empty;
-            }
-        }
-
-        private async Task<string> GetApacheCommandAsync(string servicePath)
-        {
-            var settings = await _appSettingsService.LoadSettingsAsync();
-            var selectedVersion = settings.Versions.FirstOrDefault(c => c.Service == "Apache")?.Version;
-
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var binPath = Path.Combine(settings.InstallDirectory, "bin", "Apache", selectedVersion, "bin");
-                var httpdPath = Path.Combine(binPath, "httpd.exe");
-
-                if (await _fileSystemService.FileExistsAsync(httpdPath))
-                {
-                    try
-                    {
-                        // Create a temporary batch file to run Apache
-                        var tempBatchFile = Path.Combine(Path.GetTempPath(), $"apache_start_{Guid.NewGuid():N}.bat");
-                        var batchContent = $"@echo off\ncd /d \"{binPath}\"\n\"{httpdPath}\" -D FOREGROUND\n";
-                        await _fileSystemService.WriteAllTextAsync(tempBatchFile, batchContent);
-                        return tempBatchFile;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error creating Apache batch file: {ex.Message}");
-                        // Fallback to direct command
-                        return $"cmd.exe /c \"\"{httpdPath}\" -D FOREGROUND\"";
-                    }
-                }
-            }
-
-            return string.Empty;
-        }
-
-        // Placeholder implementations for other service types
-        private async Task<string> GetMySQLCommandAsync(string servicePath)
-        {
-            // TODO: Implement MySQL command logic
-            await Task.Delay(1);
-            return string.Empty;
-        }
-
-        private async Task<string> GetRedisCommandAsync(string servicePath)
-        {
-            // TODO: Implement Redis command logic
-            await Task.Delay(1);
-            return string.Empty;
-        }
-
-        private async Task<string> GetNginxCommandAsync(string servicePath)
-        {
-            // TODO: Implement Nginx command logic
-            await Task.Delay(1);
-            return string.Empty;
-        }
-
-        private async Task<string> GetPHPCommandAsync(string servicePath)
-        {
-            // TODO: Implement PHP command logic
-            await Task.Delay(1);
-            return string.Empty;
-        }
-
-        private async Task<string> GetPostgreSQLCommandAsync(string servicePath)
-        {
-            // TODO: Implement PostgreSQL command logic
-            await Task.Delay(1);
-            return string.Empty;
-        }
-
-        private async Task<string> GetNodeCommandAsync(string servicePath)
-        {
-            // TODO: Implement Node command logic
-            await Task.Delay(1);
-            return string.Empty;
-        }
-
-        private async Task<string> GetGenericCommandAsync(string servicePath, string serviceName)
-        {
-            // TODO: Implement generic command logic
-            await Task.Delay(1);
-            return string.Empty;
+            // Simply return the current status since process events handle updates
+            return service.IsRunning;
         }
     }
 }

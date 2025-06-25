@@ -15,7 +15,11 @@ namespace DevNest.UI.Services
         public static T GetService<T>() where T : class
         {
             if (_serviceProvider == null)
-                throw new InvalidOperationException("Service provider not initialized. Call SetServiceProvider first.");
+            {
+                var errorMessage = "Service provider not initialized. Call SetServiceProvider first.";
+                System.Diagnostics.Debug.WriteLine(errorMessage);
+                throw new InvalidOperationException(errorMessage);
+            }
 
             return _serviceProvider.GetRequiredService<T>();
         }
@@ -23,7 +27,11 @@ namespace DevNest.UI.Services
         public static object GetService(Type serviceType)
         {
             if (_serviceProvider == null)
-                throw new InvalidOperationException("Service provider not initialized. Call SetServiceProvider first.");
+            {
+                var errorMessage = "Service provider not initialized. Call SetServiceProvider first.";
+                System.Diagnostics.Debug.WriteLine(errorMessage);
+                throw new InvalidOperationException(errorMessage);
+            }
 
             return _serviceProvider.GetRequiredService(serviceType);
         }

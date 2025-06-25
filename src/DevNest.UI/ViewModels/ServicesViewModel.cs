@@ -1,22 +1,20 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DevNest.Core.Exceptions;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
 {
     public partial class ServicesViewModel : BaseViewModel
     {
-        private readonly IServiceManager _serviceManager;
+        private readonly ServiceManager _serviceManager;
+        private readonly InstallManager _installManager;
         private readonly IServicesReader _servicesReader;
-        private readonly IServiceInstallationService _installationService;
-
-        [ObservableProperty]
-        private ServiceDefinition? _selectedService;
 
         [ObservableProperty]
         private string _installationStatus = string.Empty;
@@ -27,34 +25,37 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private bool _showInstallationPanel;
 
-        public ObservableCollection<Service> Services { get; } = new();
-        public ObservableCollection<InstalledService> InstalledServices { get; } = new();
-        public ObservableCollection<ServiceDefinition> AvailableServices { get; } = new();
+        [ObservableProperty]
+        private string? _selectedServiceType;
 
-        public ServicesViewModel(IServiceManager serviceManager, IServicesReader servicesReader, IServiceInstallationService installationService)
-        {
-            _serviceManager = serviceManager;
-            _servicesReader = servicesReader;
-            _installationService = installationService;
-            Title = "Services";
-            LoadServicesCommand = new AsyncRelayCommand(LoadServicesAsync);
-            LoadInstalledServicesCommand = new AsyncRelayCommand(LoadInstalledServicesAsync);
-            LoadAvailableServicesCommand = new AsyncRelayCommand(LoadAvailableServicesAsync);
-            InstallServiceCommand = new AsyncRelayCommand(InstallServiceAsync);
-            StartServiceCommand = new AsyncRelayCommand<Service>(StartServiceAsync);
-            StopServiceCommand = new AsyncRelayCommand<Service>(StopServiceAsync);
-            OpenServiceFolderCommand = new AsyncRelayCommand<InstalledService>(OpenServiceFolderAsync);
-            RefreshCommand = new AsyncRelayCommand(RefreshServicesAsync);
-        }
+        [ObservableProperty]
+        private string? _selectedVersion;
+
+        public ObservableCollection<ServiceModel> Services { get; } = new();
+        public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
+        public ObservableCollection<ServiceDefinition> AvailableServices { get; } = new();
+        public ObservableCollection<string> AvailableServiceTypes { get; } = new();
+        public ObservableCollection<string> AvailableVersions { get; } = new();
 
         public IAsyncRelayCommand LoadServicesCommand { get; }
         public IAsyncRelayCommand LoadInstalledServicesCommand { get; }
         public IAsyncRelayCommand LoadAvailableServicesCommand { get; }
         public IAsyncRelayCommand InstallServiceCommand { get; }
-        public IAsyncRelayCommand<Service> StartServiceCommand { get; }
-        public IAsyncRelayCommand<Service> StopServiceCommand { get; }
-        public IAsyncRelayCommand<InstalledService> OpenServiceFolderCommand { get; }
-        public IAsyncRelayCommand RefreshCommand { get; }
+        public IAsyncRelayCommand<ServiceModel> OpenServiceFolderCommand { get; }
+
+
+        public ServicesViewModel(ServiceManager serviceManager, IServicesReader servicesReader, InstallManager installManager)
+        {
+            _serviceManager = serviceManager;
+            _servicesReader = servicesReader;
+            _installManager = installManager;
+            Title = "Services";
+            LoadServicesCommand = new AsyncRelayCommand(LoadServicesAsync);
+            LoadInstalledServicesCommand = new AsyncRelayCommand(LoadInstalledServicesAsync);
+            LoadAvailableServicesCommand = new AsyncRelayCommand(LoadAvailableServicesAsync);
+            InstallServiceCommand = new AsyncRelayCommand(InstallServiceAsync);
+            OpenServiceFolderCommand = new AsyncRelayCommand<ServiceModel>(OpenServiceFolderAsync);
+        }
 
         public async Task LoadServicesAsync()
         {
@@ -79,64 +80,6 @@ namespace DevNest.UI.ViewModels
             }
         }
 
-        private async Task StartServiceAsync(Service? service)
-        {
-            if (service == null) return;
-
-            try
-            {
-                await _serviceManager.StartServiceAsync(service.Name);
-            }
-            catch (ServiceException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error starting service: {ex.Message}");
-                // TODO: Show error to user
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Unexpected error starting service: {ex.Message}");
-                // TODO: Show error to user
-            }
-        }
-
-        private async Task StopServiceAsync(Service? service)
-        {
-            if (service == null) return;
-
-            try
-            {
-                await _serviceManager.StopServiceAsync(service.Name);
-            }
-            catch (ServiceException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error stopping service: {ex.Message}");
-                // TODO: Show error to user
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Unexpected error stopping service: {ex.Message}");
-                // TODO: Show error to user
-            }
-        }
-
-        private async Task RefreshServicesAsync()
-        {
-            IsLoading = true;
-            try
-            {
-                await _serviceManager.RefreshServicesAsync();
-                await LoadServicesAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error refreshing services: {ex.Message}");
-                // TODO: Show error to user
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
         private async Task LoadAvailableServicesAsync()
         {
             IsLoading = true;
@@ -147,6 +90,16 @@ namespace DevNest.UI.ViewModels
                 foreach (var service in services)
                 {
                     AvailableServices.Add(service);
+                }
+
+                AvailableServiceTypes.Clear();
+
+                foreach (var service in services)
+                {
+                    if (!AvailableServiceTypes.Contains(service.ServiceType))
+                    {
+                        AvailableServiceTypes.Add(service.ServiceType);
+                    }
                 }
             }
             catch (Exception ex)
@@ -185,7 +138,19 @@ namespace DevNest.UI.ViewModels
 
         private async Task InstallServiceAsync()
         {
-            if (SelectedService == null) return;
+            if (SelectedServiceType == null || SelectedVersion == null)
+            {
+                return;
+            }
+
+            var selectedService = AvailableServices
+                .FirstOrDefault(s => s.ServiceType == SelectedServiceType && s.Name.Equals(SelectedVersion));
+
+            if (selectedService == null)
+            {
+                InstallationStatus = "Selected service not found.";
+                return;
+            }
 
             IsInstalling = true;
             ShowInstallationPanel = true;
@@ -198,7 +163,7 @@ namespace DevNest.UI.ViewModels
                     InstallationStatus = message;
                 });
 
-                var result = await _installationService.InstallServiceAsync(SelectedService, progress);
+                var result = await _installManager.InstallServiceAsync(selectedService, progress);
 
                 if (result.Success)
                 {
@@ -206,7 +171,8 @@ namespace DevNest.UI.ViewModels
                     // Refresh the installed services list
                     await LoadInstalledServicesAsync();
                     // Reset selection
-                    SelectedService = null;
+                    SelectedServiceType = null;
+                    SelectedVersion = null;
                 }
                 else
                 {
@@ -224,7 +190,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
-        private async Task OpenServiceFolderAsync(InstalledService? service)
+        private async Task OpenServiceFolderAsync(ServiceModel? service)
         {
             if (service == null) return;
 
@@ -244,5 +210,20 @@ namespace DevNest.UI.ViewModels
             await LoadInstalledServicesCommand.ExecuteAsync(null);
             await LoadAvailableServicesCommand.ExecuteAsync(null);
         }
+
+        partial void OnSelectedServiceTypeChanged(string? value)
+        {
+            AvailableVersions.Clear();
+            foreach (var service in AvailableServices)
+            {
+                if (!AvailableVersions.Contains(service.Name) &&
+                    service.ServiceType == SelectedServiceType &&
+                    !InstalledServices.Any(installedService => installedService.Name == service.Name))
+                {
+                    AvailableVersions.Add(service.Name);
+                }
+            }
+        }
     }
+
 }

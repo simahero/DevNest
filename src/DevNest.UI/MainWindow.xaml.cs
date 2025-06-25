@@ -1,12 +1,9 @@
+using DevNest.UI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using DevNest.UI.Services;
 
 namespace DevNest.UI;
 
-/// <summary>
-/// An empty window that can be used on its own or navigated to within a Frame.
-/// </summary>
 public sealed partial class MainWindow : Window
 {
     private readonly INavigationService _navigationService;
@@ -25,7 +22,7 @@ public sealed partial class MainWindow : Window
 
         // Set the default page
         MainNavigationView.SelectedItem = MainNavigationView.MenuItems[0];
-        _navigationService.NavigateTo<Views.DashboardPage>();
+        _navigationService.NavigateTo<Views.DashboardPage>(NavigationTransitions.Suppress);
     }
 
     private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -36,19 +33,22 @@ public sealed partial class MainWindow : Window
             switch (tag)
             {
                 case "Dashboard":
-                    _navigationService.NavigateTo<Views.DashboardPage>();
+                    _navigationService.NavigateTo<Views.DashboardPage>(NavigationTransitions.Suppress);
                     break;
                 case "Services":
-                    _navigationService.NavigateTo<Views.ServicesPage>();
+                    _navigationService.NavigateTo<Views.ServicesPage>(NavigationTransitions.Suppress);
                     break;
                 case "Sites":
-                    _navigationService.NavigateTo<Views.SitesPage>();
+                    _navigationService.NavigateTo<Views.SitesPage>(NavigationTransitions.Suppress);
+                    break;
+                case "Environments":
+                    _navigationService.NavigateTo<Views.EnvironmentsPage>(NavigationTransitions.Suppress);
                     break;
                 case "Dumps":
-                    _navigationService.NavigateTo<Views.DumpsPage>();
+                    _navigationService.NavigateTo<Views.DumpsPage>(NavigationTransitions.Suppress);
                     break;
                 case "Settings":
-                    _navigationService.NavigateTo<Views.SettingsPage>();
+                    _navigationService.NavigateTo<Views.SettingsPage>(NavigationTransitions.Suppress);
                     break;
             }
         }

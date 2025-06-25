@@ -1,19 +1,16 @@
-using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Services;
+using System;
+using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
 {
     public partial class SettingsViewModel : BaseViewModel
     {
-        private readonly IAppSettingsService _appSettingsService;
-        private AppSettings? _currentSettings;
+        private readonly SettingsManager _settingsManager;
+        private SettingsModel? _currentSettings;
 
         [ObservableProperty]
         private bool _startWithWindows;
@@ -28,59 +25,64 @@ namespace DevNest.UI.ViewModels
         private bool _autoCreateDatabase;
 
         [ObservableProperty]
-        private string _installDirectory = @"C:\DevNest"; [ObservableProperty]
-        private ObservableCollection<ServiceVersion> _serviceVersions = new();
+        private string _installDirectory = @"C:\DevNest";
 
         [ObservableProperty]
         private string _selectedInstallDirectory = @"C:\DevNest";
 
         private bool _isInitializing = true;
 
-        public SettingsViewModel(IAppSettingsService appSettingsService)
+        public SettingsViewModel(SettingsManager settingsManager)
         {
-            _appSettingsService = appSettingsService;
+            _settingsManager = settingsManager;
             Title = "Settings";
             SaveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync);
             ResetSettingsCommand = new AsyncRelayCommand(ResetSettingsAsync);
-            BrowseFolderCommand = new AsyncRelayCommand(BrowseFolderAsync);
+            BrowseFolderCommand = new RelayCommand(BrowseFolder);
         }
 
         public IAsyncRelayCommand SaveSettingsCommand { get; }
         public IAsyncRelayCommand ResetSettingsCommand { get; }
-        public IAsyncRelayCommand BrowseFolderCommand { get; }        // Override the method from ObservableObject to handle property changes
-        protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+        public IRelayCommand BrowseFolderCommand { get; }
+
+        // Property change handlers to sync ViewModel with AppSettings model
+        partial void OnStartWithWindowsChanged(bool value)
         {
-            base.OnPropertyChanged(e);
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.StartWithWindows = value;
+        }
 
-            // Don't auto-save during initialization or for non-settings properties
-            if (_isInitializing || string.IsNullOrEmpty(e.PropertyName))
-                return;
+        partial void OnMinimizeToSystemTrayChanged(bool value)
+        {
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.MinimizeToSystemTray = value;
+        }
 
-            // Only auto-save for actual settings properties
-            if (e.PropertyName == nameof(StartWithWindows) ||
-                e.PropertyName == nameof(MinimizeToSystemTray) ||
-                e.PropertyName == nameof(AutoVirtualHosts) ||
-                e.PropertyName == nameof(AutoCreateDatabase) ||
-                e.PropertyName == nameof(InstallDirectory))
-            {
-                // Fire and forget - don't await to avoid blocking the UI
-                _ = Task.Run(SaveSettingsAsync);
-            }
+        partial void OnAutoVirtualHostsChanged(bool value)
+        {
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.AutoVirtualHosts = value;
+        }
+
+        partial void OnAutoCreateDatabaseChanged(bool value)
+        {
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.AutoCreateDatabase = value;
         }
 
         private async Task LoadSettingsAsync()
         {
+            _isInitializing = true;
             IsLoading = true;
             try
             {
-                _currentSettings = await _appSettingsService.LoadSettingsAsync();
+                _currentSettings = await _settingsManager.LoadSettingsAsync();
 
-                // Update properties from loaded settings
+                // Update ViewModel properties from loaded settings
                 StartWithWindows = _currentSettings.StartWithWindows;
                 MinimizeToSystemTray = _currentSettings.MinimizeToSystemTray;
                 AutoVirtualHosts = _currentSettings.AutoVirtualHosts;
                 AutoCreateDatabase = _currentSettings.AutoCreateDatabase;
-                InstallDirectory = _currentSettings.InstallDirectory;
             }
             catch (Exception ex)
             {
@@ -90,6 +92,7 @@ namespace DevNest.UI.ViewModels
             finally
             {
                 IsLoading = false;
+                _isInitializing = false;
             }
         }
 
@@ -101,14 +104,13 @@ namespace DevNest.UI.ViewModels
             IsLoading = true;
             try
             {
-                // Update settings object with current property values
+                // Update settings object with current ViewModel property values
                 _currentSettings.StartWithWindows = StartWithWindows;
                 _currentSettings.MinimizeToSystemTray = MinimizeToSystemTray;
                 _currentSettings.AutoVirtualHosts = AutoVirtualHosts;
                 _currentSettings.AutoCreateDatabase = AutoCreateDatabase;
-                _currentSettings.InstallDirectory = InstallDirectory;
 
-                await _appSettingsService.SaveSettingsAsync(_currentSettings);
+                await _settingsManager.SaveSettingsAsync(_currentSettings);
 
                 // TODO: Show success message to user
             }
@@ -128,8 +130,15 @@ namespace DevNest.UI.ViewModels
             IsLoading = true;
             try
             {
-                await _appSettingsService.ResetSettingsAsync();
-                await LoadSettingsAsync(); // Reload default settings
+                _currentSettings = await _settingsManager.GetDefaultSettingsAsync();
+
+                // Update ViewModel properties from default settings
+                StartWithWindows = _currentSettings.StartWithWindows;
+                MinimizeToSystemTray = _currentSettings.MinimizeToSystemTray;
+                AutoVirtualHosts = _currentSettings.AutoVirtualHosts;
+                AutoCreateDatabase = _currentSettings.AutoCreateDatabase;
+
+                await _settingsManager.SaveSettingsAsync(_currentSettings);
 
                 // TODO: Show success message to user
             }
@@ -144,55 +153,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
-        private async Task LoadVersionsAsync()
-        {
-            if (_currentSettings == null) return;
-
-            try
-            {
-                var installDirectory = _currentSettings.InstallDirectory;
-                ServiceVersions.Clear();
-
-                foreach (var serviceVersion in _currentSettings.Versions)
-                {
-                    try
-                    {
-                        serviceVersion.AvailableVersions.Clear();
-                        var serviceCategoryPath = System.IO.Path.Combine(installDirectory, "bin", serviceVersion.Service);
-
-                        if (System.IO.Directory.Exists(serviceCategoryPath))
-                        {
-                            var versionDirectories = System.IO.Directory.GetDirectories(serviceCategoryPath)
-                                .Select(dir => System.IO.Path.GetFileName(dir))
-                                .OrderBy(version => version)
-                                .ToList();
-
-                            foreach (var version in versionDirectories)
-                            {
-                                serviceVersion.AvailableVersions.Add(version);
-                            }
-                        }
-
-                        if (string.IsNullOrEmpty(serviceVersion.Version) && serviceVersion.AvailableVersions.Count > 0)
-                        {
-                            serviceVersion.Version = serviceVersion.AvailableVersions.First();
-                        }
-
-                        ServiceVersions.Add(serviceVersion);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading versions for {serviceVersion.Service}: {ex.Message}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading service versions: {ex.Message}");
-            }
-        }
-
-        private async Task BrowseFolderAsync()
+        private void BrowseFolder()
         {
             try
             {
@@ -205,11 +166,11 @@ namespace DevNest.UI.ViewModels
                 System.Diagnostics.Debug.WriteLine($"Error browsing folder: {ex.Message}");
             }
         }
+
         protected override async Task OnLoadedAsync()
         {
             _isInitializing = true;
             await LoadSettingsAsync();
-            await LoadVersionsAsync();
             _isInitializing = false;
         }
     }

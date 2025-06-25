@@ -1,6 +1,6 @@
-using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
 {
@@ -8,6 +8,8 @@ namespace DevNest.UI.ViewModels
     {
         private bool _isLoading;
         private string _title = string.Empty;
+
+        public IAsyncRelayCommand LoadCommand { get; }
 
         public BaseViewModel()
         {
@@ -25,8 +27,6 @@ namespace DevNest.UI.ViewModels
             get => _title;
             set => SetProperty(ref _title, value);
         }
-
-        public IAsyncRelayCommand LoadCommand { get; }
 
         protected virtual Task OnLoadedAsync() => Task.CompletedTask;
         protected virtual Task OnUnloadedAsync() => Task.CompletedTask;

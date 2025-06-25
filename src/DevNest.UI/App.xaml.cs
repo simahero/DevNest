@@ -1,14 +1,13 @@
-using Microsoft.UI.Xaml;
+using DevNest.Core.Interfaces;
+using DevNest.Services;
+using DevNest.UI.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DevNest.UI.Services;
+using Microsoft.UI.Xaml;
 using System;
 
 namespace DevNest.UI;
 
-/// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
-/// </summary>
 public partial class App : Application
 {
     private Window? _window;
@@ -36,11 +35,15 @@ public partial class App : Application
 
     private void ConfigureServices()
     {
-        _host = Host.CreateDefaultBuilder()
-            .ConfigureServices((context, services) =>
+        _host = Host.CreateDefaultBuilder().ConfigureServices((context, services) =>
             {
-                services.AddDevNestServices();
+                services.AddCoreServices();
+                services.AddUIServices();
                 services.AddSingleton<INavigationService, NavigationService>();
+
+                // Register the current thread's DispatcherQueue for dependency injection
+                services.AddSingleton(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
+                services.AddSingleton<IUIDispatcher, UIDispatcher>();
             })
             .Build();
 
@@ -52,7 +55,7 @@ public partial class App : Application
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         _window = new MainWindow();
         _window.Activate();

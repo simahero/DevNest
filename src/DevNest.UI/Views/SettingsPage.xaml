@@ -133,7 +133,7 @@
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Text="Default directory for DevNest installations" />
-                        </StackPanel>                        
+                        </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="8">
                             <TextBox
                                 x:Name="InstallDirectoryTextBox"
@@ -148,54 +148,7 @@
                         </StackPanel>
                     </Grid>
                 </StackPanel>
-            </Border>
-
-
-            <!--  Versions Section  -->
-            <Border
-                Padding="16"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="8">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <TextBlock
-                            FontSize="24"
-                            Style="{StaticResource TitleTextBlockStyle}"
-                            Text="Versions" />
-                    </StackPanel>
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="Select the version for each category of installed software" />
-                    <ItemsControl x:Name="VersionsItemsControl" ItemsSource="{x:Bind ViewModel.ServiceVersions, Mode=OneWay}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="models:ServiceVersion">
-                                <Grid Margin="0,8" VerticalAlignment="Center">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock
-                                        Grid.Column="0"
-                                        VerticalAlignment="Center"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind Service}" />                                    
-                                    <ComboBox
-                                        Grid.Column="1"
-                                        HorizontalAlignment="Stretch"
-                                        IsEnabled="{x:Bind AvailableVersions.Count, Mode=OneWay, Converter={StaticResource CountToBooleanConverter}}"
-                                        ItemsSource="{x:Bind AvailableVersions, Mode=OneWay}"
-                                        PlaceholderText="{x:Bind AvailableVersions.Count, Mode=OneWay, Converter={StaticResource CountToPlaceholderConverter}}"
-                                        SelectedItem="{x:Bind Version, Mode=TwoWay}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-
-
-
+            </Border>            
             <!--  About Section  -->
             <Border
                 Padding="16"
@@ -234,7 +187,7 @@
                         </StackPanel>
                     </Grid>
                 </StackPanel>
-            </Border>            
+            </Border>
             <!--  Action Buttons  -->
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <Button Command="{x:Bind ViewModel.ResetSettingsCommand}" Content="Reset to Defaults" />

@@ -1,23 +1,22 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using DevNest.Core.Models;
+using DevNest.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using DevNest.Core.Interfaces;
-using DevNest.Core.Models;
-using DevNest.Core.Exceptions;
 
 namespace DevNest.UI.ViewModels
 {
     public partial class SitesViewModel : BaseViewModel
     {
-        private readonly ISiteService _siteService;
+        private readonly SiteManager _siteManager;
 
         [ObservableProperty]
         private string _selectedSiteName = string.Empty;
 
         [ObservableProperty]
-        private SiteType? _selectedSiteType;
+        private SiteDefinition? _selectedSiteDefinition;
 
         [ObservableProperty]
         private string _installationStatus = string.Empty;
@@ -28,39 +27,39 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private bool _showInstallationPanel;
 
-        public ObservableCollection<Site> Sites { get; } = new();
-        public ObservableCollection<SiteType> AvailableSiteTypes { get; } = new();
+        public ObservableCollection<SiteModel> Sites { get; } = new();
+        public ObservableCollection<SiteDefinition> AvailableSiteDefinitions { get; } = new();
 
-        public SitesViewModel(ISiteService siteService)
+        public SitesViewModel(SiteManager siteManager)
         {
-            _siteService = siteService;
+            _siteManager = siteManager;
             Title = "Sites";
             LoadSitesCommand = new AsyncRelayCommand(LoadSitesAsync);
-            LoadSiteTypesCommand = new AsyncRelayCommand(LoadSiteTypesAsync);
+            LoadSiteDefinitionsCommand = new AsyncRelayCommand(LoadSiteDefinitionsAsync);
             CreateSiteCommand = new AsyncRelayCommand(CreateSiteAsync);
-            OpenSiteFolderCommand = new AsyncRelayCommand<Site>(OpenSiteFolderAsync);
-            OpenInVSCodeCommand = new AsyncRelayCommand<Site>(OpenInVSCodeAsync);
-            OpenInTerminalCommand = new AsyncRelayCommand<Site>(OpenInTerminalAsync);
-            OpenInBrowserCommand = new AsyncRelayCommand<Site>(OpenInBrowserAsync);
-            OpenSiteSettingsCommand = new AsyncRelayCommand<Site>(OpenSiteSettingsAsync);
+            OpenSiteFolderCommand = new AsyncRelayCommand<SiteModel>(OpenSiteFolderAsync);
+            OpenInVSCodeCommand = new AsyncRelayCommand<SiteModel>(OpenInVSCodeAsync);
+            OpenInTerminalCommand = new AsyncRelayCommand<SiteModel>(OpenInTerminalAsync);
+            OpenInBrowserCommand = new AsyncRelayCommand<SiteModel>(OpenInBrowserAsync);
+            OpenSiteSettingsCommand = new AsyncRelayCommand<SiteModel>(OpenSiteSettingsAsync);
             RefreshCommand = new AsyncRelayCommand(RefreshSitesAsync);
         }
 
         public IAsyncRelayCommand LoadSitesCommand { get; }
-        public IAsyncRelayCommand LoadSiteTypesCommand { get; }
+        public IAsyncRelayCommand LoadSiteDefinitionsCommand { get; }
         public IAsyncRelayCommand CreateSiteCommand { get; }
-        public IAsyncRelayCommand<Site> OpenSiteFolderCommand { get; }
-        public IAsyncRelayCommand<Site> OpenInVSCodeCommand { get; }
-        public IAsyncRelayCommand<Site> OpenInTerminalCommand { get; }
-        public IAsyncRelayCommand<Site> OpenInBrowserCommand { get; }
-        public IAsyncRelayCommand<Site> OpenSiteSettingsCommand { get; }
+        public IAsyncRelayCommand<SiteModel> OpenSiteFolderCommand { get; }
+        public IAsyncRelayCommand<SiteModel> OpenInVSCodeCommand { get; }
+        public IAsyncRelayCommand<SiteModel> OpenInTerminalCommand { get; }
+        public IAsyncRelayCommand<SiteModel> OpenInBrowserCommand { get; }
+        public IAsyncRelayCommand<SiteModel> OpenSiteSettingsCommand { get; }
         public IAsyncRelayCommand RefreshCommand { get; }
         private async Task LoadSitesAsync()
         {
             IsLoading = true;
             try
             {
-                var sites = await _siteService.GetInstalledSitesAsync();
+                var sites = await _siteManager.GetInstalledSitesAsync();
                 Sites.Clear();
                 foreach (var site in sites)
                 {
@@ -78,15 +77,15 @@ namespace DevNest.UI.ViewModels
             }
         }
 
-        private async Task LoadSiteTypesAsync()
+        private async Task LoadSiteDefinitionsAsync()
         {
             try
             {
-                var siteTypes = await _siteService.GetAvailableSiteTypesAsync();
-                AvailableSiteTypes.Clear();
-                foreach (var siteType in siteTypes)
+                var siteDefinitions = await _siteManager.GetAvailableSiteDefinitionsAsync();
+                AvailableSiteDefinitions.Clear();
+                foreach (var siteDefinition in siteDefinitions)
                 {
-                    AvailableSiteTypes.Add(siteType);
+                    AvailableSiteDefinitions.Add(siteDefinition);
                 }
             }
             catch (Exception ex)
@@ -98,7 +97,7 @@ namespace DevNest.UI.ViewModels
 
         private async Task CreateSiteAsync()
         {
-            if (SelectedSiteType == null || string.IsNullOrWhiteSpace(SelectedSiteName))
+            if (SelectedSiteDefinition == null || string.IsNullOrWhiteSpace(SelectedSiteName))
                 return;
 
             IsInstalling = true;
@@ -112,7 +111,7 @@ namespace DevNest.UI.ViewModels
                     InstallationStatus = message;
                 });
 
-                await _siteService.InstallSiteAsync(SelectedSiteType.Name, SelectedSiteName, progress);
+                await _siteManager.InstallSiteAsync(SelectedSiteDefinition.Name, SelectedSiteName, progress);
 
                 InstallationStatus = "Site created successfully!";
 
@@ -120,7 +119,7 @@ namespace DevNest.UI.ViewModels
                 await LoadSitesAsync();
 
                 // Reset form
-                SelectedSiteType = null;
+                SelectedSiteDefinition = null;
                 SelectedSiteName = string.Empty;
 
                 // Hide installation panel after 3 seconds
@@ -137,14 +136,13 @@ namespace DevNest.UI.ViewModels
                 IsInstalling = false;
             }
         }
-
-        private async Task OpenSiteFolderAsync(Site? site)
+        private async Task OpenSiteFolderAsync(SiteModel? site)
         {
             if (site == null) return;
 
             try
             {
-                await _siteService.ExploreSiteAsync(site.Name);
+                await _siteManager.ExploreSiteAsync(site.Name);
             }
             catch (Exception ex)
             {
@@ -152,14 +150,13 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
-
-        private async Task OpenInVSCodeAsync(Site? site)
+        private async Task OpenInVSCodeAsync(SiteModel? site)
         {
             if (site == null) return;
 
             try
             {
-                await _siteService.OpenSiteInVSCodeAsync(site.Name);
+                await _siteManager.OpenSiteInVSCodeAsync(site.Name);
             }
             catch (Exception ex)
             {
@@ -167,14 +164,13 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
-
-        private async Task OpenInTerminalAsync(Site? site)
+        private async Task OpenInTerminalAsync(SiteModel? site)
         {
             if (site == null) return;
 
             try
             {
-                await _siteService.OpenSiteInTerminalAsync(site.Name);
+                await _siteManager.OpenSiteInTerminalAsync(site.Name);
             }
             catch (Exception ex)
             {
@@ -182,14 +178,13 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
-
-        private async Task OpenInBrowserAsync(Site? site)
+        private async Task OpenInBrowserAsync(SiteModel? site)
         {
             if (site == null) return;
 
             try
             {
-                await _siteService.OpenSiteInBrowserAsync(site.Name);
+                await _siteManager.OpenSiteInBrowserAsync(site.Name);
             }
             catch (Exception ex)
             {
@@ -197,20 +192,21 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
-
-        private async Task OpenSiteSettingsAsync(Site? site)
+        private Task OpenSiteSettingsAsync(SiteModel? site)
         {
-            if (site == null) return;
+            if (site == null) return Task.CompletedTask;
 
             try
             {
                 // TODO: Implement site settings functionality
                 System.Diagnostics.Debug.WriteLine($"Opening settings for site: {site.Name}");
+                return Task.CompletedTask;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error opening site settings: {ex.Message}");
                 // TODO: Show error to user
+                return Task.CompletedTask;
             }
         }
         private async Task RefreshSitesAsync()
@@ -221,7 +217,7 @@ namespace DevNest.UI.ViewModels
         protected override async Task OnLoadedAsync()
         {
             await LoadSitesCommand.ExecuteAsync(null);
-            await LoadSiteTypesCommand.ExecuteAsync(null);
+            await LoadSiteDefinitionsCommand.ExecuteAsync(null);
         }
     }
 }

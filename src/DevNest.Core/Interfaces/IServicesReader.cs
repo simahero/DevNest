@@ -6,7 +6,7 @@ namespace DevNest.Core.Interfaces
 {
     public interface IServicesReader
     {
-        Task<List<InstalledService>> LoadInstalledServicesAsync();
+        Task<List<ServiceModel>> LoadInstalledServicesAsync();
         Task<List<ServiceDefinition>> LoadAvailableServicesAsync();
     }
 }

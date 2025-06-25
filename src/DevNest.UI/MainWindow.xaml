@@ -62,27 +62,32 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Dashboard" Tag="Dashboard">
                     <NavigationViewItem.Icon>
-                        <ImageIcon Source="Assets/Icons/hive.svg" />
+                        <ImageIcon Source="ms-appx:///Assets/Icons/hive.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Services" Tag="Services">
                     <NavigationViewItem.Icon>
-                        <ImageIcon Source="Assets/Icons/database.svg" />
+                        <ImageIcon Source="ms-appx:///Assets/Icons/database.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Sites" Tag="Sites">
                     <NavigationViewItem.Icon>
-                        <ImageIcon Source="Assets/Icons/globe.svg" />
+                        <ImageIcon Source="ms-appx:///Assets/Icons/globe.svg" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Environments" Tag="Environments">
+                    <NavigationViewItem.Icon>
+                        <ImageIcon Source="ms-appx:///Assets/Icons/server.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Dumps" Tag="Dumps">
                     <NavigationViewItem.Icon>
-                        <ImageIcon Source="Assets/Icons/stack.svg" />
+                        <ImageIcon Source="ms-appx:///Assets/Icons/stack.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Settings" Tag="Settings">
                     <NavigationViewItem.Icon>
-                        <ImageIcon Source="Assets/Icons/gear.svg" />
+                        <ImageIcon Source="ms-appx:///Assets/Icons/gear.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>

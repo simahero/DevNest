@@ -18,7 +18,7 @@ DevNest/
 │   │   ├── ServiceManager.cs           # Service management
 │   │   ├── SiteService.cs              # Site installation/management
 │   │   ├── FileSystemService.cs        # File system operations
-│   │   └── AppSettingsService.cs       # Application settings
+│   │   └── SettingsManager.cs       # Application settings
 │   │
 │   ├── DevNest.Data/                   # Data access layer
 │   │   ├── Repositories/               # Data repositories

@@ -6,26 +6,30 @@ namespace DevNest.Services
 {
     public class ServicesReader : IServicesReader
     {
-        private readonly string _installDirectory;
-        private readonly string _servicesFilePath;
-        private readonly IFileSystemService _fileSystemService; public ServicesReader(IFileSystemService fileSystemService, string installDirectory = @"C:\DevNest\bin", string servicesFilePath = @"C:\DevNest\services.ini")
+        private readonly IPathService _pathService;
+        private readonly IFileSystemService _fileSystemService;
+
+        public ServicesReader(IFileSystemService fileSystemService, IPathService pathService)
         {
             _fileSystemService = fileSystemService;
-            _installDirectory = installDirectory;
-            _servicesFilePath = servicesFilePath;
+            _pathService = pathService;
         }
 
-        public async Task<List<InstalledService>> LoadInstalledServicesAsync()
+        public async Task<List<ServiceModel>> LoadInstalledServicesAsync()
         {
             try
             {
-                if (!await _fileSystemService.DirectoryExistsAsync(_installDirectory))
+                var binDirectory = _pathService.BinPath;
+
+                if (!await _fileSystemService.DirectoryExistsAsync(binDirectory))
                 {
-                    await _fileSystemService.CreateDirectoryAsync(_installDirectory);
+                    await _fileSystemService.CreateDirectoryAsync(binDirectory);
                 }
 
-                var allServices = new List<InstalledService>();
-                var categoryDirectories = await _fileSystemService.GetDirectoriesAsync(_installDirectory); foreach (var categoryDir in categoryDirectories)
+                var allServices = new List<ServiceModel>();
+                var categoryDirectories = await _fileSystemService.GetDirectoriesAsync(binDirectory);
+
+                foreach (var categoryDir in categoryDirectories)
                 {
                     var categoryName = Path.GetFileName(categoryDir);
                     var serviceDirectories = await _fileSystemService.GetDirectoriesAsync(categoryDir);
@@ -33,11 +37,14 @@ namespace DevNest.Services
                     foreach (var serviceDir in serviceDirectories)
                     {
                         var serviceName = Path.GetFileName(serviceDir);
-                        var service = new InstalledService
+                        var service = new ServiceModel
                         {
                             Name = serviceName,
+                            DisplayName = GetServiceDisplayName(serviceName, categoryName),
+                            Command = string.Empty, // Will be set by ServiceManager
                             Path = serviceDir,
-                            ServiceType = categoryName
+                            ServiceType = categoryName,
+                            IsSelected = false // Will be updated later with settings
                         };
 
                         allServices.Add(service);
@@ -49,19 +56,68 @@ namespace DevNest.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading installed services: {ex.Message}");
-                return new List<InstalledService>();
+                return new List<ServiceModel>();
             }
         }
+
+        public async Task<List<ServiceModel>> LoadInstalledServicesAsync(SettingsModel settings)
+        {
+            var services = await LoadInstalledServicesAsync();
+
+            // Update IsSelected based on settings
+            foreach (var service in services)
+            {
+                service.IsSelected = IsServiceSelectedBySettings(service, settings);
+            }
+
+            return services;
+        }
+
+        private static bool IsServiceSelectedBySettings(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = service.ServiceType.ToLowerInvariant() switch
+            {
+                "apache" => settings.Apache.Version,
+                "mysql" => settings.MySQL.Version,
+                "php" => settings.PHP.Version,
+                "nginx" => settings.Nginx.Version,
+                "node" => settings.Node.Version,
+                "redis" => settings.Redis.Version,
+                "postgresql" => settings.PostgreSQL.Version,
+                _ => string.Empty
+            };
+
+            return !string.IsNullOrEmpty(selectedVersion) &&
+                   service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetServiceDisplayName(string serviceName, string serviceType)
+        {
+            return serviceType switch
+            {
+                "Apache" => "Apache HTTP Server",
+                "MySQL" => "MySQL Database Server",
+                "PHP" => "PHP FastCGI Process Manager",
+                "Nginx" => "Nginx Web Server",
+                "Node" => "Node.js Runtime",
+                "Redis" => "Redis Server",
+                "PostgreSQL" => "PostgreSQL Database Server",
+                _ => $"{serviceType} Service"
+            };
+        }
+
         public async Task<List<ServiceDefinition>> LoadAvailableServicesAsync()
         {
             try
             {
-                if (!await _fileSystemService.FileExistsAsync(_servicesFilePath))
+                var servicesFilePath = Path.Combine(_pathService.ConfigPath, "services.ini");
+
+                if (!await _fileSystemService.FileExistsAsync(servicesFilePath))
                 {
                     return new List<ServiceDefinition>();
                 }
 
-                var iniContent = await _fileSystemService.ReadAllTextAsync(_servicesFilePath);
+                var iniContent = await _fileSystemService.ReadAllTextAsync(servicesFilePath);
                 var parser = new FileIniDataParser();
                 var data = parser.Parser.Parse(iniContent);
 

@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -12,22 +11,29 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private string _selectedMenuItem = "Dashboard";
 
+        public IRelayCommand<string> NavigateToPageCommand { get; }
+
+
         public DashboardViewModel DashboardViewModel { get; }
         public ServicesViewModel ServicesViewModel { get; }
         public SitesViewModel SitesViewModel { get; }
+        public EnvironmentsViewModel EnvironmentsViewModel { get; }
         public DumpsViewModel DumpsViewModel { get; }
         public SettingsViewModel SettingsViewModel { get; }
+
 
         public MainViewModel(
             DashboardViewModel dashboardViewModel,
             ServicesViewModel servicesViewModel,
             SitesViewModel sitesViewModel,
+            EnvironmentsViewModel environmentsViewModel,
             DumpsViewModel dumpsViewModel,
             SettingsViewModel settingsViewModel)
         {
             DashboardViewModel = dashboardViewModel;
             ServicesViewModel = servicesViewModel;
             SitesViewModel = sitesViewModel;
+            EnvironmentsViewModel = environmentsViewModel;
             DumpsViewModel = dumpsViewModel;
             SettingsViewModel = settingsViewModel;
 
@@ -35,11 +41,8 @@ namespace DevNest.UI.ViewModels
 
             NavigateToPageCommand = new RelayCommand<string>(NavigateToPage);
 
-            // Set initial page
             CurrentPage = DashboardViewModel;
         }
-
-        public IRelayCommand<string> NavigateToPageCommand { get; }
 
         private void NavigateToPage(string? pageName)
         {
@@ -51,6 +54,7 @@ namespace DevNest.UI.ViewModels
                 "Dashboard" => DashboardViewModel,
                 "Services" => ServicesViewModel,
                 "Sites" => SitesViewModel,
+                "Environments" => EnvironmentsViewModel,
                 "Dumps" => DumpsViewModel,
                 "Settings" => SettingsViewModel,
                 _ => DashboardViewModel

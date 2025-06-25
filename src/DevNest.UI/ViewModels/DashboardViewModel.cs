@@ -1,85 +1,59 @@
+using CommunityToolkit.Mvvm.Input;
+using DevNest.Core.Models;
+using DevNest.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using DevNest.Core.Interfaces;
-using DevNest.Core.Models;
 
 namespace DevNest.UI.ViewModels
 {
     public partial class DashboardViewModel : BaseViewModel
     {
-        private readonly IServiceManager _serviceManager;
-        private readonly ISiteService _siteService;
-        private readonly IDumpService _dumpService;
+        private readonly ServiceManager _serviceManager;
+        private readonly SiteManager _siteManager;
 
-        [ObservableProperty]
-        private int _runningServicesCount;
-
-        [ObservableProperty]
-        private int _totalServicesCount;
-
-        [ObservableProperty]
-        private int _installedSitesCount;
-
-        [ObservableProperty]
-        private int _dumpFilesCount;
-
-        public ObservableCollection<Service> RecentServices { get; } = new();
-        public ObservableCollection<Site> RecentSites { get; } = new();
-
-        public DashboardViewModel(
-            IServiceManager serviceManager,
-            ISiteService siteService,
-            IDumpService dumpService)
-        {
-            _serviceManager = serviceManager;
-            _siteService = siteService;
-            _dumpService = dumpService;
-            Title = "Dashboard";
-            LoadDashboardDataCommand = new AsyncRelayCommand(LoadDashboardDataAsync);
-            RefreshCommand = new AsyncRelayCommand(RefreshDashboardAsync);
-        }
+        public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
 
         public IAsyncRelayCommand LoadDashboardDataCommand { get; }
         public IAsyncRelayCommand RefreshCommand { get; }
+        public IAsyncRelayCommand<ServiceModel> ToggleServiceCommand { get; }
+
+        public ObservableCollection<SiteModel> RecentSites { get; } = new();
+        public DashboardViewModel(ServiceManager serviceManager, SiteManager siteManager)
+        {
+            _serviceManager = serviceManager;
+            _siteManager = siteManager;
+            Title = "Dashboard";
+            LoadDashboardDataCommand = new AsyncRelayCommand(LoadDashboardDataAsync);
+            RefreshCommand = new AsyncRelayCommand(RefreshDashboardAsync);
+            ToggleServiceCommand = new AsyncRelayCommand<ServiceModel>(ToggleServiceAsync);
+        }
 
         public async Task LoadDashboardDataAsync()
         {
             IsLoading = true;
             try
             {
-                // Load all data in parallel
                 var servicesTask = _serviceManager.GetServicesAsync();
-                var sitesTask = _siteService.GetInstalledSitesAsync();
-                var dumpsTask = _dumpService.GetDumpFilesAsync();
+                var sitesTask = _siteManager.GetInstalledSitesAsync();
 
-                await Task.WhenAll(servicesTask, sitesTask, dumpsTask);
+                await Task.WhenAll(servicesTask, sitesTask);
 
                 var services = servicesTask.Result.ToList();
                 var sites = sitesTask.Result.ToList();
-                var dumps = dumpsTask.Result.ToList();
 
-                // Update statistics
-                TotalServicesCount = services.Count;
-                RunningServicesCount = services.Count(s => s.IsRunning);
-                InstalledSitesCount = sites.Count;
-                DumpFilesCount = dumps.Count;
+                InstalledServices.Clear();
 
-                // Update recent items (show up to 5 most recent)
-                RecentServices.Clear();
-                foreach (var service in services.Take(5))
+                var selectedServices = services
+                    .Where(s => !string.IsNullOrEmpty(s.ServiceType) && s.IsSelected)
+                    .ToList();
+
+                foreach (var service in selectedServices)
                 {
-                    RecentServices.Add(service);
+                    InstalledServices.Add(service);
                 }
 
-                RecentSites.Clear();
-                foreach (var site in sites.OrderByDescending(s => s.CreatedDate).Take(5))
-                {
-                    RecentSites.Add(site);
-                }
             }
             catch (Exception ex)
             {
@@ -95,6 +69,23 @@ namespace DevNest.UI.ViewModels
         private async Task RefreshDashboardAsync()
         {
             await LoadDashboardDataAsync();
+        }
+
+        private async Task ToggleServiceAsync(ServiceModel? service)
+        {
+            if (service == null) return;
+
+            try
+            {
+                await _serviceManager.ToggleServiceAsync(service.Name);
+                // Refresh the dashboard to update service status
+                await LoadDashboardDataAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error toggling service {service.Name}: {ex.Message}");
+                // TODO: Show error to user
+            }
         }
 
         protected override async Task OnLoadedAsync()

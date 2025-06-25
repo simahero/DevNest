@@ -3,24 +3,169 @@
     x:Class="DevNest.UI.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:DevNest.UI.Converters"
+    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
     xmlns:local="using:DevNest.UI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:DevNest.Core.Models"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <converters:ServiceStatusToColorConverter x:Key="ServiceStatusToColorConverter" />
+        <converters:ServiceStatusToActionTextConverter x:Key="ServiceStatusToActionTextConverter" />
+    </Page.Resources>
+
+    <i:Interaction.Behaviors>
+        <core:EventTriggerBehavior EventName="Loaded">
+            <core:InvokeCommandAction Command="{x:Bind ViewModel.LoadCommand}" />
+        </core:EventTriggerBehavior>
+    </i:Interaction.Behaviors>
 
     <Grid Padding="32" Background="#111827">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!--  Page Title  -->
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
             <TextBlock
                 Margin="0,0,0,8"
                 FontSize="24"
+                FontWeight="SemiBold"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Dashboard" />
         </StackPanel>
+
+        <!--  Services Section Title  -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Grid.Column="0"
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Services" />
+
+                <Button
+                    Grid.Column="1"
+                    Command="{x:Bind ViewModel.RefreshCommand}"
+                    Content="Start All"
+                    Style="{StaticResource DefaultButtonStyle}" />
+            </Grid>
+        </StackPanel>
+
+
+        <!--  Services List  -->
+        <ScrollViewer Grid.Row="3">
+            <Grid>
+                <ListView
+                    x:Name="ServicesList"
+                    Margin="0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    ItemsSource="{x:Bind ViewModel.InstalledServices, Mode=OneWay}"
+                    SelectionMode="None">
+
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="Padding" Value="0" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ServiceModel">
+                            <Border
+                                Margin="0,0,0,12"
+                                Padding="24,12"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                CornerRadius="12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--  Status Indicator  -->
+                                    <Border
+                                        Grid.Column="0"
+                                        Width="12"
+                                        Height="12"
+                                        Margin="0,0,16,0"
+                                        VerticalAlignment="Center"
+                                        Background="{x:Bind Status, Mode=OneWay, Converter={StaticResource ServiceStatusToColorConverter}}"
+                                        CornerRadius="6" />
+
+                                    <!--  Service Info  -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock
+                                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                                            Text="{x:Bind DisplayName}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{x:Bind Name}" />
+                                            <TextBlock
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Visibility="{x:Bind IsRunning, Mode=OneWay}">
+                                                <Run Text=" • PID: " />
+                                                <Run Text="{x:Bind ProcessId, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!--  Status Text  -->
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        Margin="16,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        FontWeight="Medium"
+                                        Foreground="{x:Bind Status, Mode=OneWay, Converter={StaticResource ServiceStatusToColorConverter}}"
+                                        Text="{x:Bind Status}" />
+
+                                    <!--  Toggle Button  -->
+                                    <ToggleButton
+                                        Grid.Column="3"
+                                        MinWidth="80"
+                                        Command="{Binding DataContext.ToggleServiceCommand, ElementName=ServicesList}"
+                                        CommandParameter="{Binding}"
+                                        Content="{x:Bind Status, Mode=OneWay, Converter={StaticResource ServiceStatusToActionTextConverter}}"
+                                        IsChecked="{x:Bind IsRunning, Mode=OneWay}"
+                                        IsEnabled="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
+                                        Style="{StaticResource DefaultToggleButtonStyle}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <!--  Empty State  -->
+                <TextBlock
+                    x:Name="EmptyStateText"
+                    Margin="0,40,0,0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="No services available. Click Refresh to load services."
+                    Visibility="{x:Bind ViewModel.InstalledServices.Count, Mode=OneWay, Converter={StaticResource CountToVisibilityConverter}}" />
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>
