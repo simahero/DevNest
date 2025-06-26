@@ -21,11 +21,6 @@ namespace DevNest.Services
             {
                 var binDirectory = _pathService.BinPath;
 
-                if (!await _fileSystemService.DirectoryExistsAsync(binDirectory))
-                {
-                    await _fileSystemService.CreateDirectoryAsync(binDirectory);
-                }
-
                 var allServices = new List<ServiceModel>();
                 var categoryDirectories = await _fileSystemService.GetDirectoriesAsync(binDirectory);
 

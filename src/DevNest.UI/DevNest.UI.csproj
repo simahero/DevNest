@@ -46,8 +46,16 @@
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <AppxManifest Include="Package.appxmanifest" />
-  </ItemGroup>  
-  
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets/starter_dirs/**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInSingleFile>true</IncludeInSingleFile>
+      <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    </Content>
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -61,6 +69,12 @@
   <!-- Service Logo SVG Files -->
   <ItemGroup>
     <Content Include="Assets\Logos\*.svg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Icons\*.svg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -139,4 +153,5 @@
     <ProjectReference Include="..\DevNest.Core\DevNest.Core.csproj" />
     <ProjectReference Include="..\DevNest.Services\DevNest.Services.csproj" />
   </ItemGroup>
+
 </Project>

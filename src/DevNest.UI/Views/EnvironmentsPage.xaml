@@ -51,9 +51,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="8">
                     <Expander.Header>
-                        <Grid 
-                            Padding="0,12"
-                            HorizontalAlignment="Stretch">
+                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="60" />
                                 <ColumnDefinition Width="*" />
@@ -68,14 +66,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/apache.svg" />
+                                    Source="{StaticResource ApacheLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="Apache" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Apache" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -205,14 +201,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/mysql.svg" />
+                                    Source="{StaticResource MySqlLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="MySQL" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="MySQL" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -342,14 +336,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/php.svg" />
+                                    Source="{StaticResource PhpLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="PHP" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PHP" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -478,14 +470,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/node.svg" />
+                                    Source="{StaticResource NodeLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="Node.js" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Node.js" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -616,14 +606,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/redis.svg" />
+                                    Source="{StaticResource RedisLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="Redis" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Redis" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -721,14 +709,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/postgresql.svg" />
+                                    Source="{StaticResource PostgreSqlLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="PostgreSQL" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PostgreSQL" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -827,14 +813,12 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="ms-appx:///Assets/Logos/nginx.svg" />
+                                    Source="{StaticResource NginxLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock
-                                    Style="{StaticResource BodyStrongTextBlockStyle}"
-                                    Text="Nginx" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Nginx" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"

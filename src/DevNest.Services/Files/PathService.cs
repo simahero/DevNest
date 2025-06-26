@@ -9,7 +9,10 @@ namespace DevNest.Services.Files
         public PathService()
         {
             // Use the application's base directory as the root
-            _basePath = @"C:\DevNest";
+            // _basePath = @"C:\DevNest";
+            var exePath = (System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName) ?? throw new InvalidOperationException("Could not determine the application's executable path.");
+            var dir = Path.GetDirectoryName(exePath) ?? throw new InvalidOperationException("Could not determine the application's base directory.");
+            _basePath = dir;
         }
 
         public PathService(string basePath)

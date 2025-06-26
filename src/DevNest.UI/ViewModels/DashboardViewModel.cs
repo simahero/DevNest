@@ -19,7 +19,6 @@ namespace DevNest.UI.ViewModels
         public IAsyncRelayCommand RefreshCommand { get; }
         public IAsyncRelayCommand<ServiceModel> ToggleServiceCommand { get; }
 
-        public ObservableCollection<SiteModel> RecentSites { get; } = new();
         public DashboardViewModel(ServiceManager serviceManager, SiteManager siteManager)
         {
             _serviceManager = serviceManager;
@@ -77,9 +76,18 @@ namespace DevNest.UI.ViewModels
 
             try
             {
+                // Toggle the service using the manager
                 await _serviceManager.ToggleServiceAsync(service.Name);
-                // Refresh the dashboard to update service status
-                await LoadDashboardDataAsync();
+
+                // Get the updated service from the manager
+                var updatedService = await _serviceManager.GetServiceAsync(service.Name);
+                if (updatedService != null)
+                {
+                    // Update the properties of the existing instance to keep bindings
+                    service.Status = updatedService.Status;
+                    service.Process = updatedService.Process;
+                    service.IsLoading = updatedService.IsLoading;
+                }
             }
             catch (Exception ex)
             {

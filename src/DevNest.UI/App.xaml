@@ -53,6 +53,15 @@
             </ResourceDictionary.ThemeDictionaries>
 
             <!--  Other app resources here  -->
+            <SvgImageSource x:Key="PreloadedIcon" UriSource="ms-appx:///Assets/Icons/icon1.svg" />
+            <SvgImageSource x:Key="ApacheLogo" UriSource="ms-appx:///Assets/Logos/apache.svg" />
+            <SvgImageSource x:Key="MySqlLogo" UriSource="ms-appx:///Assets/Logos/mysql.svg" />
+            <SvgImageSource x:Key="NginxLogo" UriSource="ms-appx:///Assets/Logos/nginx.svg" />
+            <SvgImageSource x:Key="NodeLogo" UriSource="ms-appx:///Assets/Logos/node.svg" />
+            <SvgImageSource x:Key="PhpLogo" UriSource="ms-appx:///Assets/Logos/php.svg" />
+            <SvgImageSource x:Key="PhpMyAdminLogo" UriSource="ms-appx:///Assets/Logos/phpmyadmin.svg" />
+            <SvgImageSource x:Key="PostgreSqlLogo" UriSource="ms-appx:///Assets/Logos/postgresql.svg" />
+            <SvgImageSource x:Key="RedisLogo" UriSource="ms-appx:///Assets/Logos/redis.svg" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

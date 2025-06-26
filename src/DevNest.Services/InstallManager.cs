@@ -22,7 +22,6 @@ namespace DevNest.Services
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromMinutes(10);
 
-            // Set headers similar to DownloadController
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
         }
 
@@ -41,12 +40,10 @@ namespace DevNest.Services
 
                 progress?.Report($"Starting installation of {serviceDefinition.Name}...");
 
-                // Get installation directory from settings
                 var settings = await _settingsManager.LoadSettingsAsync();
                 var servicesDir = Path.Combine(_pathService.BinPath, serviceDefinition.ServiceType);
                 var serviceDir = Path.Combine(servicesDir, serviceDefinition.Name);
 
-                // Check if already installed
                 if (await IsServiceInstalledAsync(serviceDefinition.Name))
                 {
                     return new InstallationResultModel
@@ -56,11 +53,9 @@ namespace DevNest.Services
                     };
                 }
 
-                // Create service directory
                 progress?.Report("Creating installation directory...");
                 await _fileSystemService.CreateDirectoryAsync(serviceDir);
 
-                // Download the service
                 progress?.Report($"Downloading {serviceDefinition.Name} from {serviceDefinition.Url}...");
                 var downloadPath = await DownloadServiceAsync(serviceDefinition.Url, progress);
 
@@ -73,14 +68,34 @@ namespace DevNest.Services
                     };
                 }
 
-                // Extract if it's a zip file
                 progress?.Report("Extracting files...");
                 await ExtractServiceAsync(downloadPath, serviceDir, serviceDefinition.HasAdditionalDir, progress);
 
-                // Clean up downloaded file
                 if (await _fileSystemService.FileExistsAsync(downloadPath))
                 {
                     await _fileSystemService.DeleteFileAsync(downloadPath);
+                }
+
+                object? serviceSettings = serviceDefinition.ServiceType.ToLowerInvariant() switch
+                {
+                    "apache" => settings.Apache,
+                    "mysql" => settings.MySQL,
+                    "php" => settings.PHP,
+                    "node" => settings.Node,
+                    "redis" => settings.Redis,
+                    "postgresql" => settings.PostgreSQL,
+                    "nginx" => settings.Nginx,
+                    _ => null
+                };
+                if (serviceSettings != null)
+                {
+                    var versionProp = serviceSettings.GetType().GetProperty("Version");
+                    var versionValue = versionProp?.GetValue(serviceSettings) as string;
+                    if (string.IsNullOrEmpty(versionValue))
+                    {
+                        versionProp?.SetValue(serviceSettings, serviceDefinition.Name);
+                        await _settingsManager.SaveSettingsAsync(settings);
+                    }
                 }
 
                 progress?.Report($"Successfully installed {serviceDefinition.Name}");

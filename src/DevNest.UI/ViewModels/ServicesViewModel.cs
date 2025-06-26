@@ -168,9 +168,9 @@ namespace DevNest.UI.ViewModels
                 if (result.Success)
                 {
                     InstallationStatus = result.Message;
-                    // Refresh the installed services list
+
                     await LoadInstalledServicesAsync();
-                    // Reset selection
+
                     SelectedServiceType = null;
                     SelectedVersion = null;
                 }

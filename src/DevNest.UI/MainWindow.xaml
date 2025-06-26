@@ -14,6 +14,48 @@
     </Window.SystemBackdrop>
 
     <Grid>
+        <!--  Hidden images to warm up SVG logo rendering  -->
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource ApacheLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource MySqlLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource NginxLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource NodeLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource PhpLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource PhpMyAdminLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource PostgreSqlLogo}"
+            Visibility="Collapsed" />
+        <Image
+            Width="1"
+            Height="1"
+            Source="{StaticResource RedisLogo}"
+            Visibility="Collapsed" />
+
         <!--  Custom Title Bar  -->
         <Grid
             x:Name="AppTitleBar"

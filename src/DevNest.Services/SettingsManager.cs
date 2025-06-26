@@ -12,6 +12,7 @@ namespace DevNest.Services
 
         private readonly IFileSystemService _fileSystemService;
         private readonly IPathService _pathService;
+        private readonly LogManager _logManager;
         private readonly SettingsFactory _settingsFactory;
 
         private SettingsModel? _cachedSettings;
@@ -21,10 +22,11 @@ namespace DevNest.Services
         private bool _autoSaveEnabled = true;
 
 
-        public SettingsManager(IFileSystemService fileSystemService, IPathService pathService, SettingsFactory settingsFactory)
+        public SettingsManager(IFileSystemService fileSystemService, IPathService pathService, LogManager logManager, SettingsFactory settingsFactory)
         {
             _fileSystemService = fileSystemService;
             _pathService = pathService;
+            _logManager = logManager;
             _settingsFactory = settingsFactory;
         }
 
@@ -55,10 +57,14 @@ namespace DevNest.Services
 
                     return settings;
                 }
+                else
+                {
+                    _logManager.Log($"{settingsFilePath} doesnt exist.");
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load settings: {ex.Message}");
+                _logManager.Log($"Failed to load settings: {ex.Message}");
             }
             finally
             {
@@ -143,10 +149,12 @@ namespace DevNest.Services
         {
             try
             {
-                var settingsFilePath = Path.Combine(_pathService.ConfigPath, "settings.ini");
-                if (!string.IsNullOrEmpty(settingsFilePath) && !await _fileSystemService.DirectoryExistsAsync(settingsFilePath))
+                var configPath = _pathService.ConfigPath;
+                var settingsFilePath = Path.Combine(configPath, "settings.ini");
+                if (!string.IsNullOrEmpty(settingsFilePath))
                 {
-                    await _fileSystemService.CreateDirectoryAsync(settingsFilePath);
+                    _logManager?.Log($"Saving settings is failed: {settingsFilePath}");
+                    return;
                 }
 
                 var iniData = ConvertSettingsToIni(settings);

@@ -101,10 +101,6 @@ namespace DevNest.Services.Settings
                     .Replace("<<PHPPATH>>", phpPath);
 
                 var configDir = Path.Combine(srvRoot, "conf");
-                if (!await _fileSystemService.DirectoryExistsAsync(configDir))
-                {
-                    await _fileSystemService.CreateDirectoryAsync(configDir);
-                }
 
                 var configFilePath = Path.Combine(configDir, "httpd.conf");
                 await _fileSystemService.WriteAllTextAsync(configFilePath, configContent);

@@ -162,8 +162,6 @@ namespace DevNest.Services
                     await _fileSystemService.CreateDirectoryAsync(sitesPath);
                 }
 
-                await _fileSystemService.CreateDirectoryAsync(sitePath);
-
                 await CreateSiteStructureAsync(siteDefinition, sitePath, progress);
 
                 var site = new SiteModel

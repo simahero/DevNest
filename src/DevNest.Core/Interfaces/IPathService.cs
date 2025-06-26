@@ -21,6 +21,26 @@ namespace DevNest.Core.Interfaces
         string ConfigPath { get; }
 
         /// <summary>
+        /// Gets the path to the data directory.
+        /// </summary>
+        string DataPath { get; }
+
+        /// <summary>
+        /// Gets the path to the etc directory.
+        /// </summary>
+        string EtcPath { get; }
+
+        /// <summary>
+        /// Gets the path to the logs directory.
+        /// </summary>
+        string LogsPath { get; }
+
+        /// <summary>
+        /// Gets the path to the templates directory.
+        /// </summary>
+        string TemplatesPath { get; }
+
+        /// <summary>
         /// Gets the path to the sites-enabled directory.
         /// </summary>
         string SitesEnabledPath { get; }

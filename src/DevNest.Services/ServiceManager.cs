@@ -1,6 +1,5 @@
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using System.Diagnostics;
 
 namespace DevNest.Services
 {
@@ -45,9 +44,8 @@ namespace DevNest.Services
             return Task.FromResult(service);
         }
 
-        public async Task<bool> StartServiceAsync(string serviceName)
+        public async Task<bool> StartServiceAsync(ServiceModel service)
         {
-            var service = await GetServiceAsync(serviceName);
             if (service == null) return false;
 
             try
@@ -88,7 +86,7 @@ namespace DevNest.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error starting service {serviceName}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error starting service {service.Name}: {ex.Message}");
                 service.Status = ServiceStatus.Stopped;
                 return false;
             }
@@ -98,9 +96,8 @@ namespace DevNest.Services
             }
         }
 
-        public async Task<bool> StopServiceAsync(string serviceName)
+        public async Task<bool> StopServiceAsync(ServiceModel service)
         {
-            var service = await GetServiceAsync(serviceName);
             if (service == null) return false;
 
             try
@@ -113,48 +110,44 @@ namespace DevNest.Services
                 {
                     try
                     {
-                        // Try to close the main window first (graceful shutdown)
                         if (!service.Process.CloseMainWindow())
                         {
-                            // If graceful shutdown doesn't work, force kill
                             service.Process.Kill();
                         }
 
-                        // Wait for the process to exit (with timeout)
                         if (!service.Process.WaitForExit(5000))
                         {
-                            // Force kill if it doesn't exit within 5 seconds
                             service.Process.Kill();
                         }
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error stopping attached process for {serviceName}: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Error stopping attached process for {service.Name}: {ex.Message}");
+                        return false;
                     }
                     finally
                     {
                         service.Process?.Dispose();
                         service.Process = null;
                     }
-                }
-                else
-                {
-                    // Fallback: find and kill processes by name if no process is attached
-                    await StopServiceProcessesByName(service.Name.ToLowerInvariant());
-                }
 
-                service.Status = ServiceStatus.Stopped;
-                return true;
+                    service.Status = ServiceStatus.Stopped;
+                    await Task.CompletedTask;
+                    return true;
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error stopping service {serviceName}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error stopping service {service.Name}: {ex.Message}");
                 return false;
             }
             finally
             {
                 service.IsLoading = false;
             }
+
+            await Task.CompletedTask;
+            return true;
         }
 
         public async Task<bool> ToggleServiceAsync(string serviceName)
@@ -167,11 +160,11 @@ namespace DevNest.Services
 
             if (service.IsRunning)
             {
-                return await StopServiceAsync(serviceName);
+                return await StopServiceAsync(service);
             }
             else
             {
-                return await StartServiceAsync(serviceName);
+                return await StartServiceAsync(service);
             }
         }
 
@@ -414,53 +407,6 @@ namespace DevNest.Services
 
             return !string.IsNullOrEmpty(selectedVersion) &&
                    service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static async Task StopServiceProcessesByName(string serviceName)
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    // Map service names to common process names
-                    var processNames = serviceName switch
-                    {
-                        "apache" => new[] { "httpd", "apache" },
-                        "mysql" => new[] { "mysqld" },
-                        "nginx" => new[] { "nginx" },
-                        "php" => new[] { "php-cgi", "php" },
-                        "node" => new[] { "node" },
-                        "redis" => new[] { "redis-server" },
-                        "postgresql" => new[] { "postgres" },
-                        _ => new[] { serviceName }
-                    };
-
-                    foreach (var processName in processNames)
-                    {
-                        var processes = Process.GetProcessesByName(processName);
-                        foreach (var process in processes)
-                        {
-                            try
-                            {
-                                process.Kill();
-                                process.WaitForExit(5000); // Wait up to 5 seconds
-                            }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Error killing process {processName}: {ex.Message}");
-                            }
-                            finally
-                            {
-                                process.Dispose();
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error stopping processes for {serviceName}: {ex.Message}");
-                }
-            });
         }
 
         private static string GetWorkingDirectoryFromCommand(string command)
