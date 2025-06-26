@@ -151,7 +151,7 @@ namespace DevNest.Services
             {
                 var configPath = _pathService.ConfigPath;
                 var settingsFilePath = Path.Combine(configPath, "settings.ini");
-                if (!string.IsNullOrEmpty(settingsFilePath))
+                if (string.IsNullOrEmpty(settingsFilePath))
                 {
                     _logManager?.Log($"Saving settings is failed: {settingsFilePath}");
                     return;

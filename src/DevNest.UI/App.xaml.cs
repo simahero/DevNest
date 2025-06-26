@@ -141,7 +141,10 @@ public partial class App : Application
             var relativePath = Path.GetRelativePath(sourceDir, file);
             var destFile = Path.Combine(destDir, relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
-            File.Copy(file, destFile, overwrite);
+            if (!File.Exists(destFile))
+            {
+                File.Copy(file, destFile, overwrite: false);
+            }
         }
     }
 }

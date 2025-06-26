@@ -45,34 +45,73 @@ namespace DevNest.Services.Sites
             }
         }
 
-        private async Task AddApacheVirtualHostAsync(string siteName, string domain, string documentRoot)
+        private async Task AddVirtualHostAsync(string siteName, string domain, string documentRoot)
         {
-            var vhostConfig = await ProcessVirtualHostTemplateAsync(siteName, domain, documentRoot);
+            var apacheConfig = await ProcessApacheSitesEnabledTemplateAsync(siteName, domain, documentRoot);
 
-            var sitesEnabledPath = _pathService.SitesEnabledPath;
+            var apacheSitesEnabledPath = Path.Combine(_pathService.EtcPath, "apache", "sites-enabled");
 
-            if (!await _fileSystemService.DirectoryExistsAsync(sitesEnabledPath))
+            if (!await _fileSystemService.DirectoryExistsAsync(apacheSitesEnabledPath))
             {
-                await _fileSystemService.CreateDirectoryAsync(sitesEnabledPath);
+                await _fileSystemService.CreateDirectoryAsync(apacheSitesEnabledPath);
             }
 
-            var configFilePath = Path.Combine(sitesEnabledPath, $"auto.{domain}.conf");
+            var apacheConfigFilePath = Path.Combine(apacheSitesEnabledPath, $"auto.{domain}.conf");
 
-            if (await _fileSystemService.FileExistsAsync(configFilePath))
+            if (!await _fileSystemService.FileExistsAsync(apacheConfigFilePath))
             {
-                return;
+                await _fileSystemService.WriteAllTextAsync(apacheConfigFilePath, apacheConfig);
             }
 
-            await _fileSystemService.WriteAllTextAsync(configFilePath, vhostConfig);
+
+            var nginxConfig = await ProcessNginxSitesEnabledTemplateAsync(siteName, domain, documentRoot);
+
+            var nginxSitesEnabledPath = Path.Combine(_pathService.EtcPath, "nginx", "sites-enabled");
+
+            if (!await _fileSystemService.DirectoryExistsAsync(nginxSitesEnabledPath))
+            {
+                await _fileSystemService.CreateDirectoryAsync(nginxSitesEnabledPath);
+            }
+
+            var nginxConfigFilePath = Path.Combine(nginxSitesEnabledPath, $"auto.{domain}.conf");
+
+            if (!await _fileSystemService.FileExistsAsync(nginxConfigFilePath))
+            {
+                await _fileSystemService.WriteAllTextAsync(nginxConfigFilePath, nginxConfig);
+            }
+
         }
 
-        private async Task<string> ProcessVirtualHostTemplateAsync(string siteName, string domain, string documentRoot)
+        private async Task<string> ProcessApacheSitesEnabledTemplateAsync(string siteName, string domain, string documentRoot)
         {
-            var templatePath = @"C:\DevNest\template\auto.virtualhost.conf.tpl";
+            var apacheTemplatePath = Path.Combine(_pathService.TemplatesPath, "auto.apache.sites-enabled.conf.tpl"); //@"C:\DevNest\template\auto.apache.sites-enabled.conf.tpl";
 
             try
             {
-                var templateContent = await _fileSystemService.ReadAllTextAsync(templatePath);
+                var templateContent = await _fileSystemService.ReadAllTextAsync(apacheTemplatePath);
+
+                var processedContent = templateContent
+                    .Replace("<<PORT>>", "80")
+                    .Replace("<<PROJECT_DIR>>", documentRoot)
+                    .Replace("<<HOSTNAME>>", domain)
+                    .Replace("<<SITENAME>>", siteName);
+
+                return processedContent;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to process template: {ex.Message}");
+            }
+        }
+
+        private async Task<string> ProcessNginxSitesEnabledTemplateAsync(string siteName, string domain, string documentRoot)
+        {
+            var nginxTemplatePath = Path.Combine(_pathService.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl"); //@"C:\DevNest\template\auto.apache.sites-enabled.conf.tpl";
+
+            try
+            {
+                var templateContent = await _fileSystemService.ReadAllTextAsync(nginxTemplatePath);
 
                 var processedContent = templateContent
                     .Replace("<<PORT>>", "80")

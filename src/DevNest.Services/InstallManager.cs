@@ -9,16 +9,19 @@ namespace DevNest.Services
         private readonly IFileSystemService _fileSystemService;
         private readonly IPathService _pathService;
         private readonly SettingsManager _settingsManager;
+        private readonly LogManager _logManager;
         private readonly HttpClient _httpClient;
 
         public InstallManager(
             IFileSystemService fileSystemService,
             IPathService pathService,
-            SettingsManager settingsManager)
+            SettingsManager settingsManager,
+            LogManager logManager)
         {
             _fileSystemService = fileSystemService;
             _pathService = pathService;
             _settingsManager = settingsManager;
+            _logManager = logManager;
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromMinutes(10);
 
@@ -94,7 +97,7 @@ namespace DevNest.Services
                     if (string.IsNullOrEmpty(versionValue))
                     {
                         versionProp?.SetValue(serviceSettings, serviceDefinition.Name);
-                        await _settingsManager.SaveSettingsAsync(settings);
+                        _logManager.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
                     }
                 }
 
