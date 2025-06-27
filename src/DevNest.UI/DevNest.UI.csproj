@@ -17,6 +17,11 @@
     <SelfContained>true</SelfContained>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<DefaultLanguage>en-US</DefaultLanguage>
+		<GenerateLanguageAttribute>false</GenerateLanguageAttribute>
+	</PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
     <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>

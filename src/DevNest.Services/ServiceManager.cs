@@ -6,6 +6,7 @@ namespace DevNest.Services
     public class ServiceManager
     {
         private readonly SettingsManager _settingsManager;
+        private readonly LogManager _logManager;
 
         private readonly IServicesReader _servicesReader;
         private readonly IFileSystemService _fileSystemService;
@@ -16,15 +17,15 @@ namespace DevNest.Services
         private readonly List<ServiceModel> _services;
 
         public ServiceManager(
-            IServicesReader servicesReader,
             SettingsManager settingsManager,
+            IServicesReader servicesReader,
             IFileSystemService fileSystemService,
             ICommandExecutionService commandExecutionService,
             IPathService pathService,
             IUIDispatcher uiDispatcher)
         {
-            _servicesReader = servicesReader;
             _settingsManager = settingsManager;
+            _servicesReader = servicesReader;
             _fileSystemService = fileSystemService;
             _commandExecutionService = commandExecutionService;
             _pathService = pathService;
@@ -53,9 +54,8 @@ namespace DevNest.Services
                 service.IsLoading = true;
                 service.Status = ServiceStatus.Starting;
 
-                var workingDirectory = GetWorkingDirectoryFromCommand(service.Command);
-
-                var process = await _commandExecutionService.StartProcessAsync(service.Command, workingDirectory);
+                var workingDirectory = service.WorkingDirectory ?? Environment.CurrentDirectory;
+                var process = await _commandExecutionService.StartProcessAsync(service.Command, workingDirectory, default);
 
                 if (process != null)
                 {
@@ -178,10 +178,11 @@ namespace DevNest.Services
 
                 foreach (var service in installedServices)
                 {
-                    var command = await GetServiceCommandAsync(service, settings);
-                    if (!string.IsNullOrEmpty(command))
+                    var serviceCommand = await GetServiceCommandAsync(service, settings);
+                    if (!string.IsNullOrEmpty(serviceCommand.Item1) && !string.IsNullOrEmpty(serviceCommand.Item2))
                     {
-                        service.Command = command;
+                        service.Command = serviceCommand.Item1;
+                        service.WorkingDirectory = serviceCommand.Item2;
                         service.IsSelected = IsServiceSelected(service, settings);
                         service.Status = ServiceStatus.Stopped;
                         _services.Add(service);
@@ -194,7 +195,7 @@ namespace DevNest.Services
             }
         }
 
-        private async Task<string> GetServiceCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetServiceCommandAsync(ServiceModel service, SettingsModel settings)
         {
             try
             {
@@ -213,182 +214,115 @@ namespace DevNest.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error getting command for {service.Name}: {ex.Message}");
-                return string.Empty;
+                return (string.Empty, string.Empty);
             }
         }
 
-        private async Task<string> GetApacheCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetApacheCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Apache.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var binPath = Path.Combine(service.Path, "bin");
                 var apacheRoot = service.Path;
                 var httpdPath = Path.Combine(binPath, "httpd.exe");
-
                 if (await _fileSystemService.FileExistsAsync(httpdPath))
                 {
-                    return $"cd /d \"{binPath}\" && \"{httpdPath}\" -d \"{apacheRoot}\" -D FOREGROUND";
+                    return ($"\"{httpdPath}\" -d \"{apacheRoot}\" -D FOREGROUND", binPath);
                 }
             }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetMySQLCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetMySQLCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.MySQL.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var binPath = Path.Combine(service.Path, "bin");
                 var mysqldPath = Path.Combine(binPath, "mysqld.exe");
-
                 if (await _fileSystemService.FileExistsAsync(mysqldPath))
                 {
-                    return $"cd /d \"{binPath}\" && \"{mysqldPath}\"";
+                    return ($"\"{mysqldPath}\"", binPath);
                 }
             }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetPHPCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetPHPCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.PHP.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var phpPath = Path.Combine(service.Path, selectedVersion, "php-cgi.exe");
-
                 if (await _fileSystemService.FileExistsAsync(phpPath))
                 {
-                    return $"\"{phpPath}\" -b 127.0.0.1:9000";
+                    return ($"\"{phpPath}\" -b 127.0.0.1:9000", Path.GetDirectoryName(phpPath)!);
                 }
             }
-
-            // Fallback: look for any php-cgi.exe in the service path
-            var fallbackPhpPath = Path.Combine(service.Path, "php-cgi.exe");
-            if (await _fileSystemService.FileExistsAsync(fallbackPhpPath))
-            {
-                return $"\"{fallbackPhpPath}\" -b 127.0.0.1:9000";
-            }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetNginxCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetNginxCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Nginx.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var nginxPath = Path.Combine(service.Path, selectedVersion, "nginx.exe");
-
                 if (await _fileSystemService.FileExistsAsync(nginxPath))
                 {
-                    return $"cd /d \"{Path.GetDirectoryName(nginxPath)}\" && \"{nginxPath}\"";
+                    return ($"\"{nginxPath}\"", Path.GetDirectoryName(nginxPath)!);
                 }
             }
-
-            // Fallback: look for any nginx.exe in the service path
-            var fallbackNginxPath = Path.Combine(service.Path, "nginx.exe");
-            if (await _fileSystemService.FileExistsAsync(fallbackNginxPath))
-            {
-                return $"cd /d \"{Path.GetDirectoryName(fallbackNginxPath)}\" && \"{fallbackNginxPath}\"";
-            }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetNodeCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetNodeCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Node.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var nodePath = Path.Combine(service.Path, selectedVersion, "node.exe");
-
                 if (await _fileSystemService.FileExistsAsync(nodePath))
                 {
-                    return $"\"{nodePath}\"";
+                    return ($"\"{nodePath}\"", Path.GetDirectoryName(nodePath)!);
                 }
             }
 
-            // Fallback: look for any node.exe in the service path
-            var fallbackNodePath = Path.Combine(service.Path, "node.exe");
-            if (await _fileSystemService.FileExistsAsync(fallbackNodePath))
-            {
-                return $"\"{fallbackNodePath}\"";
-            }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetRedisCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetRedisCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Redis.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var redisPath = Path.Combine(service.Path, selectedVersion, "redis-server.exe");
-
                 if (await _fileSystemService.FileExistsAsync(redisPath))
                 {
-                    return $"\"{redisPath}\"";
+                    return ($"\"{redisPath}\"", Path.GetDirectoryName(redisPath)!);
                 }
             }
-
-            // Fallback: look for any redis-server.exe in the service path
-            var fallbackRedisPath = Path.Combine(service.Path, "redis-server.exe");
-            if (await _fileSystemService.FileExistsAsync(fallbackRedisPath))
-            {
-                return $"\"{fallbackRedisPath}\"";
-            }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetPostgreSQLCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetPostgreSQLCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.PostgreSQL.Version;
-
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var postgresPath = Path.Combine(service.Path, selectedVersion, "bin", "postgres.exe");
-
                 if (await _fileSystemService.FileExistsAsync(postgresPath))
                 {
-                    return $"cd /d \"{Path.GetDirectoryName(postgresPath)}\" && \"{postgresPath}\"";
+                    return ($"\"{postgresPath}\"", Path.GetDirectoryName(postgresPath)!);
                 }
             }
-
-            // Fallback: look for any postgres.exe in the service path
-            var fallbackPostgresPath = Path.Combine(service.Path, "bin", "postgres.exe");
-            if (await _fileSystemService.FileExistsAsync(fallbackPostgresPath))
-            {
-                return $"cd /d \"{Path.GetDirectoryName(fallbackPostgresPath)}\" && \"{fallbackPostgresPath}\"";
-            }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
-        private async Task<string> GetGenericCommandAsync(ServiceModel service)
+        private async Task<(string, string)> GetGenericCommandAsync(ServiceModel service)
         {
-            // Try to find common executable names in the service directory
-            var commonExecutables = new[] { "start.exe", "run.exe", "server.exe", "service.exe" };
-
-            foreach (var executable in commonExecutables)
-            {
-                var executablePath = Path.Combine(service.Path, executable);
-                if (await _fileSystemService.FileExistsAsync(executablePath))
-                {
-                    return $"\"{executablePath}\"";
-                }
-            }
-
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
 
         private static bool IsServiceSelected(ServiceModel service, SettingsModel settings)
@@ -405,28 +339,7 @@ namespace DevNest.Services
                 _ => string.Empty
             };
 
-            return !string.IsNullOrEmpty(selectedVersion) &&
-                   service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static string GetWorkingDirectoryFromCommand(string command)
-        {
-            // Extract working directory from commands that use "cd /d" pattern
-            if (command.Contains("cd /d"))
-            {
-                var startIndex = command.IndexOf("cd /d \"") + 7;
-                if (startIndex > 6)
-                {
-                    var endIndex = command.IndexOf("\"", startIndex);
-                    if (endIndex > startIndex)
-                    {
-                        return command.Substring(startIndex, endIndex - startIndex);
-                    }
-                }
-            }
-
-            // Default to current directory
-            return Environment.CurrentDirectory;
+            return !string.IsNullOrEmpty(selectedVersion) && service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
         }
 
         public async Task<bool> IsServiceRunningAsync(string serviceName)
@@ -434,7 +347,6 @@ namespace DevNest.Services
             var service = await GetServiceAsync(serviceName);
             if (service == null) return false;
 
-            // Simply return the current status since process events handle updates
             return service.IsRunning;
         }
     }

@@ -30,7 +30,6 @@ namespace DevNest.Services.Files
         public string TemplatesPath => Path.Combine(_basePath, "templates");
         public string WwwPath => Path.Combine(_basePath, "www");
 
-        public string SitesEnabledPath => Path.Combine(_basePath, "etc", "apache", "sites-enabled");
 
         public void EnsureDirectoriesExist()
         {
@@ -41,8 +40,6 @@ namespace DevNest.Services.Files
             EnsureDirectoryExists(LogsPath);
             EnsureDirectoryExists(TemplatesPath);
             EnsureDirectoryExists(WwwPath);
-
-            EnsureDirectoryExists(SitesEnabledPath);
         }
 
         public string GetPath(string relativePath)

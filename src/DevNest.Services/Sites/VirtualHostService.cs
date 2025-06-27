@@ -32,7 +32,7 @@ namespace DevNest.Services.Sites
                 var domain = $"{siteName}.test";
                 var documentRoot = Path.Combine(_pathService.WwwPath, siteName);
 
-                await AddApacheVirtualHostAsync(siteName, domain, documentRoot);
+                await AddVirtualHostAsync(siteName, domain, documentRoot);
 
                 await AddHostsEntryAsync(domain);
 

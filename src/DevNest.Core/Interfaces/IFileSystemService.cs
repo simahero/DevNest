@@ -15,6 +15,7 @@ namespace DevNest.Core.Interfaces
         Task<IEnumerable<string>> GetFilesAsync(string directory, string searchPattern = "*");
         Task<IEnumerable<string>> GetDirectoriesAsync(string directory);
         Task<FileInfo> GetFileInfoAsync(string filePath);
+        Task CopyDirectory(string sourceDir, string destDir, bool overwrite);
         Task CopyFileAsync(string sourceFile, string destinationFile);
         Task MoveFileAsync(string sourceFile, string destinationFile);
         Task DeleteFileAsync(string filePath);

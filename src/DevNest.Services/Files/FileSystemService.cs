@@ -53,6 +53,31 @@ namespace DevNest.Services.Files
             return await Task.FromResult(new FileInfo(filePath));
         }
 
+        public async Task CopyDirectory(string sourceDir, string destDir, bool overwrite)
+        {
+            await Task.Run(() =>
+            {
+                Directory.CreateDirectory(destDir);
+                foreach (var dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+                {
+                    var relativePath = Path.GetRelativePath(sourceDir, dirPath);
+                    var destPath = Path.Combine(destDir, relativePath);
+                    Directory.CreateDirectory(destPath);
+                }
+
+                foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+                {
+                    var relativePath = Path.GetRelativePath(sourceDir, file);
+                    var destFile = Path.Combine(destDir, relativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+                    if (!File.Exists(destFile))
+                    {
+                        File.Copy(file, destFile, overwrite: false);
+                    }
+                }
+            });
+        }
+
         public async Task CopyFileAsync(string sourceFile, string destinationFile)
         {
             await Task.Run(() => File.Copy(sourceFile, destinationFile));

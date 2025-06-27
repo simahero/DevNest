@@ -5,6 +5,13 @@ namespace DevNest.Services.Commands
 {
     public class CommandExecutionService : ICommandExecutionService
     {
+        private readonly LogManager _logManager;
+
+        public CommandExecutionService(LogManager logManager)
+        {
+            _logManager = logManager;
+        }
+
         public async Task<int> ExecuteCommandAsync(string command, string workingDirectory, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
         {
             progress?.Report($"Executing: {command}");
@@ -25,11 +32,16 @@ namespace DevNest.Services.Commands
             using var process = Process.Start(processInfo);
             if (process == null)
             {
+                _logManager.Log($"Failed to start process for command: {command}");
                 throw new InvalidOperationException("Failed to start process");
             }
 
             // Read output and error streams asynchronously
-            var errorTask = ReadStreamAsync(process.StandardError, line => progress?.Report(line), cancellationToken);
+            var errorTask = ReadStreamAsync(process.StandardError, line =>
+            {
+                progress?.Report(line);
+                _logManager.Log($"[stderr] {line}");
+            }, cancellationToken);
             var outputTask = ReadStreamAsync(process.StandardOutput, line => progress?.Report(line), cancellationToken);
 
             await process.WaitForExitAsync(cancellationToken);
@@ -45,6 +57,7 @@ namespace DevNest.Services.Commands
 
             if (exitCode != 0)
             {
+                _logManager.Log($"Command failed with exit code {exitCode}: {command}");
                 throw new Exception($"Command failed with exit code {exitCode}: {command}");
             }
         }
@@ -65,6 +78,7 @@ namespace DevNest.Services.Commands
             using var process = Process.Start(processInfo);
             if (process == null)
             {
+                _logManager.Log($"Failed to start process for command: {command}");
                 throw new InvalidOperationException("Failed to start process");
             }
 
@@ -75,145 +89,77 @@ namespace DevNest.Services.Commands
 
             if (process.ExitCode != 0)
             {
+                _logManager.Log($"Command failed with exit code {process.ExitCode}. Error: {error}");
                 throw new Exception($"Command failed with exit code {process.ExitCode}. Error: {error}");
             }
 
             return output;
         }
 
-        public async Task<Process?> StartProcessAsync(string command, string workingDirectory)
+        public async Task<Process?> StartProcessAsync(string command, string workingDirectory, CancellationToken cancellationToken = default)
         {
             try
             {
-                ProcessStartInfo processInfo;
-
-                // Parse the command to extract executable and arguments
-                if (command.Contains("cd /d") && command.Contains("&&"))
+                string executable;
+                string arguments = string.Empty;
+                if (command.StartsWith("\""))
                 {
-                    // Extract the actual command after the cd command
-                    var parts = command.Split(new[] { "&&" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 2)
+                    var endQuoteIndex = command.IndexOf('"', 1);
+                    if (endQuoteIndex > 0)
                     {
-                        var actualCommand = parts[1].Trim();
-
-                        // If the command is quoted, extract the executable and arguments
-                        if (actualCommand.StartsWith("\""))
+                        executable = command.Substring(1, endQuoteIndex - 1);
+                        if (command.Length > endQuoteIndex + 1)
                         {
-                            var endQuoteIndex = actualCommand.IndexOf("\"", 1);
-                            if (endQuoteIndex > 0)
-                            {
-                                var executable = actualCommand.Substring(1, endQuoteIndex - 1);
-                                var arguments = actualCommand.Length > endQuoteIndex + 1 ?
-                                    actualCommand.Substring(endQuoteIndex + 1).Trim() : "";
-
-                                processInfo = new ProcessStartInfo
-                                {
-                                    FileName = executable,
-                                    Arguments = arguments,
-                                    UseShellExecute = false,
-                                    CreateNoWindow = false,
-                                    WorkingDirectory = workingDirectory
-                                };
-                            }
-                            else
-                            {
-                                // Fallback to original approach
-                                processInfo = CreateFallbackProcessInfo(command, workingDirectory);
-                            }
-                        }
-                        else
-                        {
-                            // Command without quotes, split by space
-                            var commandParts = actualCommand.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                            if (commandParts.Length > 0)
-                            {
-                                processInfo = new ProcessStartInfo
-                                {
-                                    FileName = commandParts[0],
-                                    Arguments = string.Join(" ", commandParts.Skip(1)),
-                                    UseShellExecute = false,
-                                    CreateNoWindow = false,
-                                    WorkingDirectory = workingDirectory
-                                };
-                            }
-                            else
-                            {
-                                processInfo = CreateFallbackProcessInfo(command, workingDirectory);
-                            }
+                            arguments = command.Substring(endQuoteIndex + 1).Trim();
                         }
                     }
                     else
                     {
-                        processInfo = CreateFallbackProcessInfo(command, workingDirectory);
+                        // Malformed, fallback
+                        _logManager.Log($"Malformed command: {command}");
+                        return null;
                     }
                 }
                 else
                 {
-                    // Simple command without cd, parse directly
-                    if (command.StartsWith("\""))
+                    var commandParts = command.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (commandParts.Length > 0)
                     {
-                        var endQuoteIndex = command.IndexOf("\"", 1);
-                        if (endQuoteIndex > 0)
-                        {
-                            var executable = command.Substring(1, endQuoteIndex - 1);
-                            var arguments = command.Length > endQuoteIndex + 1 ?
-                                command.Substring(endQuoteIndex + 1).Trim() : "";
-
-                            processInfo = new ProcessStartInfo
-                            {
-                                FileName = executable,
-                                Arguments = arguments,
-                                UseShellExecute = false,
-                                CreateNoWindow = false,
-                                WorkingDirectory = workingDirectory
-                            };
-                        }
-                        else
-                        {
-                            processInfo = CreateFallbackProcessInfo(command, workingDirectory);
-                        }
+                        executable = commandParts[0];
+                        if (commandParts.Length > 1)
+                            arguments = commandParts[1];
                     }
                     else
                     {
-                        var commandParts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                        if (commandParts.Length > 0)
-                        {
-                            processInfo = new ProcessStartInfo
-                            {
-                                FileName = commandParts[0],
-                                Arguments = string.Join(" ", commandParts.Skip(1)),
-                                UseShellExecute = false,
-                                CreateNoWindow = false,
-                                WorkingDirectory = workingDirectory
-                            };
-                        }
-                        else
-                        {
-                            processInfo = CreateFallbackProcessInfo(command, workingDirectory);
-                        }
+                        _logManager.Log($"Malformed command: {command}");
+                        return null;
                     }
                 }
 
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = executable,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                    WorkingDirectory = workingDirectory
+                };
+
                 var process = Process.Start(processInfo);
+
+                var errorTask = ReadStreamAsync(process.StandardError, line =>
+                {
+                    _logManager.Log($"[stderr] {line}");
+                }, cancellationToken);
+
                 return await Task.FromResult(process);
             }
             catch (Exception ex)
             {
+                _logManager.Log($"Error starting process: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error starting process: {ex.Message}");
                 return null;
             }
-        }
-
-        private static ProcessStartInfo CreateFallbackProcessInfo(string command, string workingDirectory)
-        {
-            return new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c cd /d \"{workingDirectory}\" && {command}",
-                UseShellExecute = false,
-                CreateNoWindow = false,
-                WorkingDirectory = workingDirectory
-            };
         }
 
         private async Task ReadStreamAsync(StreamReader reader, Action<string> onLineRead, CancellationToken cancellationToken = default)

@@ -92,6 +92,8 @@ namespace DevNest.Core.Models
 
         public bool IsRunning => Status == ServiceStatus.Running;
 
+        public string? WorkingDirectory { get; set; }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
         {

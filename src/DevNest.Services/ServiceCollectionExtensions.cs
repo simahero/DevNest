@@ -23,6 +23,7 @@ namespace DevNest.Services
             services.AddSingleton<ServiceManager, ServiceManager>();
             services.AddSingleton<SiteManager, SiteManager>();
             services.AddSingleton<LogManager, LogManager>();
+            services.AddSingleton<StartupManager, StartupManager>();
 
             //Factories
             services.AddSingleton<SettingsFactory, SettingsFactory>();
