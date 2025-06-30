@@ -11,9 +11,6 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private string _selectedMenuItem = "Dashboard";
 
-        public IRelayCommand<string> NavigateToPageCommand { get; }
-
-
         public DashboardViewModel DashboardViewModel { get; }
         public ServicesViewModel ServicesViewModel { get; }
         public SitesViewModel SitesViewModel { get; }
@@ -39,11 +36,10 @@ namespace DevNest.UI.ViewModels
 
             Title = "DevNest";
 
-            NavigateToPageCommand = new RelayCommand<string>(NavigateToPage);
-
             CurrentPage = DashboardViewModel;
         }
 
+        [RelayCommand]
         private void NavigateToPage(string? pageName)
         {
             if (string.IsNullOrEmpty(pageName))

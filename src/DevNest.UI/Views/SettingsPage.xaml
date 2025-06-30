@@ -25,7 +25,7 @@
         </core:EventTriggerBehavior>
     </i:Interaction.Behaviors>
 
-    <ScrollViewer Padding="32" Background="#111827">
+    <ScrollViewer Padding="32" Background="#0b0f17">
         <StackPanel Spacing="24">
             <StackPanel>
                 <TextBlock
@@ -36,10 +36,7 @@
             </StackPanel>
 
             <!--  General Settings  -->
-            <Border
-                Padding="16"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="8">
+            <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <StackPanel Spacing="16">
                     <TextBlock
                         FontSize="24"
@@ -62,6 +59,7 @@
                         <ToggleSwitch
                             x:Name="StartWithWindowsToggle"
                             Grid.Column="1"
+                            CornerRadius="0"
                             IsOn="{x:Bind ViewModel.StartWithWindows, Mode=TwoWay}" />
                     </Grid>
                     <Grid>
@@ -148,12 +146,9 @@
                         </StackPanel>
                     </Grid>
                 </StackPanel>
-            </Border>            
+            </Border>
             <!--  About Section  -->
-            <Border
-                Padding="16"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="8">
+            <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <StackPanel Spacing="16">
                     <TextBlock
                         FontSize="24"
@@ -175,7 +170,7 @@
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Your development companion" />
+                                Text="DeadWaves Studio" />
                         </StackPanel>
 
                         <StackPanel

@@ -24,6 +24,7 @@ namespace DevNest.Core.Models
         public RedisSettings Redis { get; set; } = new RedisSettings();
         public PostgreSQLSettings PostgreSQL { get; set; } = new PostgreSQLSettings();
         public NginxSettings Nginx { get; set; } = new NginxSettings();
+        public MongoDBSettings MongoDB { get; set; } = new MongoDBSettings();
     }
 
     public partial class ApacheSettings : ObservableObject
@@ -35,13 +36,10 @@ namespace DevNest.Core.Models
         private string _documentRoot = @"C:\DevNest\www";
 
         [ObservableProperty]
-        private int _listenPort = 80;
+        private int _port = 80;
 
         [ObservableProperty]
         private bool _autoStart = false;
-
-        [ObservableProperty]
-        private string _logLevel = "Info";
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }
@@ -60,9 +58,6 @@ namespace DevNest.Core.Models
         [ObservableProperty]
         private bool _autoStart = false;
 
-        [ObservableProperty]
-        private string _logLevel = "Info";
-
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }
 
@@ -70,18 +65,6 @@ namespace DevNest.Core.Models
     {
         [ObservableProperty]
         private string _version = "";
-
-        [ObservableProperty]
-        private string _memoryLimit = "256M";
-
-        [ObservableProperty]
-        private int _maxExecutionTime = 30;
-
-        [ObservableProperty]
-        private bool _autoStart = true;
-
-        [ObservableProperty]
-        private string _logLevel = "Info";
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }
@@ -100,9 +83,6 @@ namespace DevNest.Core.Models
         [ObservableProperty]
         private bool _autoStart = false;
 
-        [ObservableProperty]
-        private string _logLevel = "Info";
-
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }
 
@@ -112,10 +92,10 @@ namespace DevNest.Core.Models
         private string _version = "";
 
         [ObservableProperty]
-        private bool _autoStart = false;
+        private int _port = 6379;
 
         [ObservableProperty]
-        private string _logLevel = "Info";
+        private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }
@@ -126,10 +106,10 @@ namespace DevNest.Core.Models
         private string _version = "";
 
         [ObservableProperty]
-        private bool _autoStart = false;
+        private int _port = 5432;
 
         [ObservableProperty]
-        private string _logLevel = "Info";
+        private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }
@@ -140,10 +120,24 @@ namespace DevNest.Core.Models
         private string _version = "";
 
         [ObservableProperty]
-        private bool _autoStart = false;
+        private int _port = 8080;
 
         [ObservableProperty]
-        private string _logLevel = "Info";
+        private bool _autoStart = false;
+
+        public ObservableCollection<string> AvailableVersions { get; set; } = new();
+    }
+
+    public partial class MongoDBSettings : ObservableObject
+    {
+        [ObservableProperty]
+        private string _version = "";
+
+        [ObservableProperty]
+        private int _port = 27017;
+
+        [ObservableProperty]
+        private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
     }

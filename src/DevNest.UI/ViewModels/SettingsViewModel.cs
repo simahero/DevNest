@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DevNest.Core;
 using DevNest.Core.Models;
-using DevNest.Services;
 using System;
 using System.Threading.Tasks;
 
@@ -36,16 +36,9 @@ namespace DevNest.UI.ViewModels
         {
             _settingsManager = settingsManager;
             Title = "Settings";
-            SaveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync);
-            ResetSettingsCommand = new AsyncRelayCommand(ResetSettingsAsync);
-            BrowseFolderCommand = new RelayCommand(BrowseFolder);
         }
 
-        public IAsyncRelayCommand SaveSettingsCommand { get; }
-        public IAsyncRelayCommand ResetSettingsCommand { get; }
-        public IRelayCommand BrowseFolderCommand { get; }
 
-        // Property change handlers to sync ViewModel with AppSettings model
         partial void OnStartWithWindowsChanged(bool value)
         {
             if (!_isInitializing && _currentSettings != null)
@@ -96,6 +89,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task SaveSettingsAsync()
         {
             if (_currentSettings == null)
@@ -125,6 +119,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task ResetSettingsAsync()
         {
             IsLoading = true;
@@ -153,6 +148,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private void BrowseFolder()
         {
             try

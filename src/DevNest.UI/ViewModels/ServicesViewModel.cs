@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DevNest.Core;
+using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using DevNest.Services;
+using DevNest.UI.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,27 +41,16 @@ namespace DevNest.UI.ViewModels
         public ObservableCollection<string> AvailableServiceTypes { get; } = new();
         public ObservableCollection<string> AvailableVersions { get; } = new();
 
-        public IAsyncRelayCommand LoadServicesCommand { get; }
-        public IAsyncRelayCommand LoadInstalledServicesCommand { get; }
-        public IAsyncRelayCommand LoadAvailableServicesCommand { get; }
-        public IAsyncRelayCommand InstallServiceCommand { get; }
-        public IAsyncRelayCommand<ServiceModel> OpenServiceFolderCommand { get; }
-
-
         public ServicesViewModel(ServiceManager serviceManager, IServicesReader servicesReader, InstallManager installManager)
         {
             _serviceManager = serviceManager;
             _servicesReader = servicesReader;
             _installManager = installManager;
             Title = "Services";
-            LoadServicesCommand = new AsyncRelayCommand(LoadServicesAsync);
-            LoadInstalledServicesCommand = new AsyncRelayCommand(LoadInstalledServicesAsync);
-            LoadAvailableServicesCommand = new AsyncRelayCommand(LoadAvailableServicesAsync);
-            InstallServiceCommand = new AsyncRelayCommand(InstallServiceAsync);
-            OpenServiceFolderCommand = new AsyncRelayCommand<ServiceModel>(OpenServiceFolderAsync);
         }
 
-        public async Task LoadServicesAsync()
+        [RelayCommand]
+        private async Task LoadServicesAsync()
         {
             IsLoading = true;
             try
@@ -80,6 +73,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task LoadAvailableServicesAsync()
         {
             IsLoading = true;
@@ -113,6 +107,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task LoadInstalledServicesAsync()
         {
             IsLoading = true;
@@ -136,6 +131,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task InstallServiceAsync()
         {
             if (SelectedServiceType == null || SelectedVersion == null)
@@ -190,6 +186,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task OpenServiceFolderAsync(ServiceModel? service)
         {
             if (service == null) return;
@@ -204,11 +201,31 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
+
+        [RelayCommand]
+        private void OpenServiceSettings()
+        {
+            var pathManager = ServiceLocator.GetService<PathManager>();
+            var settingsPath = Path.Combine(pathManager.ConfigPath, "services.ini");
+            if (File.Exists(settingsPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = settingsPath,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                // Optionally show a message to the user
+            }
+        }
+
         protected override async Task OnLoadedAsync()
         {
-            await LoadServicesCommand.ExecuteAsync(null);
-            await LoadInstalledServicesCommand.ExecuteAsync(null);
-            await LoadAvailableServicesCommand.ExecuteAsync(null);
+            await LoadServicesAsync();
+            await LoadInstalledServicesAsync();
+            await LoadAvailableServicesAsync();
         }
 
         partial void OnSelectedServiceTypeChanged(string? value)

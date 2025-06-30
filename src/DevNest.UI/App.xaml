@@ -14,6 +14,9 @@
             <!--  Custom Color Overrides  -->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
+
+                    <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#FF6200EA" />
+                    <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#FF6200EA" />
                     <!--  Override colors for Light theme  -->
                     <Color x:Key="SystemAccentColor">#FF0078D4</Color>
                     <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#FFFFFFFF" />
@@ -52,6 +55,96 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
+            <!-- Global FontFamily override for GeistMono -->
+            <FontFamily x:Key="ContentControlThemeFontFamily">ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono</FontFamily>
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+            </Style>
+            
+            <Style TargetType="TextBox">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="FocusVisualPrimaryBrush" Value="Transparent" />
+                <Setter Property="FocusVisualSecondaryBrush" Value="Transparent" />
+            </Style>
+
+            <Style TargetType="NumberBox">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="FocusVisualPrimaryBrush" Value="Transparent" />
+                <Setter Property="FocusVisualSecondaryBrush" Value="Transparent" />
+            </Style>
+
+            <Style TargetType="RichTextBlock">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+            </Style>
+            
+            <Style TargetType="PasswordBox">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+
+            <Style TargetType="ToggleButton">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+            
+            <Style TargetType="ComboBox">
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+            
+            <Style TargetType="Border">
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+
+            <Style TargetType="Expander">
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+
+            <Style TargetType="ListViewItem">
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+
+            <Style TargetType="NavigationViewItem">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/Geist-VariableFont_wght.ttf#Geist" />
+                <Setter Property="CornerRadius" Value="0" />
+            </Style>
+
+            <Style x:Key="TitleTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+
+            <Style x:Key="CaptionTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/GeistMono-VariableFont_wght.ttf#Geist Mono" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <Style x:Key="BodyStrongTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="ms-appx:///Assets/Fonts/Geist-VariableFont_wght.ttf#Geist" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="Margin" Value="0 0 0 4" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+
+            <CornerRadius x:Key="ToggleSwitchCornerRadius">0</CornerRadius>
+
+            <!-- Change colors if you want -->
+            <SolidColorBrush x:Key="ToggleSwitchTrackFillOff" Color="DarkGray"/>
+            <SolidColorBrush x:Key="ToggleSwitchTrackFillOn" Color="DarkGreen"/>
+            <SolidColorBrush x:Key="ToggleSwitchKnobFill" Color="White"/>
+
             <!--  Other app resources here  -->
             <SvgImageSource x:Key="PreloadedIcon" UriSource="ms-appx:///Assets/Icons/icon1.svg" />
             <SvgImageSource x:Key="ApacheLogo" UriSource="ms-appx:///Assets/Logos/apache.svg" />
@@ -62,6 +155,7 @@
             <SvgImageSource x:Key="PhpMyAdminLogo" UriSource="ms-appx:///Assets/Logos/phpmyadmin.svg" />
             <SvgImageSource x:Key="PostgreSqlLogo" UriSource="ms-appx:///Assets/Logos/postgresql.svg" />
             <SvgImageSource x:Key="RedisLogo" UriSource="ms-appx:///Assets/Logos/redis.svg" />
+            <SvgImageSource x:Key="MongoLogo" UriSource="ms-appx:///Assets/Logos/mongodb.svg" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

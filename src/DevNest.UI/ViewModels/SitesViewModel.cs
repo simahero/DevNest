@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DevNest.Core;
 using DevNest.Core.Models;
-using DevNest.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -34,26 +34,9 @@ namespace DevNest.UI.ViewModels
         {
             _siteManager = siteManager;
             Title = "Sites";
-            LoadSitesCommand = new AsyncRelayCommand(LoadSitesAsync);
-            LoadSiteDefinitionsCommand = new AsyncRelayCommand(LoadSiteDefinitionsAsync);
-            CreateSiteCommand = new AsyncRelayCommand(CreateSiteAsync);
-            OpenSiteFolderCommand = new AsyncRelayCommand<SiteModel>(OpenSiteFolderAsync);
-            OpenInVSCodeCommand = new AsyncRelayCommand<SiteModel>(OpenInVSCodeAsync);
-            OpenInTerminalCommand = new AsyncRelayCommand<SiteModel>(OpenInTerminalAsync);
-            OpenInBrowserCommand = new AsyncRelayCommand<SiteModel>(OpenInBrowserAsync);
-            OpenSiteSettingsCommand = new AsyncRelayCommand<SiteModel>(OpenSiteSettingsAsync);
-            RefreshCommand = new AsyncRelayCommand(RefreshSitesAsync);
         }
 
-        public IAsyncRelayCommand LoadSitesCommand { get; }
-        public IAsyncRelayCommand LoadSiteDefinitionsCommand { get; }
-        public IAsyncRelayCommand CreateSiteCommand { get; }
-        public IAsyncRelayCommand<SiteModel> OpenSiteFolderCommand { get; }
-        public IAsyncRelayCommand<SiteModel> OpenInVSCodeCommand { get; }
-        public IAsyncRelayCommand<SiteModel> OpenInTerminalCommand { get; }
-        public IAsyncRelayCommand<SiteModel> OpenInBrowserCommand { get; }
-        public IAsyncRelayCommand<SiteModel> OpenSiteSettingsCommand { get; }
-        public IAsyncRelayCommand RefreshCommand { get; }
+        [RelayCommand]
         private async Task LoadSitesAsync()
         {
             IsLoading = true;
@@ -77,6 +60,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task LoadSiteDefinitionsAsync()
         {
             try
@@ -95,6 +79,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task CreateSiteAsync()
         {
             if (SelectedSiteDefinition == null || string.IsNullOrWhiteSpace(SelectedSiteName))
@@ -136,6 +121,8 @@ namespace DevNest.UI.ViewModels
                 IsInstalling = false;
             }
         }
+
+        [RelayCommand]
         private async Task OpenSiteFolderAsync(SiteModel? site)
         {
             if (site == null) return;
@@ -150,6 +137,8 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
+
+        [RelayCommand]
         private async Task OpenInVSCodeAsync(SiteModel? site)
         {
             if (site == null) return;
@@ -164,6 +153,8 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
+
+        [RelayCommand]
         private async Task OpenInTerminalAsync(SiteModel? site)
         {
             if (site == null) return;
@@ -178,6 +169,8 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
+
+        [RelayCommand]
         private async Task OpenInBrowserAsync(SiteModel? site)
         {
             if (site == null) return;
@@ -192,6 +185,8 @@ namespace DevNest.UI.ViewModels
                 // TODO: Show error to user
             }
         }
+
+        [RelayCommand]
         private Task OpenSiteSettingsAsync(SiteModel? site)
         {
             if (site == null) return Task.CompletedTask;
@@ -209,6 +204,8 @@ namespace DevNest.UI.ViewModels
                 return Task.CompletedTask;
             }
         }
+
+        [RelayCommand]
         private async Task RefreshSitesAsync()
         {
             await LoadSitesAsync();
@@ -216,8 +213,8 @@ namespace DevNest.UI.ViewModels
 
         protected override async Task OnLoadedAsync()
         {
-            await LoadSitesCommand.ExecuteAsync(null);
-            await LoadSiteDefinitionsCommand.ExecuteAsync(null);
+            await LoadSitesAsync();
+            await LoadSiteDefinitionsAsync();
         }
     }
 }

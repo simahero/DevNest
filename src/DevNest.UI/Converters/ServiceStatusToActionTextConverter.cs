@@ -12,11 +12,11 @@ namespace DevNest.UI.Converters
             {
                 return status switch
                 {
-                    ServiceStatus.Running => "Stop",
+                    ServiceStatus.Running => "Running",
                     ServiceStatus.Starting => "Starting...",
                     ServiceStatus.Stopping => "Stopping...",
-                    ServiceStatus.Stopped => "Start",
-                    _ => "Start"
+                    ServiceStatus.Stopped => "Stopped",
+                    _ => "Stopped"
                 };
             }
 

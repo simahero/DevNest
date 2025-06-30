@@ -1,12 +1,9 @@
 using DevNest.Core.Interfaces;
-using DevNest.Services;
 using DevNest.UI.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace DevNest.UI;
 
@@ -62,7 +59,7 @@ public partial class App : Application
 
         var keys = new[]
         {
-            "ApacheLogo", "MySqlLogo", "NginxLogo", "NodeLogo", "PhpLogo", "PhpMyAdminLogo", "PostgreSqlLogo", "RedisLogo"
+            "ApacheLogo", "MySqlLogo", "NginxLogo", "NodeLogo", "PhpLogo", "PhpMyAdminLogo", "PostgreSqlLogo", "RedisLogo", "MongoLogo"
         };
         foreach (var key in keys)
         {

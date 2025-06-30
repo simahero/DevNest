@@ -1,8 +1,7 @@
-using DevNest.Services;
+using DevNest.Core;
 using DevNest.UI.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Threading.Tasks;
 
 namespace DevNest.UI;
 
@@ -10,6 +9,8 @@ public sealed partial class MainWindow : Window
 {
     private readonly INavigationService _navigationService;
     private readonly StartupManager _startupManager;
+
+    private User32Dll _user32Dll;
 
     public MainWindow()
     {
@@ -19,13 +20,22 @@ public sealed partial class MainWindow : Window
         _navigationService = ServiceLocator.GetService<INavigationService>();
         _navigationService.SetFrame(ContentFrame);
 
-        // Configure custom titlebar
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
-        // Set the default page
         MainNavigationView.SelectedItem = MainNavigationView.MenuItems[0];
         _navigationService.NavigateTo<Views.DashboardPage>(NavigationTransitions.Suppress);
+
+        _user32Dll = new User32Dll();
+        _user32Dll.InitializeTrayIcon(this);
+
+        this.Closed += MainWindow_Closed;
+
+    }
+
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    {
+        _user32Dll.RemoveTrayIcon();
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
@@ -62,4 +72,5 @@ public sealed partial class MainWindow : Window
             }
         }
     }
+
 }

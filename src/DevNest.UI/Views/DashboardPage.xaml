@@ -25,12 +25,13 @@
         </core:EventTriggerBehavior>
     </i:Interaction.Behaviors>
 
-    <Grid Padding="32" Background="#111827">
+    <Grid Padding="32" Background="#0b0f17">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!--  Page Title  -->
@@ -38,7 +39,6 @@
             <TextBlock
                 Margin="0,0,0,8"
                 FontSize="24"
-                FontWeight="SemiBold"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Dashboard" />
         </StackPanel>
@@ -59,9 +59,7 @@
 
                 <Button
                     Grid.Column="1"
-                    Command="{x:Bind ViewModel.RefreshCommand}"
-                    Content="Start All"
-                    Style="{StaticResource DefaultButtonStyle}" />
+                    Content="Start All" />
             </Grid>
         </StackPanel>
 
@@ -90,8 +88,7 @@
                             <Border
                                 Margin="0,0,0,12"
                                 Padding="24,12"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                CornerRadius="12">
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -112,17 +109,15 @@
 
                                     <!--  Service Info  -->
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock
-                                            Style="{StaticResource BodyStrongTextBlockStyle}"
-                                            Text="{x:Bind DisplayName}" />
+                                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind DisplayName}" />
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock
-                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                 Text="{x:Bind Name}" />
                                             <TextBlock
-                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                 Visibility="{x:Bind IsRunning, Mode=OneWay}">
                                                 <Run Text=" • PID: " />
                                                 <Run Text="{x:Bind ProcessId, Mode=OneWay}" />
@@ -130,16 +125,7 @@
                                         </StackPanel>
                                     </StackPanel>
 
-                                    <!--  Status Text  -->
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        Margin="16,0"
-                                        VerticalAlignment="Center"
-                                        FontSize="14"
-                                        FontWeight="Medium"
-                                        Foreground="{x:Bind Status, Mode=OneWay, Converter={StaticResource ServiceStatusToColorConverter}}"
-                                        Text="{x:Bind Status}" />
-
+                                    
                                     <!--  Toggle Button  -->
                                     <ToggleButton
                                         Grid.Column="3"
@@ -149,7 +135,7 @@
                                         Content="{x:Bind Status, Mode=OneWay, Converter={StaticResource ServiceStatusToActionTextConverter}}"
                                         IsChecked="{x:Bind IsRunning, Mode=OneWay}"
                                         IsEnabled="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
-                                        Style="{StaticResource DefaultToggleButtonStyle}" />
+                                             />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -168,5 +154,26 @@
                     Visibility="{x:Bind ViewModel.InstalledServices.Count, Mode=OneWay, Converter={StaticResource CountToVisibilityConverter}}" />
             </Grid>
         </ScrollViewer>
+
+        <Border Grid.Row="4" Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+            <StackPanel Spacing="16">
+                <TextBlock
+            FontSize="20"
+            FontWeight="SemiBold"
+            Text="Quick Actions" />
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button
+                        Command="{x:Bind ViewModel.OpenLogCommand}"
+                        Content="Open Debug Log" />
+                    <Button Content="Export Environment" />
+                    <Button Content="Reset All to Defaults" />
+                    <Button Content="Check for Updates" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!--  Add button at the bottom to open logs  -->
+        
     </Grid>
 </Page>

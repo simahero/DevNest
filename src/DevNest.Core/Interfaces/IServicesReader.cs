@@ -1,6 +1,4 @@
 using DevNest.Core.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace DevNest.Core.Interfaces
 {

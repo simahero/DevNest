@@ -17,7 +17,7 @@
         </core:EventTriggerBehavior>
     </i:Interaction.Behaviors>
 
-    <Grid Padding="32" Background="#111827">
+    <Grid Padding="32" Background="#0b0f17">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -62,8 +62,7 @@
                 x:Name="AddSiteButton"
                 Grid.Column="2"
                 Command="{x:Bind ViewModel.CreateSiteCommand}"
-                Content="Add Site"
-                Style="{StaticResource AccentButtonStyle}" />
+                Content="Add Site" />
         </Grid>
 
         <StackPanel
@@ -103,9 +102,8 @@
                     <DataTemplate x:DataType="models:SiteModel">
                         <Grid
                             Margin="0,8"
-                            Padding="24, 12"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            CornerRadius="8">
+                            Padding="24,12"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />

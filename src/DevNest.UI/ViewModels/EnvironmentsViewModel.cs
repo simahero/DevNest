@@ -1,6 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using DevNest.Core;
+using DevNest.Core.Files;
 using DevNest.Core.Models;
-using DevNest.Services;
+using DevNest.UI.Services;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
@@ -30,10 +35,32 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private NginxSettings? _nginx;
 
+        [ObservableProperty]
+        private MongoDBSettings? _mongoDB;
+
         public EnvironmentsViewModel(SettingsManager settingsManager)
         {
             _settingsManager = settingsManager;
             Title = "Environments";
+        }
+
+        [RelayCommand]
+        private void OpenSettings()
+        {
+            var pathManager = ServiceLocator.GetService<PathManager>();
+            var settingsPath = Path.Combine(pathManager.ConfigPath, "settings.ini");
+            if (File.Exists(settingsPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = settingsPath,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                // Optionally show a message to the user
+            }
         }
 
         public override async Task LoadAsync()
@@ -48,6 +75,7 @@ namespace DevNest.UI.ViewModels
             Redis = settings.Redis;
             PostgreSQL = settings.PostgreSQL;
             Nginx = settings.Nginx;
+            MongoDB = settings.MongoDB;
         }
 
         protected override async Task OnUnloadedAsync()

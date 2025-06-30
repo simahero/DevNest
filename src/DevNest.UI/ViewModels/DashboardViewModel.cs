@@ -1,8 +1,12 @@
 using CommunityToolkit.Mvvm.Input;
+using DevNest.Core;
+using DevNest.Core.Files;
 using DevNest.Core.Models;
-using DevNest.Services;
+using DevNest.UI.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,32 +19,33 @@ namespace DevNest.UI.ViewModels
 
         public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
 
-        public IAsyncRelayCommand LoadDashboardDataCommand { get; }
-        public IAsyncRelayCommand RefreshCommand { get; }
-        public IAsyncRelayCommand<ServiceModel> ToggleServiceCommand { get; }
-
         public DashboardViewModel(ServiceManager serviceManager, SiteManager siteManager)
         {
             _serviceManager = serviceManager;
             _siteManager = siteManager;
             Title = "Dashboard";
-            LoadDashboardDataCommand = new AsyncRelayCommand(LoadDashboardDataAsync);
-            RefreshCommand = new AsyncRelayCommand(RefreshDashboardAsync);
-            ToggleServiceCommand = new AsyncRelayCommand<ServiceModel>(ToggleServiceAsync);
         }
 
-        public async Task LoadDashboardDataAsync()
+        [RelayCommand]
+        private async Task LoadDashboardDataAsync()
+        {
+            if (InstalledServices.Count == 0)
+            {
+                await RefreshDashboardAsync();
+            }
+        }
+
+        [RelayCommand]
+        private async Task RefreshDashboardAsync()
         {
             IsLoading = true;
             try
             {
                 var servicesTask = _serviceManager.GetServicesAsync();
-                var sitesTask = _siteManager.GetInstalledSitesAsync();
 
-                await Task.WhenAll(servicesTask, sitesTask);
+                await Task.WhenAll(servicesTask);
 
                 var services = servicesTask.Result.ToList();
-                var sites = sitesTask.Result.ToList();
 
                 InstalledServices.Clear();
 
@@ -52,7 +57,6 @@ namespace DevNest.UI.ViewModels
                 {
                     InstalledServices.Add(service);
                 }
-
             }
             catch (Exception ex)
             {
@@ -65,11 +69,7 @@ namespace DevNest.UI.ViewModels
             }
         }
 
-        private async Task RefreshDashboardAsync()
-        {
-            await LoadDashboardDataAsync();
-        }
-
+        [RelayCommand]
         private async Task ToggleServiceAsync(ServiceModel? service)
         {
             if (service == null) return;
@@ -96,9 +96,28 @@ namespace DevNest.UI.ViewModels
             }
         }
 
+        [RelayCommand]
+        private void OpenLog()
+        {
+            var pathManager = ServiceLocator.GetService<PathManager>();
+            var logPath = Path.Combine(pathManager.LogsPath, "debug.log");
+            if (File.Exists(logPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = logPath,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                // Optionally show a message to the user
+            }
+        }
+
         protected override async Task OnLoadedAsync()
         {
-            await LoadDashboardDataCommand.ExecuteAsync(null);
+            await LoadDashboardDataAsync();
         }
     }
 }

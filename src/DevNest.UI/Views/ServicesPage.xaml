@@ -24,13 +24,14 @@
         </core:EventTriggerBehavior>
     </i:Interaction.Behaviors>
 
-    <Grid Padding="32" Background="#111827">
+    <Grid Padding="32" Background="#0b0f17">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
@@ -39,7 +40,6 @@
                 FontSize="24"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Services" />
-
         </StackPanel>
 
         <Grid Grid.Row="1" Margin="0,0,0,24">
@@ -71,8 +71,7 @@
                 x:Name="InstallButton"
                 Grid.Column="2"
                 Command="{x:Bind ViewModel.InstallServiceCommand}"
-                Content="Install"
-                Style="{StaticResource AccentButtonStyle}" />
+                Content="Install"/>
         </Grid>
 
         <StackPanel
@@ -123,8 +122,7 @@
                         <Grid
                             Margin="0,8"
                             Padding="24,12"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            CornerRadius="8">
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -141,8 +139,7 @@
                                 Grid.Column="1"
                                 Padding="8"
                                 Command="{Binding DataContext.OpenServiceFolderCommand, ElementName=ServicesList}"
-                                CommandParameter="{Binding}"
-                                Style="{StaticResource DefaultButtonStyle}">
+                                CommandParameter="{Binding}">
                                 <ImageIcon
                                     Width="16"
                                     Height="16"
@@ -153,5 +150,19 @@
                 </ListView.ItemTemplate>
             </ListView>
         </ScrollViewer>
+
+        <Border Grid.Row="5" Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+            <StackPanel Spacing="16">
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Quick Actions" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button
+                        Command="{x:Bind ViewModel.OpenServiceSettingsCommand}"
+                        Content="Open service configuration" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
     </Grid>
 </Page>
