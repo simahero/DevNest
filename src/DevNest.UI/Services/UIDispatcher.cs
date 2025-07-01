@@ -8,9 +8,9 @@ namespace DevNest.UI.Services
     {
         private readonly DispatcherQueue _dispatcherQueue;
 
-        public UIDispatcher(DispatcherQueue dispatcherQueue)
+        public UIDispatcher()
         {
-            _dispatcherQueue = dispatcherQueue;
+            _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         }
 
         public bool TryEnqueue(Action callback)

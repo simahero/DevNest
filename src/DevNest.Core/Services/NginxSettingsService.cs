@@ -1,13 +1,15 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
 
-namespace DevNest.Services.Settings
+namespace DevNest.Core.Services
 {
     public class NginxSettingsService : IServiceSettingsProvider<NginxSettings>
     {
-        public string ServiceName => "Nginx";
+        public ServiceType Type => ServiceType.Nginx;
+        public string ServiceName => Type.ToString();
 
         private readonly FileSystemManager _fileSystemManager;
         private readonly PathManager _pathManager;
@@ -60,5 +62,21 @@ namespace DevNest.Services.Settings
             // });
         }
 
+        /// <summary>
+        /// Returns the command and working directory for Nginx, or (string.Empty, string.Empty) if not found.
+        /// </summary>
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, FileSystemManager fileSystemManager)
+        {
+            var selectedVersion = settings.Nginx.Version;
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var nginxPath = Path.Combine(service.Path, "nginx.exe");
+                if (await fileSystemManager.FileExistsAsync(nginxPath))
+                {
+                    return ($"\"{nginxPath}\"", Path.GetDirectoryName(nginxPath)!);
+                }
+            }
+            return (string.Empty, string.Empty);
+        }
     }
 }

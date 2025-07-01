@@ -1,12 +1,14 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
 
-namespace DevNest.Services.Settings
+namespace DevNest.Core.Services
 {
     public class NodeSettingsService : IServiceSettingsProvider<NodeSettings>
     {
-        public string ServiceName => "Node";
+        public ServiceType Type => ServiceType.Node;
+        public string ServiceName => Type.ToString();
 
         public NodeSettings GetDefaultConfiguration()
         {
@@ -52,6 +54,23 @@ namespace DevNest.Services.Settings
             section.AddKey("DefaultPort", serviceSettings.Node.DefaultPort.ToString());
             section.AddKey("PackageManager", serviceSettings.Node.PackageManager ?? "npm");
             section.AddKey("AutoStart", serviceSettings.Node.AutoStart.ToString().ToLower());
+        }
+
+        /// <summary>
+        /// Returns the command and working directory for Node, or (string.Empty, string.Empty) if not found.
+        /// </summary>
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        {
+            var selectedVersion = settings.Node.Version;
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var nodePath = Path.Combine(service.Path, "node.exe");
+                if (await fileSystemManager.FileExistsAsync(nodePath))
+                {
+                    return ($"\"{nodePath}\"", Path.GetDirectoryName(nodePath)!);
+                }
+            }
+            return (string.Empty, string.Empty);
         }
     }
 }

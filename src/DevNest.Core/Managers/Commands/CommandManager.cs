@@ -61,40 +61,6 @@ namespace DevNest.Core.Commands
             }
         }
 
-        public async Task<string> ExecuteCommandWithOutputAsync(string command, string workingDirectory, CancellationToken cancellationToken = default)
-        {
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c cd /d \"{workingDirectory}\" && {command}",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = workingDirectory
-            };
-
-            using var process = Process.Start(processInfo);
-            if (process == null)
-            {
-                _logManager.Log($"Failed to start process for command: {command}");
-                throw new InvalidOperationException("Failed to start process");
-            }
-
-            var output = await process.StandardOutput.ReadToEndAsync();
-            var error = await process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync(cancellationToken);
-
-            if (process.ExitCode != 0)
-            {
-                _logManager.Log($"Command failed with exit code {process.ExitCode}. Error: {error}");
-                throw new Exception($"Command failed with exit code {process.ExitCode}. Error: {error}");
-            }
-
-            return output;
-        }
-
         public async Task<Process?> StartProcessAsync(string command, string workingDirectory, CancellationToken cancellationToken = default)
         {
             try
@@ -140,19 +106,22 @@ namespace DevNest.Core.Commands
                     FileName = executable,
                     Arguments = arguments,
                     UseShellExecute = false,
-                    CreateNoWindow = false,
+                    CreateNoWindow = true,
                     WorkingDirectory = workingDirectory,
-                    RedirectStandardOutput = true, // Enable output redirection
-                    RedirectStandardError = true   // Enable error redirection
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
                 };
+
+                string existingPath = processInfo.Environment["PATH"] ?? Environment.GetEnvironmentVariable("PATH");
+                processInfo.Environment["PATH"] = workingDirectory;
 
                 var process = Process.Start(processInfo);
 
-                // Log both stdout and stderr for debugging
                 var errorTask = ReadStreamAsync(process.StandardError, line =>
                 {
                     _logManager.Log($"[stderr] {line}");
                 }, cancellationToken);
+
                 var outputTask = ReadStreamAsync(process.StandardOutput, line =>
                 {
                     _logManager.Log($"[stdout] {line}");

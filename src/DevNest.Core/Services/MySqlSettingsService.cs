@@ -1,19 +1,21 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
 using System.Diagnostics;
 
-namespace DevNest.Services.Settings
+namespace DevNest.Core.Services
 {
-    public class MySqlSettingsService : IServiceSettingsProvider<MySQLSettings>
+    public class MySQLSettingsService : IServiceSettingsProvider<MySQLSettings>
     {
-        public string ServiceName => "MySQL";
+        public ServiceType Type => ServiceType.MySQL;
+        public string ServiceName => Type.ToString();
 
         private readonly FileSystemManager _fileSystemManager;
         private readonly PathManager _pathManager;
 
-        public MySqlSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
+        public MySQLSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
         {
             _fileSystemManager = fileSystemManager;
             _pathManager = pathManager;
@@ -87,10 +89,12 @@ namespace DevNest.Services.Settings
                 var templateContent = await _fileSystemManager.ReadAllTextAsync(TemplateFilePath);
 
                 var dataDir = Path.Combine(_pathManager.DataPath, settings.MySQL.Version);
+                var password = settings.MySQL.RootPassword;
                 var port = settings.MySQL.Port.ToString();
 
                 var configContent = templateContent
                     .Replace("<<DATADIR>>", dataDir.Replace("\\", "/"))
+                    .Replace("<<PASS>>", password)
                     .Replace("<<PORT>>", port);
 
                 var configDir = Path.Combine(_pathManager.BinPath, "MySQL", settings.MySQL.Version);
@@ -115,7 +119,7 @@ namespace DevNest.Services.Settings
                         StartInfo = new ProcessStartInfo
                         {
                             FileName = mysqldPath,
-                            Arguments = "--initialize --console",
+                            Arguments = "--initialize-insecure --console",
                             WorkingDirectory = binPath,
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
@@ -137,6 +141,24 @@ namespace DevNest.Services.Settings
             {
                 System.Diagnostics.Debug.WriteLine($"Error generating MySQL configuration: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Returns the command and working directory for MySQL, or (string.Empty, string.Empty) if not found.
+        /// </summary>
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, FileSystemManager fileSystemManager)
+        {
+            var selectedVersion = settings.MySQL.Version;
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var binPath = Path.Combine(service.Path, "bin");
+                var mysqldPath = Path.Combine(binPath, "mysqld.exe");
+                if (await fileSystemManager.FileExistsAsync(mysqldPath))
+                {
+                    return ($"\"{mysqldPath}\"", binPath);
+                }
+            }
+            return (string.Empty, string.Empty);
         }
     }
 }

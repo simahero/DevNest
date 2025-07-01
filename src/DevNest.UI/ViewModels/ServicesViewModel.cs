@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DevNest.Core;
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
-using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using DevNest.UI.Services;
 using System;
@@ -17,8 +17,9 @@ namespace DevNest.UI.ViewModels
     public partial class ServicesViewModel : BaseViewModel
     {
         private readonly ServiceManager _serviceManager;
+        private readonly PathManager _pathManager;
+        private readonly FileSystemManager _fileSystemManager;
         private readonly InstallManager _installManager;
-        private readonly IServicesReader _servicesReader;
 
         [ObservableProperty]
         private string _installationStatus = string.Empty;
@@ -30,7 +31,7 @@ namespace DevNest.UI.ViewModels
         private bool _showInstallationPanel;
 
         [ObservableProperty]
-        private string? _selectedServiceType;
+        private ServiceType? _selectedServiceType;
 
         [ObservableProperty]
         private string? _selectedVersion;
@@ -38,13 +39,14 @@ namespace DevNest.UI.ViewModels
         public ObservableCollection<ServiceModel> Services { get; } = new();
         public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
         public ObservableCollection<ServiceDefinition> AvailableServices { get; } = new();
-        public ObservableCollection<string> AvailableServiceTypes { get; } = new();
+        public ObservableCollection<ServiceType> AvailableServiceTypes { get; } = new();
         public ObservableCollection<string> AvailableVersions { get; } = new();
 
-        public ServicesViewModel(ServiceManager serviceManager, IServicesReader servicesReader, InstallManager installManager)
+        public ServicesViewModel(ServiceManager serviceManager, PathManager pathManager, FileSystemManager fileSystemManager, InstallManager installManager)
         {
             _serviceManager = serviceManager;
-            _servicesReader = servicesReader;
+            _pathManager = pathManager;
+            _fileSystemManager = fileSystemManager;
             _installManager = installManager;
             Title = "Services";
         }
@@ -62,10 +64,8 @@ namespace DevNest.UI.ViewModels
                     Services.Add(service);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading services: {ex.Message}");
-                // TODO: Show error to user
             }
             finally
             {
@@ -79,7 +79,9 @@ namespace DevNest.UI.ViewModels
             IsLoading = true;
             try
             {
-                var services = await _servicesReader.LoadAvailableServicesAsync();
+
+                var services = await _serviceManager.GetAvailableServices();
+
                 AvailableServices.Clear();
                 foreach (var service in services)
                 {
@@ -96,11 +98,7 @@ namespace DevNest.UI.ViewModels
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading available services: {ex.Message}");
-                // TODO: Show error to user
-            }
+            catch (Exception) { }
             finally
             {
                 IsLoading = false;
@@ -113,18 +111,14 @@ namespace DevNest.UI.ViewModels
             IsLoading = true;
             try
             {
-                var services = await _servicesReader.LoadInstalledServicesAsync();
+                var services = await _serviceManager.GetServicesAsync();
                 InstalledServices.Clear();
                 foreach (var service in services)
                 {
                     InstalledServices.Add(service);
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading installed services: {ex.Message}");
-                // TODO: Show error to user
-            }
+            catch (Exception) { }
             finally
             {
                 IsLoading = false;
@@ -195,11 +189,7 @@ namespace DevNest.UI.ViewModels
             {
                 await Windows.System.Launcher.LaunchFolderPathAsync(service.Path);
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error opening service folder: {ex.Message}");
-                // TODO: Show error to user
-            }
+            catch (Exception) { }
         }
 
         [RelayCommand]
@@ -215,10 +205,6 @@ namespace DevNest.UI.ViewModels
                     UseShellExecute = true
                 });
             }
-            else
-            {
-                // Optionally show a message to the user
-            }
         }
 
         protected override async Task OnLoadedAsync()
@@ -228,7 +214,7 @@ namespace DevNest.UI.ViewModels
             await LoadAvailableServicesAsync();
         }
 
-        partial void OnSelectedServiceTypeChanged(string? value)
+        partial void OnSelectedServiceTypeChanged(ServiceType? value)
         {
             AvailableVersions.Clear();
             foreach (var service in AvailableServices)

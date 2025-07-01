@@ -1,12 +1,14 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
 
-namespace DevNest.Services.Settings
+namespace DevNest.Core.Services
 {
     public class RedisSettingsService : IServiceSettingsProvider<RedisSettings>
     {
-        public string ServiceName => "Redis";
+        public ServiceType Type => ServiceType.Redis;
+        public string ServiceName => Type.ToString();
 
         public RedisSettings GetDefaultConfiguration()
         {
@@ -43,6 +45,23 @@ namespace DevNest.Services.Settings
 
             section.AddKey("Version", serviceSettings.Redis.Version ?? "");
             section.AddKey("AutoStart", serviceSettings.Redis.AutoStart.ToString().ToLower());
+        }
+
+        /// <summary>
+        /// Returns the command and working directory for Redis, or (string.Empty, string.Empty) if not found.
+        /// </summary>
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        {
+            var selectedVersion = settings.Redis.Version;
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var redisPath = Path.Combine(service.Path, "redis-server.exe");
+                if (await fileSystemManager.FileExistsAsync(redisPath))
+                {
+                    return ($"\"{redisPath}\"", Path.GetDirectoryName(redisPath)!);
+                }
+            }
+            return (string.Empty, string.Empty);
         }
     }
 }

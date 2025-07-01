@@ -1,13 +1,15 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
 
-namespace DevNest.Services.Settings
+namespace DevNest.Core.Services
 {
     public class MongoDBSettingsService : IServiceSettingsProvider<MongoDBSettings>
     {
-        public string ServiceName => "MongoDB";
+        public ServiceType Type => ServiceType.MongoDB;
+        public string ServiceName => Type.ToString();
 
         private readonly FileSystemManager _fileSystemManager;
         private readonly PathManager _pathManager;
@@ -105,5 +107,23 @@ namespace DevNest.Services.Settings
             }
         }
 
+        /// <summary>
+        /// Returns the command and working directory for MongoDB, or (string.Empty, string.Empty) if not found.
+        /// </summary>
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        {
+            var selectedVersion = settings.MongoDB.Version;
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var mongoDBPath = Path.Combine(service.Path, "bin", "mongod.exe");
+                var configPath = Path.Combine(service.Path, "bin", "mongod.cfg");
+
+                if (await fileSystemManager.FileExistsAsync(mongoDBPath))
+                {
+                    return ($"\"{mongoDBPath}\" --config \"{configPath}\"", Path.GetDirectoryName(mongoDBPath)!);
+                }
+            }
+            return (string.Empty, string.Empty);
+        }
     }
 }

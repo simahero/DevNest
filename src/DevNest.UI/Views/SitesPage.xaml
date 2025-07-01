@@ -148,6 +148,19 @@
                                         Height="16"
                                         Source="ms-appx:///Assets/Icons/terminal.svg" />
                                 </Button>
+
+                                <ToggleButton
+                                    Padding="8"
+                                    Command="{Binding DataContext.ShareWithTunnelCommand, ElementName=SitesList}"
+                                    CommandParameter="{Binding}"
+                                    IsChecked="{x:Bind IsSharing, Mode=OneWay}">
+                                    <ImageIcon
+                                        x:Name="Icon"
+                                        Width="16"
+                                        Height="16"
+                                        Source="ms-appx:///Assets/Icons/share.svg" />
+                                </ToggleButton>
+
                                 <Button
                                     Padding="8"
                                     Command="{Binding DataContext.OpenInBrowserCommand, ElementName=SitesList}"
@@ -157,10 +170,6 @@
                                         Height="16"
                                         Source="ms-appx:///Assets/Icons/link.svg" />
                                 </Button>
-                                <Button
-                                    Command="{Binding DataContext.OpenSiteSettingsCommand, ElementName=SitesList}"
-                                    CommandParameter="{Binding}"
-                                    Content="Settings" />
                             </StackPanel>
                         </Grid>
                     </DataTemplate>

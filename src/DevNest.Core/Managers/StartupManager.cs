@@ -1,4 +1,7 @@
 using DevNest.Core.Files;
+using Microsoft.Win32;
+using System;
+using System.IO;
 
 namespace DevNest.Core
 {
@@ -7,6 +10,9 @@ namespace DevNest.Core
         private readonly FileSystemManager _fileSystemManager;
         private readonly PathManager _pathManager;
         private readonly LogManager _logManager;
+
+        private const string RunKey = @"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+        private const string AppName = "DevNest";
 
         public StartupManager(FileSystemManager fileSystemManager, PathManager pathManager, LogManager logManager)
         {
@@ -90,8 +96,32 @@ namespace DevNest.Core
                     await _fileSystemManager.WriteAllTextAsync(configFilePath, configContent);
                 }
             }
+        }
 
+        public static void EnableStartup()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey, true))
+            {
+                string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                key.SetValue(AppName, '"' + exePath + '"');
+            }
+        }
 
+        public static void DisableStartup()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey, true))
+            {
+                key.DeleteValue(AppName, false);
+            }
+        }
+
+        public static bool IsStartupEnabled()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey, false))
+            {
+                var value = key.GetValue(AppName);
+                return value != null;
+            }
         }
 
     }

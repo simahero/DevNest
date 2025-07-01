@@ -1,23 +1,24 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
 
-namespace DevNest.Services.Settings
+namespace DevNest.Core.Services
 {
-    public class PhpSettingsService : IServiceSettingsProvider<PHPSettings>
+    public class PHPSettingsService : IServiceSettingsProvider<PHPSettings>
     {
+        public ServiceType Type => ServiceType.PHP;
+        public string ServiceName => Type.ToString();
 
         private readonly FileSystemManager _fileSystemManager;
         private readonly PathManager _pathManager;
 
-        public PhpSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
+        public PHPSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
         {
             _fileSystemManager = fileSystemManager;
             _pathManager = pathManager;
         }
-
-        public string ServiceName => "PHP";
 
         public PHPSettings GetDefaultConfiguration()
         {
@@ -62,7 +63,19 @@ namespace DevNest.Services.Settings
             if (!await _fileSystemManager.FileExistsAsync(iniPath))
             {
                 await _fileSystemManager.CopyFileAsync(iniDevPath, iniPath);
+
+                var autoloadPath = Path.Combine(_pathManager.EtcPath, "php", "DevNestDumper", "vendor", "autoload.php");
+                var prepend = $"auto_prepend_file = {autoloadPath}";
+                var env = $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912";
+
+                await _fileSystemManager.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
+                await _fileSystemManager.AppendAllTextAsync(iniPath, $"{prepend}\n");
+                await _fileSystemManager.AppendAllTextAsync(iniPath, $"{env}\n");
+                await _fileSystemManager.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
+                await _fileSystemManager.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
+
             }
+
         }
     }
 }

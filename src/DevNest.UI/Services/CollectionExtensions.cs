@@ -1,3 +1,4 @@
+using DevNest.Core.Interfaces;
 using DevNest.UI.ViewModels;
 using DevNest.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,9 @@ namespace DevNest.UI.Services
     {
         public static IServiceCollection AddUIServices(this IServiceCollection services)
         {
+            services.AddSingleton<INavigationService, NavigationService>();
+            services.AddSingleton<IUIDispatcher, UIDispatcher>();
+
             // ViewModels
             services.AddSingleton<DashboardViewModel>();
             services.AddSingleton<ServicesViewModel>();

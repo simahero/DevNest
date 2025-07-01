@@ -1,6 +1,6 @@
 using DevNest.Core.Files;
 using DevNest.Core.Models;
-using DevNest.Services.Settings;
+using DevNest.Core.Services;
 using IniParser.Model;
 using IniParser.Parser;
 using System.ComponentModel;
@@ -182,194 +182,69 @@ namespace DevNest.Core
         {
             await Task.Run(() =>
             {
-                try
+                foreach (var serviceType in Enum.GetValues(typeof(Enums.ServiceType)).Cast<Enums.ServiceType>())
                 {
-                    var apachePath = Path.Combine(_pathManager.BinPath, "Apache");
-                    if (Directory.Exists(apachePath))
+                    try
                     {
-                        var versionDirectories = Directory.GetDirectories(apachePath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.Apache.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
+                        var dirName = serviceType.ToString();
+                        var servicePath = Path.Combine(_pathManager.BinPath, dirName);
+                        if (Directory.Exists(servicePath))
                         {
-                            settings.Apache.AvailableVersions.Add(version);
+                            var versionDirectories = Directory.GetDirectories(servicePath)
+                                .Select(dir => Path.GetFileName(dir))
+                                .Where(dir => !string.IsNullOrEmpty(dir))
+                                .OrderBy(version => version)
+                                .ToList();
+
+                            switch (serviceType)
+                            {
+                                case Enums.ServiceType.Apache:
+                                    settings.Apache.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.Apache.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.MySQL:
+                                    settings.MySQL.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.MySQL.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.PHP:
+                                    settings.PHP.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.PHP.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.Node:
+                                    settings.Node.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.Node.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.Redis:
+                                    settings.Redis.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.Redis.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.PostgreSQL:
+                                    settings.PostgreSQL.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.PostgreSQL.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.Nginx:
+                                    settings.Nginx.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.Nginx.AvailableVersions.Add(version);
+                                    break;
+                                case Enums.ServiceType.MongoDB:
+                                    settings.MongoDB.AvailableVersions.Clear();
+                                    foreach (var version in versionDirectories)
+                                        settings.MongoDB.AvailableVersions.Add(version);
+                                    break;
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading Apache versions: {ex.Message}");
-                }
-
-                // Load MySQL versions
-                try
-                {
-                    var mysqlPath = Path.Combine(_pathManager.BinPath, "MySQL");
-                    if (Directory.Exists(mysqlPath))
+                    catch (Exception ex)
                     {
-                        var versionDirectories = Directory.GetDirectories(mysqlPath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.MySQL.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.MySQL.AvailableVersions.Add(version);
-                        }
+                        System.Diagnostics.Debug.WriteLine($"Error loading {serviceType} versions: {ex.Message}");
                     }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading MySQL versions: {ex.Message}");
-                }
-
-                // Load PHP versions
-                try
-                {
-                    var phpPath = Path.Combine(_pathManager.BinPath, "PHP");
-                    if (Directory.Exists(phpPath))
-                    {
-                        var versionDirectories = Directory.GetDirectories(phpPath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.PHP.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.PHP.AvailableVersions.Add(version);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading PHP versions: {ex.Message}");
-                }
-
-                // Load Node versions
-                try
-                {
-                    var nodePath = Path.Combine(_pathManager.BinPath, "Node");
-                    if (Directory.Exists(nodePath))
-                    {
-                        var versionDirectories = Directory.GetDirectories(nodePath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.Node.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.Node.AvailableVersions.Add(version);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading Node versions: {ex.Message}");
-                }
-
-                // Load Redis versions
-                try
-                {
-                    var redisPath = Path.Combine(_pathManager.BinPath, "Redis");
-                    if (Directory.Exists(redisPath))
-                    {
-                        var versionDirectories = Directory.GetDirectories(redisPath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.Redis.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.Redis.AvailableVersions.Add(version);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading Redis versions: {ex.Message}");
-                }
-
-                // Load PostgreSQL versions
-                try
-                {
-                    var postgresqlPath = Path.Combine(_pathManager.BinPath, "PostgreSQL");
-                    if (Directory.Exists(postgresqlPath))
-                    {
-                        var versionDirectories = Directory.GetDirectories(postgresqlPath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.PostgreSQL.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.PostgreSQL.AvailableVersions.Add(version);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading PostgreSQL versions: {ex.Message}");
-                }
-
-                // Load Nginx versions
-                try
-                {
-                    var nginxPath = Path.Combine(_pathManager.BinPath, "Nginx");
-                    if (Directory.Exists(nginxPath))
-                    {
-                        var versionDirectories = Directory.GetDirectories(nginxPath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.Nginx.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.Nginx.AvailableVersions.Add(version);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading Nginx versions: {ex.Message}");
-                }
-
-                try
-                {
-                    var mongoDBPath = Path.Combine(_pathManager.BinPath, "MongoDB");
-                    if (Directory.Exists(mongoDBPath))
-                    {
-                        var versionDirectories = Directory.GetDirectories(mongoDBPath)
-                            .Select(dir => Path.GetFileName(dir))
-                            .Where(dir => !string.IsNullOrEmpty(dir))
-                            .OrderBy(version => version)
-                            .ToList();
-
-                        settings.MongoDB.AvailableVersions.Clear();
-                        foreach (var version in versionDirectories)
-                        {
-                            settings.MongoDB.AvailableVersions.Add(version);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading MongoDB versions: {ex.Message}");
                 }
             });
         }

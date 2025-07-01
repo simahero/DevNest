@@ -18,14 +18,7 @@ namespace DevNest.Core
         private readonly CommandManager _commandManager;
         private readonly PathManager _pathManager;
 
-        public SiteManager(
-            FileSystemManager fileSystemManager,
-            SettingsManager settingsManager,
-            VirtualHostManager virtualHostManager,
-            DownloadManager downloadManager,
-            ArchiveExtractionManager archiveExtractionManager,
-            CommandManager commandManager,
-            PathManager pathManager)
+        public SiteManager(FileSystemManager fileSystemManager, SettingsManager settingsManager, VirtualHostManager virtualHostManager, DownloadManager downloadManager, ArchiveExtractionManager archiveExtractionManager, CommandManager commandManager, PathManager pathManager)
         {
             _fileSystemManager = fileSystemManager;
             _settingsManager = settingsManager;
@@ -219,6 +212,10 @@ namespace DevNest.Core
         {
             if (siteDefinition.InstallType.ToLower() == "none")
             {
+                if (!await _fileSystemManager.DirectoryExistsAsync(sitePath))
+                {
+                    await _fileSystemManager.CreateDirectoryAsync(sitePath);
+                }
                 return;
             }
             if (siteDefinition.InstallType.ToLower() == "command")
@@ -250,96 +247,5 @@ namespace DevNest.Core
                 return;
             }
         }
-
-        public async Task OpenSiteAsync(string siteName)
-        {
-            var sites = await GetInstalledSitesAsync();
-            var site = sites.FirstOrDefault(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
-            if (site == null)
-                throw new SiteException(siteName, $"Site '{siteName}' not found.");
-
-            try
-            {
-                await _commandManager.ExecuteCommandAsync($"cmd /c start \"{site.Url}\"", Environment.CurrentDirectory);
-            }
-            catch (Exception ex)
-            {
-                throw new SiteException(siteName, $"Failed to open site '{siteName}': {ex.Message}", ex);
-            }
-        }
-
-        public async Task ExploreSiteAsync(string siteName)
-        {
-            var sites = await GetInstalledSitesAsync();
-            var site = sites.FirstOrDefault(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
-            if (site == null)
-                throw new SiteException(siteName, $"Site '{siteName}' not found.");
-
-            try
-            {
-                await _commandManager.ExecuteCommandAsync($"explorer.exe \"{site.Path}\"", Environment.CurrentDirectory);
-            }
-            catch (Exception ex)
-            {
-                throw new SiteException(siteName, $"Failed to explore site '{siteName}': {ex.Message}", ex);
-            }
-        }
-
-        public async Task OpenSiteInVSCodeAsync(string siteName)
-        {
-            var sites = await GetInstalledSitesAsync();
-            var site = sites.FirstOrDefault(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
-            if (site == null)
-                throw new SiteException(siteName, $"Site '{siteName}' not found.");
-
-            try
-            {
-                await _commandManager.ExecuteCommandAsync($"code \"{site.Path}\"", Environment.CurrentDirectory);
-            }
-            catch (Exception ex)
-            {
-                throw new SiteException(siteName, $"Failed to open site '{siteName}' in VS Code: {ex.Message}", ex);
-            }
-        }
-
-        public async Task OpenSiteInTerminalAsync(string siteName)
-        {
-            var sites = await GetInstalledSitesAsync();
-            var site = sites.FirstOrDefault(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
-            if (site == null)
-                throw new SiteException(siteName, $"Site '{siteName}' not found.");
-
-            try
-            {
-                await _commandManager.ExecuteCommandAsync($"pwsh.exe -NoExit -Command \"cd '{site.Path}'\"", Environment.CurrentDirectory);
-            }
-            catch (Exception ex)
-            {
-                throw new SiteException(siteName, $"Failed to open terminal for site '{siteName}': {ex.Message}", ex);
-            }
-        }
-
-        public async Task OpenSiteInBrowserAsync(string siteName)
-        {
-            var sites = await GetInstalledSitesAsync();
-            var site = sites.FirstOrDefault(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
-            if (site == null)
-                throw new SiteException(siteName, $"Site '{siteName}' not found.");
-
-            try
-            {
-                await _commandManager.ExecuteCommandAsync($"cmd /c start \"\" \"{site.Url}\"", Environment.CurrentDirectory);
-            }
-            catch (Exception ex)
-            {
-                throw new SiteException(siteName, $"Failed to open site '{siteName}' in browser: {ex.Message}", ex);
-            }
-        }
-
     }
 }

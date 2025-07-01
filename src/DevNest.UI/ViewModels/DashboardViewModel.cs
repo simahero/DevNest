@@ -15,24 +15,19 @@ namespace DevNest.UI.ViewModels
     public partial class DashboardViewModel : BaseViewModel
     {
         private readonly ServiceManager _serviceManager;
-        private readonly SiteManager _siteManager;
 
         public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
 
-        public DashboardViewModel(ServiceManager serviceManager, SiteManager siteManager)
+        public DashboardViewModel(ServiceManager serviceManager)
         {
             _serviceManager = serviceManager;
-            _siteManager = siteManager;
             Title = "Dashboard";
         }
 
         [RelayCommand]
         private async Task LoadDashboardDataAsync()
         {
-            if (InstalledServices.Count == 0)
-            {
-                await RefreshDashboardAsync();
-            }
+            await RefreshDashboardAsync();
         }
 
         [RelayCommand]
@@ -41,27 +36,23 @@ namespace DevNest.UI.ViewModels
             IsLoading = true;
             try
             {
-                var servicesTask = _serviceManager.GetServicesAsync();
+                var services = await _serviceManager.GetServicesAsync();
 
-                await Task.WhenAll(servicesTask);
-
-                var services = servicesTask.Result.ToList();
-
-                InstalledServices.Clear();
-
-                var selectedServices = services
-                    .Where(s => !string.IsNullOrEmpty(s.ServiceType) && s.IsSelected)
-                    .ToList();
+                var selectedServices = services.Where(s => !string.IsNullOrEmpty(s.ServiceType.ToString()) && s.IsSelected).ToList();
 
                 foreach (var service in selectedServices)
                 {
-                    InstalledServices.Add(service);
+                    var existingService = InstalledServices.FirstOrDefault(existing => existing.Name == service.Name);
+                    if (existingService == null)
+                    {
+                        InstalledServices.Add(service);
+                    }
                 }
+
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading dashboard data: {ex.Message}");
-                // TODO: Show error to user
+
             }
             finally
             {
@@ -76,23 +67,10 @@ namespace DevNest.UI.ViewModels
 
             try
             {
-                // Toggle the service using the manager
-                await _serviceManager.ToggleServiceAsync(service.Name);
-
-                // Get the updated service from the manager
-                var updatedService = await _serviceManager.GetServiceAsync(service.Name);
-                if (updatedService != null)
-                {
-                    // Update the properties of the existing instance to keep bindings
-                    service.Status = updatedService.Status;
-                    service.Process = updatedService.Process;
-                    service.IsLoading = updatedService.IsLoading;
-                }
+                await _serviceManager.ToggleServiceAsync(service);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error toggling service {service.Name}: {ex.Message}");
-                // TODO: Show error to user
             }
         }
 
@@ -100,8 +78,8 @@ namespace DevNest.UI.ViewModels
         private void OpenLog()
         {
             var pathManager = ServiceLocator.GetService<PathManager>();
-            var logPath = Path.Combine(pathManager.LogsPath, "debug.log");
-            if (File.Exists(logPath))
+            var logPath = Path.Combine(pathManager.LogsPath);
+            if (Directory.Exists(logPath))
             {
                 Process.Start(new ProcessStartInfo
                 {
@@ -109,10 +87,16 @@ namespace DevNest.UI.ViewModels
                     UseShellExecute = true
                 });
             }
-            else
+        }
+
+        [RelayCommand]
+        private void OpenPHPMyAdmin()
+        {
+            Process.Start(new ProcessStartInfo
             {
-                // Optionally show a message to the user
-            }
+                FileName = "http://localhost/phpmyadmin",
+                UseShellExecute = true
+            });
         }
 
         protected override async Task OnLoadedAsync()

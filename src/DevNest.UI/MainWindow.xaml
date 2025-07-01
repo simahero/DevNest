@@ -105,6 +105,7 @@
             Margin="0,32,0,0"
             Background="#0b0f17"
             IsBackButtonVisible="Collapsed"
+            IsPaneToggleButtonVisible="False"
             IsSettingsVisible="False"
             SelectionChanged="NavigationView_SelectionChanged">
             <NavigationView.MenuItems>
@@ -113,9 +114,9 @@
                         <ImageIcon Source="ms-appx:///Assets/Icons/hive.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Services" Tag="Services">
+                <NavigationViewItem Content="Environments" Tag="Environments">
                     <NavigationViewItem.Icon>
-                        <ImageIcon Source="ms-appx:///Assets/Icons/database.svg" />
+                        <ImageIcon Source="ms-appx:///Assets/Icons/server.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Sites" Tag="Sites">
@@ -123,14 +124,14 @@
                         <ImageIcon Source="ms-appx:///Assets/Icons/globe.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Environments" Tag="Environments">
-                    <NavigationViewItem.Icon>
-                        <ImageIcon Source="ms-appx:///Assets/Icons/server.svg" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
                 <NavigationViewItem Content="Dumps" Tag="Dumps">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="ms-appx:///Assets/Icons/stack.svg" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Services" Tag="Services">
+                    <NavigationViewItem.Icon>
+                        <ImageIcon Source="ms-appx:///Assets/Icons/database.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Settings" Tag="Settings">

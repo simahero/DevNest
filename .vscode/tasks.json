@@ -17,6 +17,14 @@
 			"args": ["publish", "src/DevNest.UI/DevNest.UI.csproj", "-c", "Release", "--self-contained", "true", "/p:PublishSingleFile=true", "/p:IncludeAllContentForSelfExtract=true", "/p:PublishTrimmed=false"],
 			"group": "build",
 			"isBackground": false
+		},
+		{
+			"label": "Test TCP connection",
+			"type": "shell",
+			"command": "powershell",
+			"args": ["-Command", "Test-NetConnection 127.0.0.1 -Port 9912"],
+			"group": "test",
+			"isBackground": false
 		}
 	]
 }

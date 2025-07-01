@@ -1,15 +1,9 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using DevNest.Core.Enums;
 
 namespace DevNest.Core.Models
 {
-    public enum ServiceStatus
-    {
-        Stopped,
-        Running,
-        Starting,
-        Stopping
-    }
 
     public class ServiceModel : INotifyPropertyChanged
     {
@@ -22,7 +16,7 @@ namespace DevNest.Core.Models
         public required string Name { get; set; }
         public required string DisplayName { get; set; }
         public required string Command { get; set; }
-        public string ServiceType { get; set; } = string.Empty;
+        public ServiceType ServiceType { get; set; }
 
         public string Path
         {
@@ -106,7 +100,7 @@ namespace DevNest.Core.Models
         public string Name { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string ServiceType { get; set; } = string.Empty;
+        public ServiceType ServiceType { get; set; }
         public bool HasAdditionalDir { get; set; } = false;
         public string DisplayName => $"{Name} - {Description}";
     }

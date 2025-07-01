@@ -34,6 +34,11 @@ namespace DevNest.Core.Files
             await File.WriteAllTextAsync(filePath, content);
         }
 
+        public async Task AppendAllTextAsync(string filePath, string content)
+        {
+            await File.AppendAllTextAsync(filePath, content);
+        }
+
         public Task<IEnumerable<string>> GetFilesAsync(string directory, string searchPattern = "*")
         {
             var files = Directory.GetFiles(directory, searchPattern);

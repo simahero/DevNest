@@ -114,20 +114,6 @@
                                 Margin="0,0,0,8"
                                 FontWeight="SemiBold"
                                 Text="Apache Configuration" />
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Document Root" />
-                                <TextBox
-                                    Grid.Column="1"
-                                    PlaceholderText="C:\DevNest\www"
-                                    Text="{x:Bind ViewModel.Apache.DocumentRoot, Mode=TwoWay}" />
-                            </Grid>
 
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
@@ -159,6 +145,174 @@
                             </Grid>
 
                         </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Nginx Configuration  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                    <Expander.Header>
+                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Service Icon  -->
+                            <Border
+                                Grid.Column="0"
+                                Width="32"
+                                Height="32"
+                                Margin="0,0,16,0">
+                                <Image
+                                    Width="32"
+                                    Height="32"
+                                    Source="{StaticResource NginxLogo}" />
+                            </Border>
+
+                            <!--  Service Info  -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Nginx" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Visibility="{x:Bind ViewModel.Nginx.Version, Converter={StaticResource ObjectToBooleanConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Nginx.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+
+                    <StackPanel Margin="0,16,0,0" Spacing="16">
+
+                        <!--  Version Selection  -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Text="Version" />
+                            <ComboBox
+                                Grid.Column="1"
+                                Margin="0,0,12,0"
+                                HorizontalAlignment="Stretch"
+                                IsEnabled="{x:Bind ViewModel.Nginx.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Nginx.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Nginx.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Nginx.Version, Mode=TwoWay}" />
+                        </Grid>
+
+                        <!--  Nginx Configuration  -->
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                Margin="0,0,0,8"
+                                FontWeight="SemiBold"
+                                Text="Nginx Configuration" />
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Port" />
+                                <NumberBox
+                                    Grid.Column="1"
+                                    Maximum="65535"
+                                    Minimum="1"
+                                    PlaceholderText="8080"
+                                    Value="{x:Bind ViewModel.Nginx.Port, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Auto Start" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Nginx.AutoStart, Mode=TwoWay}" />
+                            </Grid>
+
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!--  PHP Configuration  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                    <Expander.Header>
+                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Service Icon  -->
+                            <Border
+                                Grid.Column="0"
+                                Width="32"
+                                Height="32"
+                                Margin="0,0,16,0">
+                                <Image
+                                    Width="32"
+                                    Height="32"
+                                    Source="{StaticResource PhpLogo}" />
+                            </Border>
+
+                            <!--  Service Info  -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PHP" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Visibility="{x:Bind ViewModel.Php.Version, Converter={StaticResource ObjectToBooleanConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Php.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+
+                    <StackPanel Margin="0,16,0,0" Spacing="16">
+
+
+                        <!--  Version Selection  -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Text="Version" />
+                            <ComboBox
+                                Grid.Column="1"
+                                Margin="0,0,12,0"
+                                HorizontalAlignment="Stretch"
+                                IsEnabled="{x:Bind ViewModel.Php.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Php.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Php.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Php.Version, Mode=TwoWay}" />
+
+                        </Grid>
+
                     </StackPanel>
                 </Expander>
 
@@ -279,7 +433,7 @@
                     </StackPanel>
                 </Expander>
 
-                <!--  PHP Configuration  -->
+                <!--  PostgreSQL Configuration  -->
                 <Expander
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch"
@@ -300,24 +454,23 @@
                                 <Image
                                     Width="32"
                                     Height="32"
-                                    Source="{StaticResource PhpLogo}" />
+                                    Source="{StaticResource PostgreSqlLogo}" />
                             </Border>
 
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PHP" />
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PostgreSQL" />
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Php.Version, Converter={StaticResource ObjectToBooleanConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Php.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.PostgreSQL.Version, Converter={StaticResource ObjectToBooleanConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.PostgreSQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
 
                     <StackPanel Margin="0,16,0,0" Spacing="16">
-
 
                         <!--  Version Selection  -->
                         <Grid>
@@ -326,7 +479,6 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-
                             <TextBlock
                                 Grid.Column="0"
                                 VerticalAlignment="Center"
@@ -336,13 +488,151 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.Php.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.Php.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.Php.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Php.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.PostgreSQL.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.PostgreSQL.Version, Mode=TwoWay}" />
 
                         </Grid>
 
+                        <!--  PostgreSQL Configuration  -->
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                Margin="0,0,0,8"
+                                FontWeight="SemiBold"
+                                Text="PostgreSQL Configuration" />
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Port" />
+                                <NumberBox
+                                    Grid.Column="1"
+                                    Maximum="65535"
+                                    Minimum="1"
+                                    PlaceholderText="5432"
+                                    Value="{x:Bind ViewModel.PostgreSQL.Port, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Auto Start" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.PostgreSQL.AutoStart, Mode=TwoWay}" />
+                            </Grid>
+
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!--  MongoDB Configuration  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                    <Expander.Header>
+                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Service Icon  -->
+                            <Border
+                                Grid.Column="0"
+                                Width="32"
+                                Height="32"
+                                Margin="0,0,16,0">
+                                <Image
+                                    Width="32"
+                                    Height="32"
+                                    Source="{StaticResource MongoLogo}" />
+                            </Border>
+
+                            <!--  Service Info  -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Mongo DB" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Visibility="{x:Bind ViewModel.MongoDB.Version, Converter={StaticResource ObjectToBooleanConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.MongoDB.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+                    </Expander.Header>
+
+                    <StackPanel Margin="0,16,0,0" Spacing="16">
+
+                        <!--  Version Selection  -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Text="Version" />
+                            <ComboBox
+                                Grid.Column="1"
+                                Margin="0,0,12,0"
+                                HorizontalAlignment="Stretch"
+                                IsEnabled="{x:Bind ViewModel.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.MongoDB.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.MongoDB.Version, Mode=TwoWay}" />
+                        </Grid>
+
+                        <!--  MongoDB Configuration  -->
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                Margin="0,0,0,8"
+                                FontWeight="SemiBold"
+                                Text="MongoDB Configuration" />
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Port" />
+                                <NumberBox
+                                    Grid.Column="1"
+                                    Maximum="65535"
+                                    Minimum="1"
+                                    PlaceholderText="27017"
+                                    Value="{x:Bind ViewModel.MongoDB.Port, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Auto Start" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.MongoDB.AutoStart, Mode=TwoWay}" />
+                            </Grid>
+
+                        </StackPanel>
                     </StackPanel>
                 </Expander>
 
@@ -514,309 +804,6 @@
                     </StackPanel>
                 </Expander>
 
-                <!--  PostgreSQL Configuration  -->
-                <Expander
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <Expander.Header>
-                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!--  Service Icon  -->
-                            <Border
-                                Grid.Column="0"
-                                Width="32"
-                                Height="32"
-                                Margin="0,0,16,0">
-                                <Image
-                                    Width="32"
-                                    Height="32"
-                                    Source="{StaticResource PostgreSqlLogo}" />
-                            </Border>
-
-                            <!--  Service Info  -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PostgreSQL" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.PostgreSQL.Version, Converter={StaticResource ObjectToBooleanConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.PostgreSQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel>
-                        </Grid>
-                    </Expander.Header>
-
-                    <StackPanel Margin="0,16,0,0" Spacing="16">
-
-                        <!--  Version Selection  -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="Version" />
-                            <ComboBox
-                                Grid.Column="1"
-                                Margin="0,0,12,0"
-                                HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.PostgreSQL.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.PostgreSQL.Version, Mode=TwoWay}" />
-
-                        </Grid>
-
-                        <!--  PostgreSQL Configuration  -->
-                        <StackPanel Spacing="12">
-                            <TextBlock
-                                Margin="0,0,0,8"
-                                FontWeight="SemiBold"
-                                Text="PostgreSQL Configuration" />
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Port" />
-                                <NumberBox
-                                    Grid.Column="1"
-                                    Maximum="65535"
-                                    Minimum="1"
-                                    PlaceholderText="5432"
-                                    Value="{x:Bind ViewModel.PostgreSQL.Port, Mode=TwoWay}" />
-                            </Grid>
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.PostgreSQL.AutoStart, Mode=TwoWay}" />
-                            </Grid>
-
-                        </StackPanel>
-                    </StackPanel>
-                </Expander>
-
-                <!--  Nginx Configuration  -->
-                <Expander
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <Expander.Header>
-                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!--  Service Icon  -->
-                            <Border
-                                Grid.Column="0"
-                                Width="32"
-                                Height="32"
-                                Margin="0,0,16,0">
-                                <Image
-                                    Width="32"
-                                    Height="32"
-                                    Source="{StaticResource NginxLogo}" />
-                            </Border>
-
-                            <!--  Service Info  -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Nginx" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Nginx.Version, Converter={StaticResource ObjectToBooleanConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Nginx.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel>
-                        </Grid>
-                    </Expander.Header>
-
-                    <StackPanel Margin="0,16,0,0" Spacing="16">
-
-                        <!--  Version Selection  -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="Version" />
-                            <ComboBox
-                                Grid.Column="1"
-                                Margin="0,0,12,0"
-                                HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.Nginx.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.Nginx.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.Nginx.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Nginx.Version, Mode=TwoWay}" />
-                        </Grid>
-
-                        <!--  Nginx Configuration  -->
-                        <StackPanel Spacing="12">
-                            <TextBlock
-                                Margin="0,0,0,8"
-                                FontWeight="SemiBold"
-                                Text="Nginx Configuration" />
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Port" />
-                                <NumberBox
-                                    Grid.Column="1"
-                                    Maximum="65535"
-                                    Minimum="1"
-                                    PlaceholderText="8080"
-                                    Value="{x:Bind ViewModel.Nginx.Port, Mode=TwoWay}" />
-                            </Grid>
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Nginx.AutoStart, Mode=TwoWay}" />
-                            </Grid>
-
-                        </StackPanel>
-                    </StackPanel>
-                </Expander>
-
-                <!--  MongoDB Configuration  -->
-                <Expander
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <Expander.Header>
-                        <Grid Padding="0,12" HorizontalAlignment="Stretch">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <!--  Service Icon  -->
-                            <Border
-                                Grid.Column="0"
-                                Width="32"
-                                Height="32"
-                                Margin="0,0,16,0">
-                                <Image
-                                    Width="32"
-                                    Height="32"
-                                    Source="{StaticResource MongoLogo}" />
-                            </Border>
-
-                            <!--  Service Info  -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Mongo DB" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.MongoDB.Version, Converter={StaticResource ObjectToBooleanConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.MongoDB.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel>
-                        </Grid>
-                    </Expander.Header>
-
-                    <StackPanel Margin="0,16,0,0" Spacing="16">
-
-                        <!--  Version Selection  -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="Version" />
-                            <ComboBox
-                                Grid.Column="1"
-                                Margin="0,0,12,0"
-                                HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.MongoDB.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.MongoDB.Version, Mode=TwoWay}" />
-                        </Grid>
-
-                        <!--  MongoDB Configuration  -->
-                        <StackPanel Spacing="12">
-                            <TextBlock
-                                Margin="0,0,0,8"
-                                FontWeight="SemiBold"
-                                Text="MongoDB Configuration" />
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Port" />
-                                <NumberBox
-                                    Grid.Column="1"
-                                    Maximum="65535"
-                                    Minimum="1"
-                                    PlaceholderText="27017"
-                                    Value="{x:Bind ViewModel.MongoDB.Port, Mode=TwoWay}" />
-                            </Grid>
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.MongoDB.AutoStart, Mode=TwoWay}" />
-                            </Grid>
-
-                        </StackPanel>
-                    </StackPanel>
-                </Expander>
             </StackPanel>
 
             <!--  Quick Actions  -->
@@ -826,14 +813,9 @@
                         FontSize="20"
                         FontWeight="SemiBold"
                         Text="Quick Actions" />
-
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button 
-                            Command="{x:Bind ViewModel.OpenSettingsCommand}"
-                            Content="Open settings file" />
-                        <Button Content="Export Environment" />
-                        <Button Content="Reset All to Defaults" />
-                        <Button Content="Check for Updates" />
+                        <Button Command="{x:Bind ViewModel.OpenSettingsCommand}" Content="Open settings file" />
+                        <Button Command="{x:Bind ViewModel.OpenEtcCommand}" Content="Open etc directory" />
                     </StackPanel>
                 </StackPanel>
             </Border>

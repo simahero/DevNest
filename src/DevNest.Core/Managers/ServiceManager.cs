@@ -1,7 +1,12 @@
 using DevNest.Core.Commands;
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.Services;
+using IniParser;
+using System.Diagnostics;
+
 
 namespace DevNest.Core
 {
@@ -10,41 +15,116 @@ namespace DevNest.Core
         private readonly SettingsManager _settingsManager;
         private readonly LogManager _logManager = null!;
         private readonly CommandManager _commandManager;
-
-        private readonly ServicesReader _servicesReader;
         private readonly FileSystemManager _fileSystemManager;
         private readonly PathManager _pathManager;
+
         private readonly IUIDispatcher _uiDispatcher;
 
-        private readonly List<ServiceModel> _services;
-
-        public ServiceManager(
-            SettingsManager settingsManager,
-            CommandManager commandManager,
-            ServicesReader servicesReader,
-            FileSystemManager fileSystemManager,
-            PathManager pathManager,
-            IUIDispatcher uiDispatcher)
+        public ServiceManager(SettingsManager settingsManager, CommandManager commandManager, FileSystemManager fileSystemManager, PathManager pathManager, IUIDispatcher uiDispatcher)
         {
             _settingsManager = settingsManager;
-            _servicesReader = servicesReader;
             _fileSystemManager = fileSystemManager;
             _commandManager = commandManager;
             _pathManager = pathManager;
             _uiDispatcher = uiDispatcher;
-            _services = new List<ServiceModel>();
         }
 
         public async Task<IEnumerable<ServiceModel>> GetServicesAsync()
         {
-            await RefreshServicesAsync();
-            return _services.AsReadOnly();
+            try
+            {
+                var allServices = new List<ServiceModel>();
+
+                var settings = await _settingsManager.LoadSettingsAsync();
+                var binDirectory = _pathManager.BinPath;
+                var categoryDirectories = await _fileSystemManager.GetDirectoriesAsync(binDirectory);
+                foreach (var categoryDir in categoryDirectories)
+                {
+                    var categoryName = Path.GetFileName(categoryDir);
+                    if (Enum.TryParse<ServiceType>(categoryName, out var serviceType))
+                    {
+                        var serviceDirectories = await _fileSystemManager.GetDirectoriesAsync(categoryDir);
+                        foreach (var serviceDir in serviceDirectories)
+                        {
+                            var serviceName = Path.GetFileName(serviceDir);
+                            var service = new ServiceModel
+                            {
+                                Name = serviceName,
+                                DisplayName = GetServiceDisplayName(serviceName, serviceType),
+                                Command = string.Empty,
+                                Path = serviceDir,
+                                ServiceType = serviceType,
+                                Status = ServiceStatus.Stopped,
+                                IsLoading = false,
+                                IsSelected = false
+                            };
+
+                            var (command, workingDirectory) = await GetServiceCommandAsync(service, settings);
+                            service.Command = command;
+                            service.WorkingDirectory = workingDirectory;
+                            service.IsSelected = IsServiceSelected(service, settings);
+                            allServices.Add(service);
+                        }
+                    }
+                }
+                return allServices.AsReadOnly();
+            }
+            catch (Exception)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing services");
+                return Enumerable.Empty<ServiceModel>();
+            }
         }
 
-        public Task<ServiceModel?> GetServiceAsync(string name)
+        public async Task<IEnumerable<ServiceDefinition>> GetAvailableServices()
         {
-            var service = _services.FirstOrDefault(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            return Task.FromResult(service);
+            var servicesFilePath = Path.Combine(_pathManager.ConfigPath, "services.ini");
+            if (!await _fileSystemManager.FileExistsAsync(servicesFilePath))
+            {
+                return Enumerable.Empty<ServiceDefinition>();
+            }
+            var iniContent = await _fileSystemManager.ReadAllTextAsync(servicesFilePath);
+            var parser = new FileIniDataParser();
+            var data = parser.Parser.Parse(iniContent);
+            var allServices = new List<ServiceDefinition>();
+            foreach (var section in data.Sections)
+            {
+                var categoryName = section.SectionName;
+                var hasAdditionalDir = false;
+                if (section.Keys.ContainsKey("has_additional_dir"))
+                {
+                    bool.TryParse(section.Keys["has_additional_dir"], out hasAdditionalDir);
+                }
+                if (!Enum.TryParse<ServiceType>(categoryName, out var serviceType))
+                    continue;
+                var serviceNames = new HashSet<string>();
+                foreach (var key in section.Keys)
+                {
+                    if (key.KeyName.EndsWith(".name") || key.KeyName.EndsWith(".url"))
+                    {
+                        var serviceName = key.KeyName.Substring(0, key.KeyName.LastIndexOf('.'));
+                        serviceNames.Add(serviceName);
+                    }
+                }
+                foreach (var serviceName in serviceNames)
+                {
+                    var nameKey = $"{serviceName}.name";
+                    var urlKey = $"{serviceName}.url";
+                    if (section.Keys.ContainsKey(nameKey) && section.Keys.ContainsKey(urlKey))
+                    {
+                        var serviceDefinition = new ServiceDefinition
+                        {
+                            Name = serviceName,
+                            Url = section.Keys[urlKey],
+                            Description = section.Keys[nameKey],
+                            ServiceType = serviceType,
+                            HasAdditionalDir = hasAdditionalDir
+                        };
+                        allServices.Add(serviceDefinition);
+                    }
+                }
+            }
+            return allServices;
         }
 
         public async Task<bool> StartServiceAsync(ServiceModel service)
@@ -67,12 +147,8 @@ namespace DevNest.Core
                     {
                         _uiDispatcher.TryEnqueue(() =>
                         {
-                            System.Diagnostics.Debug.WriteLine($"Process exited event fired for service {service.Name}");
-
                             service.Status = ServiceStatus.Stopped;
                             service.Process = null;
-
-                            System.Diagnostics.Debug.WriteLine($"Service {service.Name} status updated to Stopped due to process exit");
                         });
                     };
 
@@ -86,9 +162,8 @@ namespace DevNest.Core
                     return false;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error starting service {service.Name}: {ex.Message}");
                 service.Status = ServiceStatus.Stopped;
                 return false;
             }
@@ -107,54 +182,41 @@ namespace DevNest.Core
                 service.IsLoading = true;
                 service.Status = ServiceStatus.Stopping;
 
-                // If we have a process attached, try to stop it gracefully
-                if (service.Process != null && !service.Process.HasExited)
+                if (service.Process != null)
                 {
-                    try
+                    var killTree = new ProcessStartInfo
                     {
-                        if (!service.Process.CloseMainWindow())
-                        {
-                            service.Process.Kill();
-                        }
-
-                        if (!service.Process.WaitForExit(5000))
-                        {
-                            service.Process.Kill();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error stopping attached process for {service.Name}: {ex.Message}");
-                        return false;
-                    }
-                    finally
-                    {
-                        service.Process?.Dispose();
-                        service.Process = null;
-                    }
-
-                    service.Status = ServiceStatus.Stopped;
-                    await Task.CompletedTask;
-                    return true;
+                        FileName = "taskkill",
+                        Arguments = $"/PID {service.Process.Id} /T /F",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    Process.Start(killTree)?.WaitForExit();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error stopping service {service.Name}: {ex.Message}");
-                return false;
+                System.Diagnostics.Debug.WriteLine($"Failed to kill process tree: {ex.Message}");
             }
             finally
             {
+                if (service.Process != null)
+                {
+                    service.Process.Dispose();
+                    service.Process = null;
+                }
+
                 service.IsLoading = false;
             }
+
+            service.Status = ServiceStatus.Stopped;
 
             await Task.CompletedTask;
             return true;
         }
 
-        public async Task<bool> ToggleServiceAsync(string serviceName)
+        public async Task<bool> ToggleServiceAsync(ServiceModel service)
         {
-            var service = await GetServiceAsync(serviceName);
             if (service == null)
             {
                 return false;
@@ -170,48 +232,20 @@ namespace DevNest.Core
             }
         }
 
-        public async Task RefreshServicesAsync()
-        {
-            try
-            {
-                _services.Clear();
-                var installedServices = await _servicesReader.LoadInstalledServicesAsync();
-                var settings = await _settingsManager.LoadSettingsAsync();
-
-                foreach (var service in installedServices)
-                {
-                    var (command, workingDirectory) = await GetServiceCommandAsync(service, settings);
-                    if (!string.IsNullOrEmpty(command) && !string.IsNullOrEmpty(workingDirectory))
-                    {
-                        service.Command = command;
-                        service.WorkingDirectory = workingDirectory;
-                        service.IsSelected = IsServiceSelected(service, settings);
-                        service.Status = ServiceStatus.Stopped;
-                        _services.Add(service);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error refreshing services: {ex.Message}");
-            }
-        }
-
         private async Task<(string, string)> GetServiceCommandAsync(ServiceModel service, SettingsModel settings)
         {
             try
             {
-                return service.ServiceType.ToLowerInvariant() switch
+                return service.ServiceType switch
                 {
-                    "apache" => await GetApacheCommandAsync(service, settings),
-                    "mysql" => await GetMySQLCommandAsync(service, settings),
-                    "php" => await GetPHPCommandAsync(service, settings),
-                    "nginx" => await GetNginxCommandAsync(service, settings),
-                    "node" => await GetNodeCommandAsync(service, settings),
-                    "redis" => await GetRedisCommandAsync(service, settings),
-                    "postgresql" => await GetPostgreSQLCommandAsync(service, settings),
-                    "mongodb" => await GetMongoDBCommandAsync(service, settings),
-                    _ => await GetGenericCommandAsync(service)
+                    ServiceType.Apache => await ApacheSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.MySQL => await MySQLSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.Nginx => await NginxSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.Node => await NodeSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.Redis => await RedisSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.PostgreSQL => await PostgreSQLSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.MongoDB => await MongoDBSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    _ => await Task.FromResult((string.Empty, string.Empty)),
                 };
             }
             catch (Exception)
@@ -220,151 +254,45 @@ namespace DevNest.Core
             }
         }
 
-        private async Task<(string, string)> GetApacheCommandAsync(ServiceModel service, SettingsModel settings)
+        private static string GetServiceDisplayName(string serviceName, ServiceType serviceType)
         {
-            var selectedVersion = settings.Apache.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
+            return serviceType switch
             {
-                var binPath = Path.Combine(service.Path, "bin");
-                var apacheRoot = service.Path;
-                var httpdPath = Path.Combine(binPath, "httpd.exe");
-                if (await _fileSystemManager.FileExistsAsync(httpdPath))
-                {
-                    return ($"\"{httpdPath}\" -d \"{apacheRoot}\" -D FOREGROUND", binPath);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetMySQLCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.MySQL.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var binPath = Path.Combine(service.Path, "bin");
-                var mysqldPath = Path.Combine(binPath, "mysqld.exe");
-                if (await _fileSystemManager.FileExistsAsync(mysqldPath))
-                {
-                    return ($"\"{mysqldPath}\"", binPath);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetPHPCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.PHP.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var phpPath = Path.Combine(service.Path, selectedVersion, "php-cgi.exe");
-                if (await _fileSystemManager.FileExistsAsync(phpPath))
-                {
-                    return ($"\"{phpPath}\" -b 127.0.0.1:9000", Path.GetDirectoryName(phpPath)!);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetNginxCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.Nginx.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var nginxPath = Path.Combine(service.Path, "nginx.exe");
-                if (await _fileSystemManager.FileExistsAsync(nginxPath))
-                {
-                    return ($"\"{nginxPath}\"", Path.GetDirectoryName(nginxPath)!);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetNodeCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.Node.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var nodePath = Path.Combine(service.Path, "node.exe");
-                if (await _fileSystemManager.FileExistsAsync(nodePath))
-                {
-                    return ($"\"{nodePath}\"", Path.GetDirectoryName(nodePath)!);
-                }
-            }
-
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetRedisCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.Redis.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var redisPath = Path.Combine(service.Path, "redis-server.exe");
-                if (await _fileSystemManager.FileExistsAsync(redisPath))
-                {
-                    return ($"\"redis-server.exe\" --service-start", Path.GetDirectoryName(redisPath)!);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetPostgreSQLCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.PostgreSQL.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var postgresPath = Path.Combine(service.Path, "bin", "postgres.exe");
-                if (await _fileSystemManager.FileExistsAsync(postgresPath))
-                {
-                    return ($"\"{postgresPath}\"", Path.GetDirectoryName(postgresPath)!);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private async Task<(string, string)> GetMongoDBCommandAsync(ServiceModel service, SettingsModel settings)
-        {
-            var selectedVersion = settings.MongoDB.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var mongoDBPath = Path.Combine(service.Path, "bin", "mongod.exe");
-                if (await _fileSystemManager.FileExistsAsync(mongoDBPath))
-                {
-                    return ($"\"{mongoDBPath}\"", Path.GetDirectoryName(mongoDBPath)!);
-                }
-            }
-            return (string.Empty, string.Empty);
-        }
-
-        private Task<(string, string)> GetGenericCommandAsync(ServiceModel service)
-        {
-            return Task.FromResult((string.Empty, string.Empty));
+                ServiceType.Apache => "Apache HTTP Server",
+                ServiceType.MySQL => "MySQL Database Server",
+                ServiceType.PHP => "PHP FastCGI Process Manager",
+                ServiceType.Nginx => "Nginx Web Server",
+                ServiceType.Node => "Node.js Runtime",
+                ServiceType.Redis => "Redis Server",
+                ServiceType.PostgreSQL => "PostgreSQL Database Server",
+                ServiceType.MongoDB => "MongoDB Database Server",
+                _ => $"{serviceType} Service"
+            };
         }
 
         private static bool IsServiceSelected(ServiceModel service, SettingsModel settings)
         {
-            var selectedVersion = service.ServiceType.ToLowerInvariant() switch
+            var selectedVersion = service.ServiceType switch
             {
-                "apache" => settings.Apache.Version,
-                "mysql" => settings.MySQL.Version,
-                "php" => settings.PHP.Version,
-                "nginx" => settings.Nginx.Version,
-                "node" => settings.Node.Version,
-                "redis" => settings.Redis.Version,
-                "postgresql" => settings.PostgreSQL.Version,
-                "mongodb" => settings.MongoDB.Version,
+                ServiceType.Apache => settings.Apache.Version,
+                ServiceType.MySQL => settings.MySQL.Version,
+                ServiceType.PHP => settings.PHP.Version,
+                ServiceType.Nginx => settings.Nginx.Version,
+                ServiceType.Node => settings.Node.Version,
+                ServiceType.Redis => settings.Redis.Version,
+                ServiceType.PostgreSQL => settings.PostgreSQL.Version,
+                ServiceType.MongoDB => settings.MongoDB.Version,
                 _ => string.Empty
             };
 
             return !string.IsNullOrEmpty(selectedVersion) && service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<bool> IsServiceRunningAsync(string serviceName)
+        public Task<bool> IsServiceRunningAsync(ServiceModel service)
         {
-            var service = await GetServiceAsync(serviceName);
-            if (service == null) return false;
+            if (service == null) return Task.FromResult(false);
 
-            return service.IsRunning;
+            return Task.FromResult(service.IsRunning);
         }
     }
 }

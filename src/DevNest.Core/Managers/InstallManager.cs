@@ -1,6 +1,8 @@
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Models;
 using System.IO.Compression;
+
 
 namespace DevNest.Core
 {
@@ -44,7 +46,7 @@ namespace DevNest.Core
                 progress?.Report($"Starting installation of {serviceDefinition.Name}...");
 
                 var settings = await _settingsManager.LoadSettingsAsync();
-                var servicesDir = Path.Combine(_pathService.BinPath, serviceDefinition.ServiceType);
+                var servicesDir = Path.Combine(_pathService.BinPath, serviceDefinition.ServiceType.ToString());
                 var serviceDir = Path.Combine(servicesDir, serviceDefinition.Name);
 
                 if (await IsServiceInstalledAsync(serviceDefinition.Name))
@@ -79,17 +81,18 @@ namespace DevNest.Core
                     await _fileSystemService.DeleteFileAsync(downloadPath);
                 }
 
-                object? serviceSettings = serviceDefinition.ServiceType.ToLowerInvariant() switch
+                object? serviceSettings = serviceDefinition.ServiceType switch
                 {
-                    "apache" => settings.Apache,
-                    "mysql" => settings.MySQL,
-                    "php" => settings.PHP,
-                    "node" => settings.Node,
-                    "redis" => settings.Redis,
-                    "postgresql" => settings.PostgreSQL,
-                    "nginx" => settings.Nginx,
+                    ServiceType.Apache => settings.Apache,
+                    ServiceType.MySQL => settings.MySQL,
+                    ServiceType.PHP => settings.PHP,
+                    ServiceType.Node => settings.Node,
+                    ServiceType.Redis => settings.Redis,
+                    ServiceType.PostgreSQL => settings.PostgreSQL,
+                    ServiceType.Nginx => settings.Nginx,
                     _ => null
                 };
+
                 if (serviceSettings != null)
                 {
                     var versionProp = serviceSettings.GetType().GetProperty("Version");

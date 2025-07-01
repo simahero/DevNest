@@ -57,9 +57,20 @@ namespace DevNest.UI.ViewModels
                     UseShellExecute = true
                 });
             }
-            else
+        }
+
+        [RelayCommand]
+        private void OpenEtc()
+        {
+            var pathManager = ServiceLocator.GetService<PathManager>();
+            var etcPath = Path.Combine(pathManager.EtcPath);
+            if (Directory.Exists(etcPath))
             {
-                // Optionally show a message to the user
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = etcPath,
+                    UseShellExecute = true
+                });
             }
         }
 

@@ -114,7 +114,7 @@ namespace DevNest.Core.Sites
                 var templateContent = await _fileSystemManager.ReadAllTextAsync(nginxTemplatePath);
 
                 var processedContent = templateContent
-                    .Replace("<<PORT>>", "80")
+                    .Replace("<<PORT>>", "8080")
                     .Replace("<<PROJECT_DIR>>", documentRoot)
                     .Replace("<<HOSTNAME>>", domain)
                     .Replace("<<SITENAME>>", siteName);

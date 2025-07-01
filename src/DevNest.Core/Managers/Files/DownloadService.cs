@@ -24,9 +24,6 @@ namespace DevNest.Core.Files
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             _httpClient.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
             _httpClient.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en-US,en;q=0.5");
-
-            // Important: Pretend we clicked the download link from the MySQL website
-            _httpClient.DefaultRequestHeaders.Referrer = new Uri("https://dev.mysql.com/downloads/mysql/");
         }
 
         public async Task<string> DownloadToTempAsync(string url, IProgress<string>? progress = null)

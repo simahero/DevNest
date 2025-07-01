@@ -119,34 +119,46 @@
                             IsOn="{x:Bind ViewModel.AutoCreateDatabase, Mode=TwoWay}" />
                     </Grid>
 
+                </StackPanel>
+            </Border>
+
+            <!--  About Section  -->
+            <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        FontSize="24"
+                        Style="{StaticResource TitleTextBlockStyle}"
+                        Text="NGORK" />
+
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock FontWeight="SemiBold" Text="Install Directory" />
+                            <TextBlock FontWeight="SemiBold" Text="DevNest" />
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Default directory for DevNest installations" />
+                                Text="Version 1.0.0" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="DeadWaves Studio" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="8">
-                            <TextBox
-                                x:Name="InstallDirectoryTextBox"
-                                HorizontalAlignment="Stretch"
-                                IsReadOnly="True"
-                                Text="{x:Bind ViewModel.InstallDirectory, Mode=OneWay}" />
-                            <Button
-                                x:Name="BrowseInstallDirectoryButton"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.BrowseFolderCommand}"
-                                Content="Browse" />
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button Content="Check for Updates" />
+                            <Button Content="About" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
+
             <!--  About Section  -->
             <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <StackPanel Spacing="16">
@@ -183,6 +195,7 @@
                     </Grid>
                 </StackPanel>
             </Border>
+
             <!--  Action Buttons  -->
             <StackPanel Orientation="Horizontal" Spacing="12">
                 <Button Command="{x:Bind ViewModel.ResetSettingsCommand}" Content="Reset to Defaults" />

@@ -45,22 +45,11 @@
 
         <!--  Services Section Title  -->
         <StackPanel Grid.Row="2" Margin="0,0,0,16">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock
-                    Grid.Column="0"
-                    FontSize="20"
-                    FontWeight="SemiBold"
-                    Text="Services" />
-
-                <Button
-                    Grid.Column="1"
-                    Content="Start All" />
-            </Grid>
+            <TextBlock
+                Grid.Column="0"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="Services" />
         </StackPanel>
 
 
@@ -125,7 +114,7 @@
                                         </StackPanel>
                                     </StackPanel>
 
-                                    
+
                                     <!--  Toggle Button  -->
                                     <ToggleButton
                                         Grid.Column="3"
@@ -134,8 +123,7 @@
                                         CommandParameter="{Binding}"
                                         Content="{x:Bind Status, Mode=OneWay, Converter={StaticResource ServiceStatusToActionTextConverter}}"
                                         IsChecked="{x:Bind IsRunning, Mode=OneWay}"
-                                        IsEnabled="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}"
-                                             />
+                                        IsEnabled="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -155,25 +143,25 @@
             </Grid>
         </ScrollViewer>
 
-        <Border Grid.Row="4" Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <Border
+            Grid.Row="4"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
             <StackPanel Spacing="16">
                 <TextBlock
-            FontSize="20"
-            FontWeight="SemiBold"
-            Text="Quick Actions" />
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Quick Actions" />
 
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                    <Button
-                        Command="{x:Bind ViewModel.OpenLogCommand}"
-                        Content="Open Debug Log" />
-                    <Button Content="Export Environment" />
-                    <Button Content="Reset All to Defaults" />
-                    <Button Content="Check for Updates" />
+                    <Button Content="Start all" />
+                    <Button Command="{x:Bind ViewModel.OpenPHPMyAdminCommand}" Content="PHPMyAdmin" />
+                    <Button Command="{x:Bind ViewModel.OpenLogCommand}" Content="Open Logs" />
                 </StackPanel>
             </StackPanel>
         </Border>
 
         <!--  Add button at the bottom to open logs  -->
-        
+
     </Grid>
 </Page>

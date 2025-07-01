@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace DevNest.Core.Models
 {
@@ -10,6 +12,7 @@ namespace DevNest.Core.Models
         private bool _isInstalled;
         private bool _isActive;
         private DateTime _createdDate;
+        private Process? _shareProcess;
 
         public string Name
         {
@@ -19,7 +22,7 @@ namespace DevNest.Core.Models
                 if (_name != value)
                 {
                     _name = value;
-                    OnPropertyChanged(nameof(Name));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -32,7 +35,7 @@ namespace DevNest.Core.Models
                 if (_path != value)
                 {
                     _path = value;
-                    OnPropertyChanged(nameof(Path));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -45,7 +48,7 @@ namespace DevNest.Core.Models
                 if (_url != value)
                 {
                     _url = value;
-                    OnPropertyChanged(nameof(Url));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -58,7 +61,7 @@ namespace DevNest.Core.Models
                 if (_isInstalled != value)
                 {
                     _isInstalled = value;
-                    OnPropertyChanged(nameof(IsInstalled));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -71,7 +74,7 @@ namespace DevNest.Core.Models
                 if (_isActive != value)
                 {
                     _isActive = value;
-                    OnPropertyChanged(nameof(IsActive));
+                    OnPropertyChanged();
                 }
             }
         }
@@ -84,13 +87,28 @@ namespace DevNest.Core.Models
                 if (_createdDate != value)
                 {
                     _createdDate = value;
-                    OnPropertyChanged(nameof(CreatedDate));
+                    OnPropertyChanged();
                 }
             }
         }
 
+        public Process? ShareProcess
+        {
+            get => _shareProcess;
+            set
+            {
+                if (_shareProcess != value)
+                {
+                    _shareProcess = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsSharing => ShareProcess != null && !ShareProcess.HasExited;
+
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged(string propertyName)
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null!)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

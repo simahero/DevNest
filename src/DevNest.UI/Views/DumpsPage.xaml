@@ -6,21 +6,36 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:DevNest.UI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DevNest.UI.ViewModels"
     mc:Ignorable="d">
 
-    <Grid Padding="32" Background="#0b0f17">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock
-                Margin="0,0,0,8"
-                FontSize="24"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Dumps" />
-        </StackPanel>
+        <!--  Header  -->
+        <Border
+            Grid.Row="0"
+            Margin="12"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            CornerRadius="8">
+            <StackPanel>
+                <TextBlock Style="{ThemeResource TitleTextBlockStyle}" Text="VarDumper Output" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Real-time PHP variable dumps from Symfony VarDumper" />
+            </StackPanel>
+        </Border>
+
+        <!--  TreeView for dumps  -->
+        <ScrollViewer Grid.Row="1" Margin="12,0,12,12">
+            <TreeView x:Name="DumpsTreeView">
+                <!--  TreeView content will be populated from code-behind  -->
+            </TreeView>
+        </ScrollViewer>
     </Grid>
 </Page>

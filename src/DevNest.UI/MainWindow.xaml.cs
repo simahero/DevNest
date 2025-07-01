@@ -1,7 +1,10 @@
 using DevNest.Core;
 using DevNest.UI.Services;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using WinRT.Interop;
 
 namespace DevNest.UI;
 
@@ -35,7 +38,23 @@ public sealed partial class MainWindow : Window
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
+        // Prevent the window from actually closing and hide it instead
+        args.Handled = true;
+
+        // Hide the window to system tray
+        _user32Dll.HideWindow();
+    }
+
+    public void RestoreFromTray()
+    {
+        _user32Dll.ShowWindow();
+        this.Activate();
+    }
+
+    public void ActuallyExit()
+    {
         _user32Dll.RemoveTrayIcon();
+        Application.Current.Exit();
     }
 
     private async void RootGrid_Loaded(object sender, RoutedEventArgs e)

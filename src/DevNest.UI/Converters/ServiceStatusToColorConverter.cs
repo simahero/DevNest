@@ -1,4 +1,4 @@
-using DevNest.Core.Models;
+using DevNest.Core.Enums;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using System;
