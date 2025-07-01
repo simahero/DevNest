@@ -1,4 +1,3 @@
-using PhpSerializerNET;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Net.Sockets;
@@ -38,32 +37,14 @@ public class VarDumperServer
                 int bytesRead = await stream.ReadAsync(buffer);
                 if (bytesRead == 0) break;
 
-                var b64rawData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                System.Diagnostics.Debug.WriteLine($"VarDumper received data: {b64rawData}");
+                var jsonData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                System.Diagnostics.Debug.WriteLine($"VarDumper received data: {jsonData}");
 
-                byte[] base64EncodedBytes = Convert.FromBase64String(b64rawData);
-                string decodedString = System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
-
-                try
+                var deserializedObject = JsonSerializer.Deserialize<object>(jsonData);
+                if (deserializedObject != null)
                 {
-                    var deserializedObject = PhpSerialization.Deserialize(decodedString);
-                    if (deserializedObject != null)
-                    {
-                        Dumps.Add(deserializedObject);
-                    }
-
-                    System.Diagnostics.Debug.WriteLine("Deserialized object:");
-                    System.Diagnostics.Debug.WriteLine(JsonSerializer.Serialize(deserializedObject));
-
-                    //DumpReceived?.Invoke(deserializedObject);
+                    Dumps.Add(deserializedObject);
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error deserializing data: {ex.Message}");
-                }
-
-                // Symfony VarDumper sends formatted dump data
-                // For now, just display the raw dump content
 
             }
         }

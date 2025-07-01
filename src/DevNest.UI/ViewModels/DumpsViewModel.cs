@@ -1,9 +1,9 @@
 using DevNest.Core.Dump;
 using DevNest.UI.Models;
-using System.Collections;
+using Microsoft.UI.Dispatching;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using Microsoft.UI.Dispatching;
+using System.Text.Json;
 
 namespace DevNest.UI.ViewModels
 {
@@ -19,10 +19,8 @@ namespace DevNest.UI.ViewModels
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
             Title = "VarDumper Output";
 
-            // Subscribe to collection changes
             _varDumperServer.Dumps.CollectionChanged += Dumps_CollectionChanged;
 
-            // Populate existing items
             PopulateTreeNodes();
         }
 
@@ -36,7 +34,6 @@ namespace DevNest.UI.ViewModels
 
         private void Dumps_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // Ensure this runs on the UI thread
             _dispatcherQueue.TryEnqueue(() => PopulateTreeNodes());
         }
 
@@ -62,109 +59,174 @@ namespace DevNest.UI.ViewModels
         {
             if (obj == null)
             {
-                node.Children.Add(new TreeNodeModel { Content = "null" });
+                node.Content += " = null";
                 return;
             }
 
-            if (obj is IDictionary dict)
+            if (obj is JsonElement jsonElement)
             {
-                foreach (DictionaryEntry entry in dict)
-                {
-                    var childNode = new TreeNodeModel()
-                    {
-                        Content = $"{entry.Key}: {GetValuePreview(entry.Value)}",
-                        IsExpanded = false
-                    };
-
-                    if (IsComplexObject(entry.Value))
-                    {
-                        PopulateNode(childNode, entry.Value);
-                    }
-
-                    node.Children.Add(childNode);
-                }
+                PopulateJsonElement(node, jsonElement);
             }
-            else if (obj is IList list)
+            else
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    var childNode = new TreeNodeModel()
-                    {
-                        Content = $"[{i}]: {GetValuePreview(list[i])}",
-                        IsExpanded = false
-                    };
-
-                    if (IsComplexObject(list[i]))
-                    {
-                        PopulateNode(childNode, list[i]);
-                    }
-
-                    node.Children.Add(childNode);
-                }
+                node.Content += $" = {obj}";
             }
-            else if (obj.GetType().IsClass && obj.GetType() != typeof(string))
+        }
+
+        private void PopulateJsonElement(TreeNodeModel parentNode, JsonElement element)
+        {
+            switch (element.ValueKind)
             {
-                // Handle object properties using reflection
-                var properties = obj.GetType().GetProperties();
-                foreach (var prop in properties)
+                case JsonValueKind.Object:
+                    PopulateJsonObject(parentNode, element);
+                    break;
+
+                case JsonValueKind.Array:
+                    PopulateJsonArray(parentNode, element);
+                    break;
+
+                case JsonValueKind.String:
+                    parentNode.Content = $"\"{element.GetString()}\" (string)";
+                    break;
+
+                case JsonValueKind.Number:
+                    if (element.GetRawText().Contains('.'))
+                        parentNode.Content = $"{element.GetRawText()} (float)";
+                    else
+                        parentNode.Content = $"{element.GetRawText()} (integer)";
+                    break;
+
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    parentNode.Content = $"{element.GetBoolean().ToString().ToLower()} (boolean)";
+                    break;
+
+                case JsonValueKind.Null:
+                    parentNode.Content = "null (null)";
+                    break;
+
+                default:
+                    parentNode.Content = $"{element.GetRawText()} (unknown)";
+                    break;
+            }
+        }
+
+        private void PopulateJsonObject(TreeNodeModel parentNode, JsonElement obj)
+        {
+            if (obj.TryGetProperty("__type", out var typeProperty))
+            {
+                var type = typeProperty.GetString();
+                parentNode.Content += $" ({type})";
+
+                if (obj.TryGetProperty("__class", out var classProperty))
                 {
-                    try
+                    parentNode.Content += $" {classProperty.GetString()}";
+                }
+
+                if (obj.TryGetProperty("__value", out var valueProperty))
+                {
+                    if (valueProperty.ValueKind == JsonValueKind.Object)
                     {
-                        var value = prop.GetValue(obj);
-                        var childNode = new TreeNodeModel()
+                        foreach (var prop in valueProperty.EnumerateObject())
                         {
-                            Content = $"{prop.Name}: {GetValuePreview(value)}",
+                            var childNode = new TreeNodeModel
+                            {
+                                Content = prop.Name,
+                                IsExpanded = false
+                            };
+
+                            if (prop.Value.ValueKind == JsonValueKind.Object || prop.Value.ValueKind == JsonValueKind.Array)
+                            {
+                                PopulateJsonElement(childNode, prop.Value);
+                            }
+                            else
+                            {
+                                // Store the property name and set the content to just the value
+                                var propName = childNode.Content;
+                                PopulateJsonElement(childNode, prop.Value);
+                                childNode.Content = $"{propName} = {childNode.Content}";
+                            }
+
+                            parentNode.Children.Add(childNode);
+                        }
+                    }
+                    else
+                    {
+                        var valueNode = new TreeNodeModel
+                        {
+                            Content = "value",
                             IsExpanded = false
                         };
 
-                        if (IsComplexObject(value))
+                        if (valueProperty.ValueKind == JsonValueKind.Object || valueProperty.ValueKind == JsonValueKind.Array)
                         {
-                            PopulateNode(childNode, value);
+                            PopulateJsonElement(valueNode, valueProperty);
+                        }
+                        else
+                        {
+                            var propName = valueNode.Content;
+                            PopulateJsonElement(valueNode, valueProperty);
+                            valueNode.Content = $"{propName} = {valueNode.Content}";
                         }
 
-                        node.Children.Add(childNode);
+                        parentNode.Children.Add(valueNode);
                     }
-                    catch
+                }
+
+                if (obj.TryGetProperty("__resourceType", out var resourceTypeProperty))
+                {
+                    var resourceNode = new TreeNodeModel
                     {
-                        // Skip properties that can't be accessed
-                    }
+                        Content = $"resourceType = \"{resourceTypeProperty.GetString()}\"",
+                        IsExpanded = false
+                    };
+                    parentNode.Children.Add(resourceNode);
                 }
             }
             else
             {
-                node.Children.Add(new TreeNodeModel { Content = obj.ToString() ?? "" });
+                parentNode.Content += " (object)";
+
+                foreach (var prop in obj.EnumerateObject())
+                {
+                    var childNode = new TreeNodeModel
+                    {
+                        Content = prop.Name,
+                        IsExpanded = false
+                    };
+
+                    if (prop.Value.ValueKind == JsonValueKind.Object || prop.Value.ValueKind == JsonValueKind.Array)
+                    {
+                        PopulateJsonElement(childNode, prop.Value);
+                    }
+                    else
+                    {
+                        var propName = childNode.Content;
+                        PopulateJsonElement(childNode, prop.Value);
+                        childNode.Content = $"{propName} = {childNode.Content}";
+                    }
+
+                    parentNode.Children.Add(childNode);
+                }
             }
         }
 
-        private string GetValuePreview(object? value)
+        private void PopulateJsonArray(TreeNodeModel parentNode, JsonElement array)
         {
-            if (value == null) return "null";
+            parentNode.Content += $" (array[{array.GetArrayLength()}])";
 
-            if (value is string str)
-                return $"\"{str}\"";
-
-            if (value is bool boolean)
-                return boolean.ToString().ToLower();
-
-            if (value is IDictionary dict)
-                return $"Dictionary ({dict.Count} items)";
-
-            if (value is IList list)
-                return $"Array ({list.Count} items)";
-
-            if (value.GetType().IsClass && value.GetType() != typeof(string))
-                return $"Object ({value.GetType().Name})";
-
-            return value.ToString() ?? "";
-        }
-
-        private bool IsComplexObject(object? value)
-        {
-            if (value == null) return false;
-
-            return value is IDictionary ||
-                   value is IList ||
-                   (value.GetType().IsClass && value.GetType() != typeof(string));
+            int index = 0;
+            foreach (var item in array.EnumerateArray())
+            {
+                var childNode = new TreeNodeModel
+                {
+                    Content = $"[{index}]",
+                    IsExpanded = false
+                };
+                PopulateJsonElement(childNode, item);
+                parentNode.Children.Add(childNode);
+                index++;
+            }
         }
     }
 }

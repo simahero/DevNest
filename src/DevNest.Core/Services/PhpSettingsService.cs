@@ -64,13 +64,13 @@ namespace DevNest.Core.Services
             {
                 await _fileSystemManager.CopyFileAsync(iniDevPath, iniPath);
 
-                var autoloadPath = Path.Combine(_pathManager.EtcPath, "php", "DevNestDumper", "vendor", "autoload.php");
+                var autoloadPath = Path.Combine(_pathManager.EtcPath, "php", "DevNestDumper", "index.php");
                 var prepend = $"auto_prepend_file = {autoloadPath}";
-                var env = $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912";
 
                 await _fileSystemManager.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
                 await _fileSystemManager.AppendAllTextAsync(iniPath, $"{prepend}\n");
-                await _fileSystemManager.AppendAllTextAsync(iniPath, $"{env}\n");
+                await _fileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912\n");
+                await _fileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
                 await _fileSystemManager.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
                 await _fileSystemManager.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
 

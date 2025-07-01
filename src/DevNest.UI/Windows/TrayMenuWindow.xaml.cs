@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace DevNest.UI
+namespace DevNest.UI.Windows
 {
     public sealed partial class TrayMenuWindow : Window
     {

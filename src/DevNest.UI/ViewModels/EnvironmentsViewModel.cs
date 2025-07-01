@@ -4,6 +4,7 @@ using DevNest.Core;
 using DevNest.Core.Files;
 using DevNest.Core.Models;
 using DevNest.UI.Services;
+using DevNest.UI.Windows;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -72,6 +73,31 @@ namespace DevNest.UI.ViewModels
                     UseShellExecute = true
                 });
             }
+        }
+
+        [RelayCommand]
+        private void OpenPHPIni()
+        {
+            var pathManager = ServiceLocator.GetService<PathManager>();
+            var phpIniPath = Path.Combine(pathManager.BinPath, "PHP", _settingsManager.CurrentSettings.PHP.Version, "php.ini");
+            if (File.Exists(phpIniPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = phpIniPath,
+                    UseShellExecute = true
+                });
+            }
+        }
+
+        [RelayCommand]
+        private void OpenPHPExtensionsWindow()
+        {
+            var pathManager = ServiceLocator.GetService<PathManager>();
+            var phpIniPath = Path.Combine(pathManager.BinPath, "PHP", _settingsManager.CurrentSettings.PHP.Version, "php.ini");
+
+            var extWindow = new PHPExtensionWindow(phpIniPath);
+            extWindow.Activate();
         }
 
         public override async Task LoadAsync()

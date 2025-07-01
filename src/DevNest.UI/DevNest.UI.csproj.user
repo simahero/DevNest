@@ -8,4 +8,9 @@
       <SubType>Designer</SubType>
     </AppxManifest>
   </ItemGroup>
+  <ItemGroup>
+    <Page Update="Windows\PHPExtensionWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
 </Project>

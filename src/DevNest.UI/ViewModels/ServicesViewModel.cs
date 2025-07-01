@@ -187,7 +187,16 @@ namespace DevNest.UI.ViewModels
 
             try
             {
-                await Windows.System.Launcher.LaunchFolderPathAsync(service.Path);
+                var pathManager = ServiceLocator.GetService<PathManager>();
+
+                if (Directory.Exists(service.Path))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = service.Path,
+                        UseShellExecute = true
+                    });
+                }
             }
             catch (Exception) { }
         }
