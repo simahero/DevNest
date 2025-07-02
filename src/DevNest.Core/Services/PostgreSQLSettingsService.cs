@@ -1,6 +1,7 @@
 using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.Files;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -43,16 +44,13 @@ namespace DevNest.Core.Services
             section.AddKey("AutoStart", serviceSettings.PostgreSQL.AutoStart.ToString().ToLower());
         }
 
-        /// <summary>
-        /// Returns the command and working directory for PostgreSQL, or (string.Empty, string.Empty) if not found.
-        /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.PostgreSQL.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var postgresPath = Path.Combine(service.Path, "bin", "postgres.exe");
-                if (await fileSystemManager.FileExistsAsync(postgresPath))
+                if (await FileSystemManager.FileExistsAsync(postgresPath))
                 {
                     return ($"\"{postgresPath}\"", Path.GetDirectoryName(postgresPath)!);
                 }

@@ -7,30 +7,19 @@ namespace DevNest.Core
 {
     public class StartupManager
     {
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
         private readonly LogManager _logManager;
 
         private const string RunKey = @"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
         private const string AppName = "DevNest";
 
-        public StartupManager(FileSystemManager fileSystemManager, PathManager pathManager, LogManager logManager)
+        public StartupManager(LogManager logManager)
         {
-            _fileSystemManager = fileSystemManager;
-            _pathManager = pathManager;
             _logManager = logManager;
-
         }
 
         public async Task CopyStarterDirOnStartup()
         {
-            if (_pathManager == null)
-            {
-                _logManager?.Log("IPathService is not available.");
-                return;
-            }
-
-            string exePath = _pathManager.BasePath;
+            string exePath = PathManager.BasePath;
 
             string[] possibleSources = new[]
             {
@@ -52,7 +41,8 @@ namespace DevNest.Core
             {
                 if (sourceDir != null)
                 {
-                    await _fileSystemManager.CopyDirectory(sourceDir, exePath, overwrite: false);
+                    await FileSystemManager.CopyDirectory(sourceDir, exePath, true);
+                    _logManager?.Log($"Copying starting directory.");
                 }
                 else
                 {
@@ -69,12 +59,12 @@ namespace DevNest.Core
         {
             string[] servers = { "apache", "nginx" };
 
-            string templateDir = _pathManager.TemplatesPath;
+            string templateDir = PathManager.TemplatesPath;
 
 
             foreach (var server in servers)
             {
-                string aliasDir = Path.Combine(_pathManager.EtcPath, server, "alias");
+                string aliasDir = Path.Combine(PathManager.EtcPath, server, "alias");
                 if (!Directory.Exists(aliasDir))
                 {
                     Directory.CreateDirectory(aliasDir);
@@ -84,8 +74,8 @@ namespace DevNest.Core
 
                 foreach (var tplFile in templateFiles)
                 {
-                    var templateContent = await _fileSystemManager.ReadAllTextAsync(tplFile);
-                    var rootPath = _pathManager.BasePath.Replace('\\', '/');
+                    var templateContent = await FileSystemManager.ReadAllTextAsync(tplFile);
+                    var rootPath = PathManager.BasePath.Replace('\\', '/');
                     var configContent = templateContent.Replace("<<ROOT>>", rootPath);
 
                     var tplFileName = Path.GetFileName(tplFile);
@@ -93,35 +83,51 @@ namespace DevNest.Core
                     string configFileName = tplFileName.Replace(prefix, "").Replace(".tpl", "");
                     var configFilePath = Path.Combine(aliasDir, configFileName);
 
-                    await _fileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                    await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
                 }
             }
         }
 
         public static void EnableStartup()
         {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey, true))
-            {
-                string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                key.SetValue(AppName, '"' + exePath + '"');
-            }
+#if WINDOWS
+                    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey, true))
+                    {
+                        if (key != null)
+                        {
+                            string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                            key.SetValue(AppName, '"' + exePath + '"');
+                        }
+                    }
+#endif
         }
 
         public static void DisableStartup()
         {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey, true))
-            {
-                key.DeleteValue(AppName, false);
-            }
+#if WINDOWS
+                    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey, true))
+                    {
+                        if (key != null)
+                        {
+                            key.DeleteValue(AppName, false);
+                        }
+                    }
+#endif
         }
 
         public static bool IsStartupEnabled()
         {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunKey, false))
-            {
-                var value = key.GetValue(AppName);
-                return value != null;
-            }
+#if WINDOWS
+                    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey, false))
+                    {
+                        if (key != null)
+                        {
+                            var value = key.GetValue(AppName);
+                            return value != null;
+                        }
+                    }
+#endif
+            return false;
         }
 
     }

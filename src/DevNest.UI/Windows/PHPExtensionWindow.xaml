@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:DevNest.UI.Windows"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:DevNest.UI.ViewModels"
     Title="PHP Extensions"
     mc:Ignorable="d">
 
@@ -77,19 +78,20 @@
                 VerticalScrollBarVisibility="Auto">
                 <GridView
                     x:Name="ExtensionsGridView"
-                    ItemsSource="{x:Bind extensions}"
+                    ItemsSource="{x:Bind ViewModel.Extensions, Mode=OneWay}"
                     SelectionMode="None">
 
                     <GridView.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <ItemsWrapGrid x:Name="MaxItemsWrapGrid"
-                           MaximumRowsOrColumns="5"
-                           Orientation="Horizontal"/>
+                            <ItemsWrapGrid
+                                x:Name="MaxItemsWrapGrid"
+                                MaximumRowsOrColumns="5"
+                                Orientation="Horizontal" />
                         </ItemsPanelTemplate>
                     </GridView.ItemsPanel>
 
                     <GridView.ItemTemplate>
-                        <DataTemplate x:DataType="local:PhpExtensionViewModel">
+                        <DataTemplate x:DataType="vm:PhpExtensionViewModel">
                             <Border
                                 MinWidth="200"
                                 Padding="12"
@@ -125,13 +127,13 @@
                 <Button
                     x:Name="CancelButton"
                     MinWidth="100"
-                    Click="CancelButton_Click"
+                    Command="{x:Bind ViewModel.CancelCommand}"
                     Content="Cancel"
                     Style="{ThemeResource DefaultButtonStyle}" />
                 <Button
                     x:Name="SaveButton"
                     MinWidth="100"
-                    Click="SaveButton_Click"
+                    Command="{x:Bind ViewModel.SaveAndCloseCommand}"
                     Content="Save Changes"
                     Style="{ThemeResource AccentButtonStyle}" />
             </StackPanel>

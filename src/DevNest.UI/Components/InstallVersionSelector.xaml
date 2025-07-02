@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="DevNest.UI.Components.InstallVersionSelector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:DevNest.UI.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:DevNest.UI.Components"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:CountToBooleanConverter x:Key="CountToBooleanConverter" />
+        <converters:CountToPlaceholderConverter x:Key="CountToPlaceholderConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="0,0,12,0">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                FontWeight="SemiBold"
+                Text="Install" />
+            <ComboBox
+                x:Name="VersionComboBox"
+                Grid.Column="1"
+                Margin="0,0,12,0"
+                HorizontalAlignment="Stretch"
+                DisplayMemberPath="Name"
+                IsEnabled="{x:Bind InstallableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                ItemsSource="{x:Bind InstallableVersions, Mode=OneWay}"
+                PlaceholderText="{x:Bind InstallableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                SelectedValue="{x:Bind SelectedVersion, Mode=TwoWay}"
+                SelectedValuePath="Name" />
+
+            <Button
+                x:Name="InstallButton"
+                Grid.Column="2"
+                Command="{x:Bind InstallCommand}"
+                CommandParameter="{x:Bind InstallCommandParameter}"
+                Content="Install" />
+        </Grid>
+
+        <StackPanel
+            x:Name="InstallationPanel"
+            Grid.Row="1"
+            Margin="0,24,0,12"
+            Visibility="{x:Bind ShowInstallationPanel, Mode=OneWay}">
+            <TextBlock
+                x:Name="InstallationStatusText"
+                Margin="0,0,0,8"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind InstallationStatus, Mode=OneWay}" />
+            <ProgressBar
+                x:Name="InstallationProgressBar"
+                IsIndeterminate="True"
+                Visibility="{x:Bind IsInstalling, Mode=OneWay}" />
+        </StackPanel>
+
+    </Grid>
+</UserControl>

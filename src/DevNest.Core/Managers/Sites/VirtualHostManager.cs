@@ -5,14 +5,10 @@ namespace DevNest.Core.Sites
 {
     public class VirtualHostManager
     {
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
         private readonly SettingsManager _settingsManager;
 
-        public VirtualHostManager(FileSystemManager fileSystemManager, PathManager pathManager, SettingsManager settingsManager)
+        public VirtualHostManager(SettingsManager settingsManager)
         {
-            _fileSystemManager = fileSystemManager;
-            _pathManager = pathManager;
             _settingsManager = settingsManager;
         }
 
@@ -30,7 +26,7 @@ namespace DevNest.Core.Sites
                 progress?.Report("Creating virtual host...");
 
                 var domain = $"{siteName}.test";
-                var documentRoot = Path.Combine(_pathManager.WwwPath, siteName);
+                var documentRoot = Path.Combine(PathManager.WwwPath, siteName);
 
                 await AddVirtualHostAsync(siteName, domain, documentRoot);
 
@@ -49,46 +45,46 @@ namespace DevNest.Core.Sites
         {
             var apacheConfig = await ProcessApacheSitesEnabledTemplateAsync(siteName, domain, documentRoot);
 
-            var apacheSitesEnabledPath = Path.Combine(_pathManager.EtcPath, "apache", "sites-enabled");
+            var apacheSitesEnabledPath = Path.Combine(PathManager.EtcPath, "apache", "sites-enabled");
 
-            if (!await _fileSystemManager.DirectoryExistsAsync(apacheSitesEnabledPath))
+            if (!await FileSystemManager.DirectoryExistsAsync(apacheSitesEnabledPath))
             {
-                await _fileSystemManager.CreateDirectoryAsync(apacheSitesEnabledPath);
+                await FileSystemManager.CreateDirectoryAsync(apacheSitesEnabledPath);
             }
 
             var apacheConfigFilePath = Path.Combine(apacheSitesEnabledPath, $"auto.{domain}.conf");
 
-            if (!await _fileSystemManager.FileExistsAsync(apacheConfigFilePath))
+            if (!await FileSystemManager.FileExistsAsync(apacheConfigFilePath))
             {
-                await _fileSystemManager.WriteAllTextAsync(apacheConfigFilePath, apacheConfig);
+                await FileSystemManager.WriteAllTextAsync(apacheConfigFilePath, apacheConfig);
             }
 
 
             var nginxConfig = await ProcessNginxSitesEnabledTemplateAsync(siteName, domain, documentRoot);
 
-            var nginxSitesEnabledPath = Path.Combine(_pathManager.EtcPath, "nginx", "sites-enabled");
+            var nginxSitesEnabledPath = Path.Combine(PathManager.EtcPath, "nginx", "sites-enabled");
 
-            if (!await _fileSystemManager.DirectoryExistsAsync(nginxSitesEnabledPath))
+            if (!await FileSystemManager.DirectoryExistsAsync(nginxSitesEnabledPath))
             {
-                await _fileSystemManager.CreateDirectoryAsync(nginxSitesEnabledPath);
+                await FileSystemManager.CreateDirectoryAsync(nginxSitesEnabledPath);
             }
 
             var nginxConfigFilePath = Path.Combine(nginxSitesEnabledPath, $"auto.{domain}.conf");
 
-            if (!await _fileSystemManager.FileExistsAsync(nginxConfigFilePath))
+            if (!await FileSystemManager.FileExistsAsync(nginxConfigFilePath))
             {
-                await _fileSystemManager.WriteAllTextAsync(nginxConfigFilePath, nginxConfig);
+                await FileSystemManager.WriteAllTextAsync(nginxConfigFilePath, nginxConfig);
             }
 
         }
 
         private async Task<string> ProcessApacheSitesEnabledTemplateAsync(string siteName, string domain, string documentRoot)
         {
-            var apacheTemplatePath = Path.Combine(_pathManager.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
+            var apacheTemplatePath = Path.Combine(PathManager.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
 
             try
             {
-                var templateContent = await _fileSystemManager.ReadAllTextAsync(apacheTemplatePath);
+                var templateContent = await FileSystemManager.ReadAllTextAsync(apacheTemplatePath);
 
                 var processedContent = templateContent
                     .Replace("<<PORT>>", "80")
@@ -107,11 +103,11 @@ namespace DevNest.Core.Sites
 
         private async Task<string> ProcessNginxSitesEnabledTemplateAsync(string siteName, string domain, string documentRoot)
         {
-            var nginxTemplatePath = Path.Combine(_pathManager.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
+            var nginxTemplatePath = Path.Combine(PathManager.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
 
             try
             {
-                var templateContent = await _fileSystemManager.ReadAllTextAsync(nginxTemplatePath);
+                var templateContent = await FileSystemManager.ReadAllTextAsync(nginxTemplatePath);
 
                 var processedContent = templateContent
                     .Replace("<<PORT>>", "8080")
@@ -130,12 +126,12 @@ namespace DevNest.Core.Sites
 
         private async Task AddHostsEntryAsync(string domain)
         {
-            var hostsFilePath = @"C:\Windows\System32\drivers\etc\hosts";
+            var hostsFilePath = @"C:\\Windows\\System32\\drivers\\etc\\hosts";
             var hostsEntry = $"127.0.0.1\t{domain}\t#DevNest";
 
-            if (await _fileSystemManager.FileExistsAsync(hostsFilePath))
+            if (await FileSystemManager.FileExistsAsync(hostsFilePath))
             {
-                var existingContent = await _fileSystemManager.ReadAllTextAsync(hostsFilePath);
+                var existingContent = await FileSystemManager.ReadAllTextAsync(hostsFilePath);
                 if (existingContent.Contains(domain))
                 {
                     return;
@@ -144,9 +140,9 @@ namespace DevNest.Core.Sites
 
             try
             {
-                var currentContent = await _fileSystemManager.ReadAllTextAsync(hostsFilePath);
+                var currentContent = await FileSystemManager.ReadAllTextAsync(hostsFilePath);
                 var newContent = currentContent + Environment.NewLine + hostsEntry;
-                await _fileSystemManager.WriteAllTextAsync(hostsFilePath, newContent);
+                await FileSystemManager.WriteAllTextAsync(hostsFilePath, newContent);
             }
             catch (Exception)
             {

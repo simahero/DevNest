@@ -1,6 +1,6 @@
 using DevNest.Core.Enums;
-using DevNest.Core.Files;
 using DevNest.Core.Models;
+using DevNest.Core.Files;
 using System.IO.Compression;
 
 
@@ -8,20 +8,12 @@ namespace DevNest.Core
 {
     public class InstallManager
     {
-        private readonly FileSystemManager _fileSystemService;
-        private readonly PathManager _pathService;
         private readonly SettingsManager _settingsManager;
         private readonly LogManager _logManager;
         private readonly HttpClient _httpClient;
 
-        public InstallManager(
-            FileSystemManager fileSystemManager,
-            PathManager pathManager,
-            SettingsManager settingsManager,
-            LogManager logManager)
+        public InstallManager(SettingsManager settingsManager, LogManager logManager)
         {
-            _fileSystemService = fileSystemManager;
-            _pathService = pathManager;
             _settingsManager = settingsManager;
             _logManager = logManager;
             _httpClient = new HttpClient();
@@ -46,7 +38,7 @@ namespace DevNest.Core
                 progress?.Report($"Starting installation of {serviceDefinition.Name}...");
 
                 var settings = await _settingsManager.LoadSettingsAsync();
-                var servicesDir = Path.Combine(_pathService.BinPath, serviceDefinition.ServiceType.ToString());
+                var servicesDir = Path.Combine(PathManager.BinPath, serviceDefinition.ServiceType.ToString());
                 var serviceDir = Path.Combine(servicesDir, serviceDefinition.Name);
 
                 if (await IsServiceInstalledAsync(serviceDefinition.Name))
@@ -59,7 +51,7 @@ namespace DevNest.Core
                 }
 
                 progress?.Report("Creating installation directory...");
-                await _fileSystemService.CreateDirectoryAsync(serviceDir);
+                await FileSystemManager.CreateDirectoryAsync(serviceDir);
 
                 progress?.Report($"Downloading {serviceDefinition.Name} from {serviceDefinition.Url}...");
                 var downloadPath = await DownloadServiceAsync(serviceDefinition.Url, progress);
@@ -76,9 +68,9 @@ namespace DevNest.Core
                 progress?.Report("Extracting files...");
                 await ExtractServiceAsync(downloadPath, serviceDir, serviceDefinition.HasAdditionalDir, progress);
 
-                if (await _fileSystemService.FileExistsAsync(downloadPath))
+                if (await FileSystemManager.FileExistsAsync(downloadPath))
                 {
-                    await _fileSystemService.DeleteFileAsync(downloadPath);
+                    await FileSystemManager.DeleteFileAsync(downloadPath);
                 }
 
                 object? serviceSettings = serviceDefinition.ServiceType switch
@@ -100,7 +92,7 @@ namespace DevNest.Core
                     if (string.IsNullOrEmpty(versionValue))
                     {
                         versionProp?.SetValue(serviceSettings, serviceDefinition.Name);
-                        _logManager.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
+                        _ = _logManager.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
                     }
                 }
 
@@ -129,8 +121,8 @@ namespace DevNest.Core
             try
             {
                 var settings = await _settingsManager.LoadSettingsAsync();
-                var serviceDir = Path.Combine(_pathService.BinPath, serviceName);
-                return await _fileSystemService.DirectoryExistsAsync(serviceDir);
+                var serviceDir = Path.Combine(PathManager.BinPath, serviceName);
+                return await FileSystemManager.DirectoryExistsAsync(serviceDir);
             }
             catch
             {
@@ -145,9 +137,9 @@ namespace DevNest.Core
                 progress?.Report($"Uninstalling {serviceName}...");
 
                 var settings = await _settingsManager.LoadSettingsAsync();
-                var serviceDir = Path.Combine(_pathService.BinPath, serviceName);
+                var serviceDir = Path.Combine(PathManager.BinPath, serviceName);
 
-                if (!await _fileSystemService.DirectoryExistsAsync(serviceDir))
+                if (!await FileSystemManager.DirectoryExistsAsync(serviceDir))
                 {
                     return new InstallationResultModel
                     {
@@ -156,7 +148,7 @@ namespace DevNest.Core
                     };
                 }
 
-                await _fileSystemService.DeleteDirectoryAsync(serviceDir);
+                await FileSystemManager.DeleteDirectoryAsync(serviceDir, true);
 
                 progress?.Report($"Successfully uninstalled {serviceName}");
 
@@ -198,7 +190,7 @@ namespace DevNest.Core
                 var contentBytes = await response.Content.ReadAsByteArrayAsync();
 
                 progress?.Report($"Saving to {tempPath}...");
-                await File.WriteAllBytesAsync(tempPath, contentBytes);
+                await FileSystemManager.WriteAllBytesAsync(tempPath, contentBytes);
 
                 return tempPath;
             }
@@ -238,7 +230,7 @@ namespace DevNest.Core
                     var destinationDir = Path.GetDirectoryName(destinationFile);
                     if (!string.IsNullOrEmpty(destinationDir))
                     {
-                        await _fileSystemService.CreateDirectoryAsync(destinationDir);
+                        await FileSystemManager.CreateDirectoryAsync(destinationDir);
                     }
 
                     entry.ExtractToFile(destinationFile, overwrite: true);
@@ -250,7 +242,7 @@ namespace DevNest.Core
                 progress?.Report("Copying file...");
                 var fileName = Path.GetFileName(archivePath);
                 var destinationFile = Path.Combine(destinationPath, fileName);
-                await _fileSystemService.CopyFileAsync(archivePath, destinationFile);
+                await FileSystemManager.CopyFileAsync(archivePath, destinationFile);
             }
         }
 

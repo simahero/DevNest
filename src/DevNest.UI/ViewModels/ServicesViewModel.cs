@@ -17,8 +17,6 @@ namespace DevNest.UI.ViewModels
     public partial class ServicesViewModel : BaseViewModel
     {
         private readonly ServiceManager _serviceManager;
-        private readonly PathManager _pathManager;
-        private readonly FileSystemManager _fileSystemManager;
         private readonly InstallManager _installManager;
 
         [ObservableProperty]
@@ -42,11 +40,9 @@ namespace DevNest.UI.ViewModels
         public ObservableCollection<ServiceType> AvailableServiceTypes { get; } = new();
         public ObservableCollection<string> AvailableVersions { get; } = new();
 
-        public ServicesViewModel(ServiceManager serviceManager, PathManager pathManager, FileSystemManager fileSystemManager, InstallManager installManager)
+        public ServicesViewModel(ServiceManager serviceManager, InstallManager installManager)
         {
             _serviceManager = serviceManager;
-            _pathManager = pathManager;
-            _fileSystemManager = fileSystemManager;
             _installManager = installManager;
             Title = "Services";
         }
@@ -187,9 +183,7 @@ namespace DevNest.UI.ViewModels
 
             try
             {
-                var pathManager = ServiceLocator.GetService<PathManager>();
-
-                if (Directory.Exists(service.Path))
+                if (await FileSystemManager.DirectoryExistsAsync(service.Path))
                 {
                     Process.Start(new ProcessStartInfo
                     {
@@ -202,11 +196,10 @@ namespace DevNest.UI.ViewModels
         }
 
         [RelayCommand]
-        private void OpenServiceSettings()
+        private async Task OpenServiceSettings()
         {
-            var pathManager = ServiceLocator.GetService<PathManager>();
-            var settingsPath = Path.Combine(pathManager.ConfigPath, "services.ini");
-            if (File.Exists(settingsPath))
+            var settingsPath = Path.Combine(PathManager.ConfigPath, "services.ini");
+            if (await FileSystemManager.FileExistsAsync(settingsPath))
             {
                 Process.Start(new ProcessStartInfo
                 {

@@ -1,6 +1,7 @@
 using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.Files;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -56,16 +57,13 @@ namespace DevNest.Core.Services
             section.AddKey("AutoStart", serviceSettings.Node.AutoStart.ToString().ToLower());
         }
 
-        /// <summary>
-        /// Returns the command and working directory for Node, or (string.Empty, string.Empty) if not found.
-        /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Node.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var nodePath = Path.Combine(service.Path, "node.exe");
-                if (await fileSystemManager.FileExistsAsync(nodePath))
+                if (await FileSystemManager.FileExistsAsync(nodePath))
                 {
                     return ($"\"{nodePath}\"", Path.GetDirectoryName(nodePath)!);
                 }

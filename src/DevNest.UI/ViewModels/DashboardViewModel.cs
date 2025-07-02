@@ -47,6 +47,13 @@ namespace DevNest.UI.ViewModels
                     {
                         InstalledServices.Add(service);
                     }
+                    else
+                    {
+                        existingService.Command = service.Command;
+                        existingService.IsSelected = service.IsSelected;
+                        existingService.Path = service.Path;
+                        existingService.WorkingDirectory = service.WorkingDirectory;
+                    }
                 }
 
             }
@@ -77,8 +84,7 @@ namespace DevNest.UI.ViewModels
         [RelayCommand]
         private void OpenLog()
         {
-            var pathManager = ServiceLocator.GetService<PathManager>();
-            var logPath = Path.Combine(pathManager.LogsPath);
+            var logPath = Path.Combine(PathManager.LogsPath);
             if (Directory.Exists(logPath))
             {
                 Process.Start(new ProcessStartInfo

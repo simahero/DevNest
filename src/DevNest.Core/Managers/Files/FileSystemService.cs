@@ -1,62 +1,43 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+
 namespace DevNest.Core.Files
 {
-    public class FileSystemManager
+    public static class FileSystemManager
     {
-        public Task<bool> DirectoryExistsAsync(string path)
+        public static Task<bool> DirectoryExistsAsync(string path)
         {
-            return Task.FromResult(Directory.Exists(path));
+            return Task.Run(() => Directory.Exists(path));
         }
 
-        public Task<bool> FileExistsAsync(string path)
+        public static Task<bool> FileExistsAsync(string path)
         {
-            return Task.FromResult(File.Exists(path));
+            return Task.Run(() => File.Exists(path));
         }
 
-        public Task CreateDirectoryAsync(string path)
+        public static Task CreateDirectoryAsync(string path)
         {
-            Directory.CreateDirectory(path);
-            return Task.CompletedTask;
+            return Task.Run(() => Directory.CreateDirectory(path));
         }
 
-        public Task DeleteDirectoryAsync(string path, bool recursive = false)
+        public static async Task<IEnumerable<string>> GetFilesAsync(string directory, string searchPattern = "*")
         {
-            Directory.Delete(path, recursive);
-            return Task.CompletedTask;
+            return (await Task.Run(() => Directory.GetFiles(directory, searchPattern))).AsEnumerable();
         }
 
-        public async Task<string> ReadAllTextAsync(string filePath)
+        public static async Task<IEnumerable<string>> GetDirectoriesAsync(string directory)
         {
-            return await File.ReadAllTextAsync(filePath);
+            return (await Task.Run(() => Directory.GetDirectories(directory))).AsEnumerable();
         }
 
-        public async Task WriteAllTextAsync(string filePath, string content)
+        public static Task<FileInfo> GetFileInfoAsync(string filePath)
         {
-            await File.WriteAllTextAsync(filePath, content);
+            return Task.Run(() => new FileInfo(filePath));
         }
 
-        public async Task AppendAllTextAsync(string filePath, string content)
-        {
-            await File.AppendAllTextAsync(filePath, content);
-        }
-
-        public Task<IEnumerable<string>> GetFilesAsync(string directory, string searchPattern = "*")
-        {
-            var files = Directory.GetFiles(directory, searchPattern);
-            return Task.FromResult<IEnumerable<string>>(files);
-        }
-
-        public Task<IEnumerable<string>> GetDirectoriesAsync(string directory)
-        {
-            var directories = Directory.GetDirectories(directory);
-            return Task.FromResult<IEnumerable<string>>(directories);
-        }
-
-        public async Task<FileInfo> GetFileInfoAsync(string filePath)
-        {
-            return await Task.FromResult(new FileInfo(filePath));
-        }
-
-        public async Task CopyDirectory(string sourceDir, string destDir, bool overwrite)
+        public static async Task CopyDirectory(string sourceDir, string destDir, bool overwrite)
         {
             await Task.Run(() =>
             {
@@ -73,28 +54,95 @@ namespace DevNest.Core.Files
                     var relativePath = Path.GetRelativePath(sourceDir, file);
                     var destFile = Path.Combine(destDir, relativePath);
                     Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
-                    if (!File.Exists(destFile))
+                    if (!File.Exists(destFile) || overwrite)
                     {
-                        File.Copy(file, destFile, overwrite: false);
+                        File.Copy(file, destFile, overwrite);
                     }
                 }
             });
         }
 
-        public async Task CopyFileAsync(string sourceFile, string destinationFile)
+        public static async Task CopyFileAsync(string sourceFile, string destinationFile)
         {
             await Task.Run(() => File.Copy(sourceFile, destinationFile));
         }
 
-        public async Task MoveFileAsync(string sourceFile, string destinationFile)
+        public static async Task MoveFileAsync(string sourceFile, string destinationFile)
         {
             await Task.Run(() => File.Move(sourceFile, destinationFile));
         }
 
-        public Task DeleteFileAsync(string filePath)
+        public static Task<string> ReadAllTextAsync(string path)
         {
-            File.Delete(filePath);
-            return Task.CompletedTask;
+            return Task.Run(() => File.ReadAllText(path));
         }
+
+        public static Task DeleteDirectoryAsync(string path, bool recursive)
+        {
+            return Task.Run(() => Directory.Delete(path, recursive));
+        }
+
+        public static Task DeleteFileAsync(string path)
+        {
+            return Task.Run(() => File.Delete(path));
+        }
+
+        public static Task<DateTime> GetDirectoryCreationTimeAsync(string path)
+        {
+            return Task.Run(() => Directory.GetCreationTime(path));
+        }
+
+        public static async Task AppendAllTextAsync(string path, string contents)
+        {
+            await Task.Run(() => File.AppendAllText(path, contents));
+        }
+
+        public static async Task WriteAllTextAsync(string path, string contents)
+        {
+            await WriteFileWithRetryAsync(path, contents);
+        }
+
+        public static async Task WriteAllBytesAsync(string path, byte[] bytes)
+        {
+            await Task.Run(() => File.WriteAllBytes(path, bytes));
+        }
+
+        public static async Task<string> ReadFileWithRetryAsync(string filePath, int maxRetries = 3)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    using var reader = new StreamReader(stream);
+                    return await reader.ReadToEndAsync();
+                }
+                catch (IOException) when (i < maxRetries - 1)
+                {
+                    await Task.Delay(100 * (i + 1)); // Progressive delay
+                }
+            }
+            throw new IOException($"Could not read file {filePath} after {maxRetries} attempts");
+        }
+
+        public static async Task WriteFileWithRetryAsync(string filePath, string content, int maxRetries = 3)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+                    using var writer = new StreamWriter(stream);
+                    await writer.WriteAsync(content);
+                    return;
+                }
+                catch (IOException) when (i < maxRetries - 1)
+                {
+                    await Task.Delay(100 * (i + 1)); // Progressive delay
+                }
+            }
+            throw new IOException($"Could not write file {filePath} after {maxRetries} attempts");
+        }
+
     }
 }

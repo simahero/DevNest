@@ -12,14 +12,7 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.MySQL;
         public string ServiceName => Type.ToString();
 
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
-
-        public MySQLSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
-        {
-            _fileSystemManager = fileSystemManager;
-            _pathManager = pathManager;
-        }
+        public MySQLSettingsService() { }
 
         public MySQLSettings GetDefaultConfiguration()
         {
@@ -75,20 +68,20 @@ namespace DevNest.Core.Services
 
         private async Task GenerateMySQLConfigurationAsync(SettingsModel settings)
         {
-            string TemplateFilePath = Path.Combine(_pathManager.TemplatesPath, "mysql.ini.tpl");
+            string TemplateFilePath = Path.Combine(PathManager.TemplatesPath, "mysql.ini.tpl");
 
             try
             {
 
-                if (!await _fileSystemManager.FileExistsAsync(TemplateFilePath))
+                if (!await FileSystemManager.FileExistsAsync(TemplateFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"MySQL template file not found: {TemplateFilePath}");
                     return;
                 }
 
-                var templateContent = await _fileSystemManager.ReadAllTextAsync(TemplateFilePath);
+                var templateContent = await FileSystemManager.ReadAllTextAsync(TemplateFilePath);
 
-                var dataDir = Path.Combine(_pathManager.DataPath, settings.MySQL.Version);
+                var dataDir = Path.Combine(PathManager.DataPath, settings.MySQL.Version);
                 var password = settings.MySQL.RootPassword;
                 var port = settings.MySQL.Port.ToString();
 
@@ -97,21 +90,21 @@ namespace DevNest.Core.Services
                     .Replace("<<PASS>>", password)
                     .Replace("<<PORT>>", port);
 
-                var configDir = Path.Combine(_pathManager.BinPath, "MySQL", settings.MySQL.Version);
+                var configDir = Path.Combine(PathManager.BinPath, "MySQL", settings.MySQL.Version);
 
                 var configFilePath = Path.Combine(configDir, "my.ini");
-                await _fileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
 
                 var ibdata1Path = Path.Combine(dataDir, "ibdata1");
 
-                if (!await _fileSystemManager.DirectoryExistsAsync(dataDir))
+                if (!await FileSystemManager.DirectoryExistsAsync(dataDir))
                 {
-                    await _fileSystemManager.CreateDirectoryAsync(dataDir);
+                    await FileSystemManager.CreateDirectoryAsync(dataDir);
                 }
 
-                if (!await _fileSystemManager.FileExistsAsync(ibdata1Path))
+                if (!await FileSystemManager.FileExistsAsync(ibdata1Path))
                 {
-                    var binPath = Path.Combine(_pathManager.BinPath, "MySQL", settings.MySQL.Version, "bin");
+                    var binPath = Path.Combine(PathManager.BinPath, "MySQL", settings.MySQL.Version, "bin");
                     var mysqldPath = Path.Combine(binPath, "mysqld.exe");
 
                     var process = new Process
@@ -146,14 +139,14 @@ namespace DevNest.Core.Services
         /// <summary>
         /// Returns the command and working directory for MySQL, or (string.Empty, string.Empty) if not found.
         /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, FileSystemManager fileSystemManager)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.MySQL.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var binPath = Path.Combine(service.Path, "bin");
                 var mysqldPath = Path.Combine(binPath, "mysqld.exe");
-                if (await fileSystemManager.FileExistsAsync(mysqldPath))
+                if (await FileSystemManager.FileExistsAsync(mysqldPath))
                 {
                     return ($"\"{mysqldPath}\"", binPath);
                 }

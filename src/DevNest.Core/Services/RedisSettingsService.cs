@@ -1,6 +1,7 @@
 using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.Files;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -47,16 +48,13 @@ namespace DevNest.Core.Services
             section.AddKey("AutoStart", serviceSettings.Redis.AutoStart.ToString().ToLower());
         }
 
-        /// <summary>
-        /// Returns the command and working directory for Redis, or (string.Empty, string.Empty) if not found.
-        /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Redis.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var redisPath = Path.Combine(service.Path, "redis-server.exe");
-                if (await fileSystemManager.FileExistsAsync(redisPath))
+                if (await FileSystemManager.FileExistsAsync(redisPath))
                 {
                     return ($"\"{redisPath}\"", Path.GetDirectoryName(redisPath)!);
                 }

@@ -13,7 +13,6 @@ namespace DevNest.UI.ViewModels
     public partial class SitesViewModel : BaseViewModel
     {
         private readonly SiteManager _siteManager;
-        private readonly PathManager _pathManager;
         private readonly SettingsManager _settingsManager;
 
         [ObservableProperty]
@@ -34,10 +33,9 @@ namespace DevNest.UI.ViewModels
         public ObservableCollection<SiteModel> Sites { get; } = new();
         public ObservableCollection<SiteDefinition> AvailableSiteDefinitions { get; } = new();
 
-        public SitesViewModel(SiteManager siteManager, PathManager pathManager, SettingsManager settingsManager)
+        public SitesViewModel(SiteManager siteManager, SettingsManager settingsManager)
         {
             _siteManager = siteManager;
-            _pathManager = pathManager;
             _settingsManager = settingsManager;
             Title = "Sites";
         }
@@ -111,7 +109,6 @@ namespace DevNest.UI.ViewModels
                 SelectedSiteDefinition = null;
                 SelectedSiteName = string.Empty;
 
-                await Task.Delay(3000);
                 ShowInstallationPanel = false;
             }
             catch (Exception ex)
@@ -142,7 +139,7 @@ namespace DevNest.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task OpenInVSCode(SiteModel? site)
+        private void OpenInVSCode(SiteModel? site)
         {
             if (site == null) return;
 
@@ -159,7 +156,7 @@ namespace DevNest.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task OpenInTerminal(SiteModel? site)
+        private void OpenInTerminal(SiteModel? site)
         {
             if (site == null)
                 return;
@@ -253,7 +250,7 @@ namespace DevNest.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task OpenInBrowser(SiteModel? site)
+        private void OpenInBrowser(SiteModel? site)
         {
             if (site == null) return;
 

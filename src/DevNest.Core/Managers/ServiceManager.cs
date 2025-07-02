@@ -1,9 +1,9 @@
 using DevNest.Core.Commands;
 using DevNest.Core.Enums;
-using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
+using DevNest.Core.Files;
 using IniParser;
 using System.Diagnostics;
 
@@ -15,17 +15,12 @@ namespace DevNest.Core
         private readonly SettingsManager _settingsManager;
         private readonly LogManager _logManager = null!;
         private readonly CommandManager _commandManager;
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
-
         private readonly IUIDispatcher _uiDispatcher;
 
-        public ServiceManager(SettingsManager settingsManager, CommandManager commandManager, FileSystemManager fileSystemManager, PathManager pathManager, IUIDispatcher uiDispatcher)
+        public ServiceManager(SettingsManager settingsManager, CommandManager commandManager, IUIDispatcher uiDispatcher)
         {
             _settingsManager = settingsManager;
-            _fileSystemManager = fileSystemManager;
             _commandManager = commandManager;
-            _pathManager = pathManager;
             _uiDispatcher = uiDispatcher;
         }
 
@@ -36,14 +31,14 @@ namespace DevNest.Core
                 var allServices = new List<ServiceModel>();
 
                 var settings = await _settingsManager.LoadSettingsAsync();
-                var binDirectory = _pathManager.BinPath;
-                var categoryDirectories = await _fileSystemManager.GetDirectoriesAsync(binDirectory);
+                var binDirectory = PathManager.BinPath;
+                var categoryDirectories = await FileSystemManager.GetDirectoriesAsync(binDirectory);
                 foreach (var categoryDir in categoryDirectories)
                 {
                     var categoryName = Path.GetFileName(categoryDir);
                     if (Enum.TryParse<ServiceType>(categoryName, out var serviceType))
                     {
-                        var serviceDirectories = await _fileSystemManager.GetDirectoriesAsync(categoryDir);
+                        var serviceDirectories = await FileSystemManager.GetDirectoriesAsync(categoryDir);
                         foreach (var serviceDir in serviceDirectories)
                         {
                             var serviceName = Path.GetFileName(serviceDir);
@@ -78,12 +73,12 @@ namespace DevNest.Core
 
         public async Task<IEnumerable<ServiceDefinition>> GetAvailableServices()
         {
-            var servicesFilePath = Path.Combine(_pathManager.ConfigPath, "services.ini");
-            if (!await _fileSystemManager.FileExistsAsync(servicesFilePath))
+            var servicesFilePath = Path.Combine(PathManager.ConfigPath, "services.ini");
+            if (!await FileSystemManager.FileExistsAsync(servicesFilePath))
             {
                 return Enumerable.Empty<ServiceDefinition>();
             }
-            var iniContent = await _fileSystemManager.ReadAllTextAsync(servicesFilePath);
+            var iniContent = await FileSystemManager.ReadAllTextAsync(servicesFilePath);
             var parser = new FileIniDataParser();
             var data = parser.Parser.Parse(iniContent);
             var allServices = new List<ServiceDefinition>();
@@ -238,13 +233,14 @@ namespace DevNest.Core
             {
                 return service.ServiceType switch
                 {
-                    ServiceType.Apache => await ApacheSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
-                    ServiceType.MySQL => await MySQLSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
-                    ServiceType.Nginx => await NginxSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
-                    ServiceType.Node => await NodeSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
-                    ServiceType.Redis => await RedisSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
-                    ServiceType.PostgreSQL => await PostgreSQLSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
-                    ServiceType.MongoDB => await MongoDBSettingsService.GetCommandAsync(service, settings, _fileSystemManager),
+                    ServiceType.Apache => await ApacheSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.MySQL => await MySQLSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.Nginx => await NginxSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.Node => await NodeSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.Redis => await RedisSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.PostgreSQL => await PostgreSQLSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.MongoDB => await MongoDBSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.PHP => await PHPSettingsService.GetCommandAsync(service, settings),
                     _ => await Task.FromResult((string.Empty, string.Empty)),
                 };
             }

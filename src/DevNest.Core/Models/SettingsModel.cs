@@ -42,6 +42,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class MySQLSettings : ObservableObject
@@ -59,6 +60,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class PHPSettings : ObservableObject
@@ -67,6 +69,7 @@ namespace DevNest.Core.Models
         private string _version = "";
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class NodeSettings : ObservableObject
@@ -84,6 +87,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class RedisSettings : ObservableObject
@@ -98,6 +102,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class PostgreSQLSettings : ObservableObject
@@ -112,6 +117,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class NginxSettings : ObservableObject
@@ -126,6 +132,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
     public partial class MongoDBSettings : ObservableObject
@@ -140,6 +147,7 @@ namespace DevNest.Core.Models
         private bool _autoStart = false;
 
         public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
 }

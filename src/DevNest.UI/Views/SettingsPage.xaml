@@ -198,7 +198,6 @@
 
             <!--  Action Buttons  -->
             <StackPanel Orientation="Horizontal" Spacing="12">
-                <Button Command="{x:Bind ViewModel.ResetSettingsCommand}" Content="Reset to Defaults" />
                 <Button Content="Export Settings" />
                 <Button Content="Import Settings" />
             </StackPanel>

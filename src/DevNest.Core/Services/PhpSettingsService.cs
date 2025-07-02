@@ -11,14 +11,7 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.PHP;
         public string ServiceName => Type.ToString();
 
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
-
-        public PHPSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
-        {
-            _fileSystemManager = fileSystemManager;
-            _pathManager = pathManager;
-        }
+        public PHPSettingsService() { }
 
         public PHPSettings GetDefaultConfiguration()
         {
@@ -46,36 +39,51 @@ namespace DevNest.Core.Services
 
             section.AddKey("Version", serviceSettings.PHP.Version ?? string.Empty);
 
-            _ = Task.Run(async () => await GenerateApacheConfigurationAsync(serviceSettings));
+            _ = Task.Run(async () => await GeneratePHPConfigurationAsync(serviceSettings));
         }
 
-        private async Task GenerateApacheConfigurationAsync(SettingsModel settings)
+        private async Task GeneratePHPConfigurationAsync(SettingsModel settings)
         {
-            var phpBinDir = Path.Combine(_pathManager.BinPath, "PHP", settings.PHP.Version);
+            var phpBinDir = Path.Combine(PathManager.BinPath, "PHP", settings.PHP.Version);
             var iniDevPath = Path.Combine(phpBinDir, "php.ini-development");
             var iniPath = Path.Combine(phpBinDir, "php.ini");
 
-            if (!await _fileSystemManager.FileExistsAsync(iniDevPath))
+            if (!await FileSystemManager.FileExistsAsync(iniDevPath))
             {
                 return;
             }
 
-            if (!await _fileSystemManager.FileExistsAsync(iniPath))
+            if (!await FileSystemManager.FileExistsAsync(iniPath))
             {
-                await _fileSystemManager.CopyFileAsync(iniDevPath, iniPath);
+                await FileSystemManager.CopyFileAsync(iniDevPath, iniPath);
 
-                var autoloadPath = Path.Combine(_pathManager.EtcPath, "php", "DevNestDumper", "index.php");
+                var autoloadPath = Path.Combine(PathManager.EtcPath, "php", "DevNestDumper", "index.php");
                 var prepend = $"auto_prepend_file = {autoloadPath}";
 
-                await _fileSystemManager.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
-                await _fileSystemManager.AppendAllTextAsync(iniPath, $"{prepend}\n");
-                await _fileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912\n");
-                await _fileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
-                await _fileSystemManager.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
-                await _fileSystemManager.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
+                await FileSystemManager.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
+                await FileSystemManager.AppendAllTextAsync(iniPath, $"{prepend}\n");
+                await FileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912\n");
+                await FileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
+                await FileSystemManager.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
+                await FileSystemManager.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
 
             }
 
         }
+
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        {
+            var selectedVersion = settings.PHP.Version;
+            if (!string.IsNullOrEmpty(selectedVersion))
+            {
+                var binPath = Path.Combine(service.Path, "php-cgi.exe");
+                if (await FileSystemManager.FileExistsAsync(binPath))
+                {
+                    return ($"\"{binPath}\" -b 127.0.0.1:9003", service.Path);
+                }
+            }
+            return (string.Empty, string.Empty);
+        }
+
     }
 }

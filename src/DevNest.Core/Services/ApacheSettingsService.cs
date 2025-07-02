@@ -1,8 +1,7 @@
-using DevNest.Core;
+using DevNest.Core.Enums;
 using DevNest.Core.Files;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using DevNest.Core.Enums;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -12,14 +11,10 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.Apache;
         public string ServiceName => Type.ToString();
 
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
         private readonly IServiceProvider _serviceProvider;
 
-        public ApacheSettingsService(FileSystemManager fileSystemManager, PathManager pathManager, IServiceProvider serviceProvider)
+        public ApacheSettingsService(IServiceProvider serviceProvider)
         {
-            _fileSystemManager = fileSystemManager;
-            _pathManager = pathManager;
             _serviceProvider = serviceProvider;
         }
 
@@ -73,7 +68,7 @@ namespace DevNest.Core.Services
 
         private async Task GenerateApacheConfigurationAsync(SettingsModel settings)
         {
-            string TemplateFilePath = Path.Combine(_pathManager.TemplatesPath, "httpd.conf.tpl");
+            string TemplateFilePath = Path.Combine(PathManager.TemplatesPath, "httpd.conf.tpl");
 
             try
             {
@@ -82,21 +77,21 @@ namespace DevNest.Core.Services
                     return;
                 }
 
-                if (!await _fileSystemManager.FileExistsAsync(TemplateFilePath))
+                if (!await FileSystemManager.FileExistsAsync(TemplateFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"Apache template file not found: {TemplateFilePath}");
                     return;
                 }
 
-                var templateContent = await _fileSystemManager.ReadAllTextAsync(TemplateFilePath);
+                var templateContent = await FileSystemManager.ReadAllTextAsync(TemplateFilePath);
 
 
-                var srvRoot = Path.Combine(_pathManager.BinPath, "Apache", settings.Apache.Version).Replace('\\', '/');
-                var logsPath = _pathManager.LogsPath.Replace('\\', '/');
+                var srvRoot = Path.Combine(PathManager.BinPath, "Apache", settings.Apache.Version).Replace('\\', '/');
+                var logsPath = Path.Combine(PathManager.LogsPath).Replace('\\', '/');
                 var documentRoot = settings.Apache.DocumentRoot.Replace('\\', '/');
                 var port = settings.Apache.Port.ToString();
-                var phpPath = Path.Combine(_pathManager.BinPath, "PHP", settings.PHP.Version).Replace('\\', '/');
-                var etcPath = _pathManager.EtcPath.Replace('\\', '/');
+                var phpPath = Path.Combine(PathManager.BinPath, "PHP", settings.PHP.Version).Replace('\\', '/');
+                var etcPath = PathManager.EtcPath.Replace('\\', '/');
 
                 var configContent = templateContent
                     .Replace("<<SRVROOT>>", srvRoot)
@@ -109,7 +104,7 @@ namespace DevNest.Core.Services
                 var configDir = Path.Combine(srvRoot, "conf");
 
                 var configFilePath = Path.Combine(configDir, "httpd.conf");
-                await _fileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
 
                 System.Diagnostics.Debug.WriteLine($"Apache configuration generated: {configFilePath}");
             }
@@ -121,18 +116,17 @@ namespace DevNest.Core.Services
 
         private async Task GenerateApacheVirtualHosts(SettingsModel settings)
         {
-            // Resolve SiteManager only when needed to avoid circular dependency
             var siteManager = (SiteManager?)_serviceProvider.GetService(typeof(SiteManager));
             if (siteManager == null)
             {
                 throw new InvalidOperationException("SiteManager service is not registered in the service provider.");
             }
             var sites = await siteManager.GetInstalledSitesAsync();
-            var apacheTemplatePath = Path.Combine(_pathManager.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
+            var apacheTemplatePath = Path.Combine(PathManager.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
 
-            var templateContent = await _fileSystemManager.ReadAllTextAsync(apacheTemplatePath);
+            var templateContent = await FileSystemManager.ReadAllTextAsync(apacheTemplatePath);
 
-            var apacheSitesEnabledPath = Path.Combine(_pathManager.EtcPath, "apache", "sites-enabled");
+            var apacheSitesEnabledPath = Path.Combine(PathManager.EtcPath, "apache", "sites-enabled");
 
             if (Directory.Exists(apacheSitesEnabledPath))
             {
@@ -152,12 +146,12 @@ namespace DevNest.Core.Services
                 {
                     var processedContent = templateContent
                         .Replace("<<PORT>>", settings.Apache.Port.ToString())
-                        .Replace("<<PROJECT_DIR>>", Path.Combine(_pathManager.WwwPath, site.Name))
+                        .Replace("<<PROJECT_DIR>>", Path.Combine(PathManager.WwwPath, site.Name))
                         .Replace("<<HOSTNAME>>", $"{site.Name}.test")
                         .Replace("<<SITENAME>>", site.Name);
 
                     var apacheConfigFilePath = Path.Combine(apacheSitesEnabledPath, $"auto.{site.Name}.test.conf");
-                    await _fileSystemManager.WriteAllTextAsync(apacheConfigFilePath, processedContent);
+                    await FileSystemManager.WriteAllTextAsync(apacheConfigFilePath, processedContent);
                 }
                 catch (Exception ex)
                 {
@@ -166,10 +160,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        /// <summary>
-        /// Returns the command and working directory for Apache, or (string.Empty, string.Empty) if not found.
-        /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, FileSystemManager fileSystemManager)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.Apache.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
@@ -177,7 +168,7 @@ namespace DevNest.Core.Services
                 var binPath = Path.Combine(service.Path, "bin");
                 var apacheRoot = service.Path;
                 var httpdPath = Path.Combine(binPath, "httpd.exe");
-                if (await fileSystemManager.FileExistsAsync(httpdPath))
+                if (await FileSystemManager.FileExistsAsync(httpdPath))
                 {
                     return ($"\"{httpdPath}\" -d \"{apacheRoot}\" -D FOREGROUND", binPath);
                 }

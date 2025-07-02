@@ -8,18 +8,18 @@ namespace DevNest.Core.Services
     {
         private readonly Dictionary<ServiceType, IServiceSettingsProvider> _providers;
 
-        public SettingsFactory(FileSystemManager fileSystemManager, PathManager pathManager, IServiceProvider serviceProvider)
+        public SettingsFactory(IServiceProvider serviceProvider)
         {
             _providers = new Dictionary<ServiceType, IServiceSettingsProvider>
             {
-                { ServiceType.Apache, new ApacheSettingsService(fileSystemManager, pathManager, serviceProvider) },
-                { ServiceType.MySQL, new MySQLSettingsService(fileSystemManager, pathManager) },
-                { ServiceType.PHP, new PHPSettingsService(fileSystemManager, pathManager) },
+                { ServiceType.Apache, new ApacheSettingsService(serviceProvider) },
+                { ServiceType.MySQL, new MySQLSettingsService() },
+                { ServiceType.PHP, new PHPSettingsService() },
                 { ServiceType.Node, new NodeSettingsService() },
                 { ServiceType.Redis, new RedisSettingsService()  },
                 { ServiceType.PostgreSQL, new PostgreSQLSettingsService() },
-                { ServiceType.Nginx, new NginxSettingsService(fileSystemManager, pathManager) },
-                { ServiceType.MongoDB, new MongoDBSettingsService(fileSystemManager, pathManager) }
+                { ServiceType.Nginx, new NginxSettingsService(serviceProvider) },
+                { ServiceType.MongoDB, new MongoDBSettingsService() }
             };
         }
 

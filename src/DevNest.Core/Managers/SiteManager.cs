@@ -10,46 +10,43 @@ namespace DevNest.Core
 {
     public class SiteManager
     {
-        private readonly FileSystemManager _fileSystemManager;
         private readonly SettingsManager _settingsManager;
         private readonly VirtualHostManager _virtualHostManager;
         private readonly DownloadManager _downloadManager;
         private readonly ArchiveExtractionManager _archiveExtractionManager;
         private readonly CommandManager _commandManager;
-        private readonly PathManager _pathManager;
 
-        public SiteManager(FileSystemManager fileSystemManager, SettingsManager settingsManager, VirtualHostManager virtualHostManager, DownloadManager downloadManager, ArchiveExtractionManager archiveExtractionManager, CommandManager commandManager, PathManager pathManager)
+        public SiteManager(SettingsManager settingsManager, VirtualHostManager virtualHostManager, DownloadManager downloadManager, ArchiveExtractionManager archiveExtractionManager, CommandManager commandManager)
         {
-            _fileSystemManager = fileSystemManager;
             _settingsManager = settingsManager;
             _virtualHostManager = virtualHostManager;
             _downloadManager = downloadManager;
             _archiveExtractionManager = archiveExtractionManager;
             _commandManager = commandManager;
-            _pathManager = pathManager;
         }
 
         public async Task<IEnumerable<SiteModel>> GetInstalledSitesAsync()
         {
-            var sitesPath = _pathManager.WwwPath;
+            var sitesPath = PathManager.WwwPath;
 
-            if (!await _fileSystemManager.DirectoryExistsAsync(sitesPath))
+            if (!await FileSystemManager.DirectoryExistsAsync(sitesPath))
             {
                 return new List<SiteModel>();
             }
 
             var sites = new List<SiteModel>();
-            var siteDirectories = await _fileSystemManager.GetDirectoriesAsync(sitesPath);
+            var siteDirectories = await FileSystemManager.GetDirectoriesAsync(sitesPath);
 
             foreach (var siteDir in siteDirectories)
             {
                 var siteName = Path.GetFileName(siteDir);
+                var createdDate = await FileSystemManager.GetDirectoryCreationTimeAsync(siteDir);
                 var site = new SiteModel
                 {
                     Name = siteName,
                     Path = siteDir,
                     Url = $"http://{siteName}.test",
-                    CreatedDate = Directory.GetCreationTime(siteDir),
+                    CreatedDate = createdDate,
                     IsActive = true
                 };
 
@@ -63,13 +60,13 @@ namespace DevNest.Core
         {
             try
             {
-                var sitesIniPath = Path.Combine(_pathManager.ConfigPath, "sites.ini");
-                if (!await _fileSystemManager.FileExistsAsync(sitesIniPath))
+                var sitesIniPath = Path.Combine(PathManager.ConfigPath, "sites.ini");
+                if (!await FileSystemManager.FileExistsAsync(sitesIniPath))
                 {
                     return new List<SiteDefinition>();
                 }
 
-                var content = await _fileSystemManager.ReadAllTextAsync(sitesIniPath);
+                var content = await FileSystemManager.ReadAllTextAsync(sitesIniPath);
                 var iniData = new IniDataParser().Parse(content);
                 var siteDefinitions = ParseIniToSiteDefinitions(iniData);
 
@@ -144,14 +141,14 @@ namespace DevNest.Core
                 throw new SiteException(name, $"Site type '{siteDefinitionName}' not found.");
             }
 
-            var sitesPath = _pathManager.WwwPath;
+            var sitesPath = PathManager.WwwPath;
             var sitePath = Path.Combine(sitesPath, name);
 
             try
             {
-                if (!await _fileSystemManager.DirectoryExistsAsync(sitesPath))
+                if (!await FileSystemManager.DirectoryExistsAsync(sitesPath))
                 {
-                    await _fileSystemManager.CreateDirectoryAsync(sitesPath);
+                    await FileSystemManager.CreateDirectoryAsync(sitesPath);
                 }
 
                 await CreateSiteStructureAsync(siteDefinition, sitePath, progress);
@@ -200,7 +197,7 @@ namespace DevNest.Core
 
             try
             {
-                await _fileSystemManager.DeleteDirectoryAsync(site.Path, true);
+                await FileSystemManager.DeleteDirectoryAsync(site.Path, true);
             }
             catch (Exception ex)
             {
@@ -212,9 +209,9 @@ namespace DevNest.Core
         {
             if (siteDefinition.InstallType.ToLower() == "none")
             {
-                if (!await _fileSystemManager.DirectoryExistsAsync(sitePath))
+                if (!await FileSystemManager.DirectoryExistsAsync(sitePath))
                 {
-                    await _fileSystemManager.CreateDirectoryAsync(sitePath);
+                    await FileSystemManager.CreateDirectoryAsync(sitePath);
                 }
                 return;
             }
@@ -239,9 +236,9 @@ namespace DevNest.Core
                     var tempFilePath = await _downloadManager.DownloadToTempAsync(siteDefinition.InstallUrl, progress);
                     await _archiveExtractionManager.ExtractAsync(tempFilePath, sitePath, siteDefinition.HasAdditionalDir, progress);
 
-                    if (await _fileSystemManager.FileExistsAsync(tempFilePath))
+                    if (await FileSystemManager.FileExistsAsync(tempFilePath))
                     {
-                        await _fileSystemManager.DeleteFileAsync(tempFilePath);
+                        await FileSystemManager.DeleteFileAsync(tempFilePath);
                     }
                 }
                 return;

@@ -13,8 +13,6 @@ namespace DevNest.UI.Services
         public static IServiceCollection AddCoreServices(this IServiceCollection services)
         {
 
-            services.AddSingleton<PathManager>();
-            services.AddSingleton<FileSystemManager>();
             services.AddSingleton<LogManager>();
             services.AddSingleton<ArchiveExtractionManager>();
             services.AddSingleton<DownloadManager>();

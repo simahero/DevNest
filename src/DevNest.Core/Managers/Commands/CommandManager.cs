@@ -119,19 +119,19 @@ namespace DevNest.Core.Commands
 
                 var errorTask = ReadStreamAsync(process.StandardError, line =>
                 {
-                    _logManager.Log($"[stderr] {line}");
+                    _ = _logManager.Log($"[stderr] {line}");
                 }, cancellationToken);
 
                 var outputTask = ReadStreamAsync(process.StandardOutput, line =>
                 {
-                    _logManager.Log($"[stdout] {line}");
+                    _ = _logManager.Log($"[stdout] {line}");
                 }, cancellationToken);
 
                 return await Task.FromResult(process);
             }
             catch (Exception ex)
             {
-                _logManager.Log($"Error starting process: {ex.Message}");
+                _ = _logManager.Log($"Error starting process: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error starting process: {ex.Message}");
                 return null;
             }

@@ -11,14 +11,7 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.MongoDB;
         public string ServiceName => Type.ToString();
 
-        private readonly FileSystemManager _fileSystemManager;
-        private readonly PathManager _pathManager;
-
-        public MongoDBSettingsService(FileSystemManager fileSystemManager, PathManager pathManager)
-        {
-            _fileSystemManager = fileSystemManager;
-            _pathManager = pathManager;
-        }
+        public MongoDBSettingsService() { }
 
         public MongoDBSettings GetDefaultConfiguration()
         {
@@ -69,34 +62,34 @@ namespace DevNest.Core.Services
 
         private async Task GenerateMongoDBConfigurationAsync(SettingsModel settings)
         {
-            string TemplateFilePath = Path.Combine(_pathManager.TemplatesPath, "mongod.cfg.tpl");
+            string TemplateFilePath = Path.Combine(PathManager.TemplatesPath, "mongod.cfg.tpl");
 
             try
             {
 
-                if (!await _fileSystemManager.FileExistsAsync(TemplateFilePath))
+                if (!await FileSystemManager.FileExistsAsync(TemplateFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"MongoDB template file not found: {TemplateFilePath}");
                     return;
                 }
 
-                var templateContent = await _fileSystemManager.ReadAllTextAsync(TemplateFilePath);
+                var templateContent = await FileSystemManager.ReadAllTextAsync(TemplateFilePath);
 
-                var dataDir = Path.Combine(_pathManager.DataPath, settings.MongoDB.Version);
-                var logPath = Path.Combine(_pathManager.LogsPath, settings.MongoDB.Version + ".log");
+                var dataDir = Path.Combine(PathManager.DataPath, settings.MongoDB.Version);
+                var logPath = Path.Combine(PathManager.LogsPath, settings.MongoDB.Version + ".log");
 
                 var configContent = templateContent
                     .Replace("<<DATADIR>>", dataDir.Replace("\\", "/"))
                     .Replace("<<LOGPATH>>", logPath.Replace("\\", "/"));
 
-                var configDir = Path.Combine(_pathManager.BinPath, "MongoDB", settings.MongoDB.Version, "bin");
+                var configDir = Path.Combine(PathManager.BinPath, "MongoDB", settings.MongoDB.Version, "bin");
 
                 var configFilePath = Path.Combine(configDir, "mongod.cfg");
-                await _fileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
 
-                if (!await _fileSystemManager.DirectoryExistsAsync(dataDir))
+                if (!await FileSystemManager.DirectoryExistsAsync(dataDir))
                 {
-                    await _fileSystemManager.CreateDirectoryAsync(dataDir);
+                    await FileSystemManager.CreateDirectoryAsync(dataDir);
                 }
 
                 System.Diagnostics.Debug.WriteLine($"MongoDB configuration generated: {configFilePath}");
@@ -110,7 +103,7 @@ namespace DevNest.Core.Services
         /// <summary>
         /// Returns the command and working directory for MongoDB, or (string.Empty, string.Empty) if not found.
         /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings, DevNest.Core.Files.FileSystemManager fileSystemManager)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = settings.MongoDB.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
@@ -118,7 +111,7 @@ namespace DevNest.Core.Services
                 var mongoDBPath = Path.Combine(service.Path, "bin", "mongod.exe");
                 var configPath = Path.Combine(service.Path, "bin", "mongod.cfg");
 
-                if (await fileSystemManager.FileExistsAsync(mongoDBPath))
+                if (await FileSystemManager.FileExistsAsync(mongoDBPath))
                 {
                     return ($"\"{mongoDBPath}\" --config \"{configPath}\"", Path.GetDirectoryName(mongoDBPath)!);
                 }

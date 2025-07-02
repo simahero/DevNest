@@ -90,65 +90,6 @@ namespace DevNest.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task SaveSettingsAsync()
-        {
-            if (_currentSettings == null)
-                return;
-
-            IsLoading = true;
-            try
-            {
-                // Update settings object with current ViewModel property values
-                _currentSettings.StartWithWindows = StartWithWindows;
-                _currentSettings.MinimizeToSystemTray = MinimizeToSystemTray;
-                _currentSettings.AutoVirtualHosts = AutoVirtualHosts;
-                _currentSettings.AutoCreateDatabase = AutoCreateDatabase;
-
-                await _settingsManager.SaveSettingsAsync(_currentSettings);
-
-                // TODO: Show success message to user
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error saving settings: {ex.Message}");
-                // TODO: Show error to user
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        [RelayCommand]
-        private async Task ResetSettingsAsync()
-        {
-            IsLoading = true;
-            try
-            {
-                _currentSettings = await _settingsManager.GetDefaultSettingsAsync();
-
-                // Update ViewModel properties from default settings
-                StartWithWindows = _currentSettings.StartWithWindows;
-                MinimizeToSystemTray = _currentSettings.MinimizeToSystemTray;
-                AutoVirtualHosts = _currentSettings.AutoVirtualHosts;
-                AutoCreateDatabase = _currentSettings.AutoCreateDatabase;
-
-                await _settingsManager.SaveSettingsAsync(_currentSettings);
-
-                // TODO: Show success message to user
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error resetting settings: {ex.Message}");
-                // TODO: Show error to user
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        [RelayCommand]
         private void BrowseFolder()
         {
             try
