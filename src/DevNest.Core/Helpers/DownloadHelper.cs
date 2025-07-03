@@ -1,13 +1,13 @@
 using System.Net;
 using System.Net.Http.Headers;
 
-namespace DevNest.Core.Files
+namespace DevNest.Core.Helpers
 {
-    public class DownloadManager
+    public class DownloadHelper
     {
         private static readonly HttpClient _httpClient;
 
-        static DownloadManager()
+        static DownloadHelper()
         {
             var handler = new HttpClientHandler
             {
@@ -26,7 +26,7 @@ namespace DevNest.Core.Files
             _httpClient.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en-US,en;q=0.5");
         }
 
-        public async Task<string> DownloadToTempAsync(string url, IProgress<string>? progress = null)
+        public static async Task<string> DownloadToTempAsync(string url, IProgress<string>? progress = null)
         {
             progress?.Report($"Downloading from: {url}...");
 

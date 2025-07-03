@@ -1,4 +1,4 @@
-using DevNest.Core.Files;
+using DevNest.Core.Helpers;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
 using IniParser.Model;
@@ -11,7 +11,6 @@ namespace DevNest.Core
     public class SettingsManager
     {
 
-        private readonly LogManager _logManager;
         private readonly SettingsFactory _settingsFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly SemaphoreSlim _fileLock = new(1, 1);
@@ -24,9 +23,8 @@ namespace DevNest.Core
 
         private CancellationTokenSource? _autoSaveCts;
 
-        public SettingsManager(LogManager logManager, SettingsFactory settingsFactory, IServiceProvider serviceProvider)
+        public SettingsManager(SettingsFactory settingsFactory, IServiceProvider serviceProvider)
         {
-            _logManager = logManager;
             _settingsFactory = settingsFactory;
             _serviceProvider = serviceProvider;
         }
@@ -62,12 +60,12 @@ namespace DevNest.Core
                 }
                 else
                 {
-                    _ = _logManager.Log($"{settingsFilePath} doesnt exist.");
+                    _ = LogManager.Log($"{settingsFilePath} doesnt exist.");
                 }
             }
             catch (Exception ex)
             {
-                _ = _logManager.Log($"Failed to load settings: {ex.Message}");
+                _ = LogManager.Log($"Failed to load settings: {ex.Message}");
             }
             finally
             {
@@ -80,6 +78,9 @@ namespace DevNest.Core
                 MinimizeToSystemTray = false,
                 AutoVirtualHosts = true,
                 AutoCreateDatabase = false,
+                NgrokDomain = string.Empty,
+                NgrokApiKey = string.Empty,
+                UseWLS = false,
             };
             await LoadVersionsForSettings(defaultSettings);
 
@@ -172,7 +173,7 @@ namespace DevNest.Core
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
-                        _logManager?.Log($"Auto-save failed: {ex.Message}");
+                        _ = LogManager.Log($"Auto-save failed: {ex.Message}");
                     }
                 }, token);
             }
@@ -194,7 +195,7 @@ namespace DevNest.Core
                 var settingsFilePath = Path.Combine(configPath, "settings.ini");
                 if (string.IsNullOrEmpty(settingsFilePath))
                 {
-                    _logManager?.Log($"Saving settings is failed: {settingsFilePath}");
+                    _ = LogManager.Log($"Saving settings is failed: {settingsFilePath}");
                     return;
                 }
 
@@ -383,6 +384,17 @@ namespace DevNest.Core
                 settings.AutoVirtualHosts = bool.Parse(generalSection["AutoVirtualHosts"] ?? "true");
                 settings.AutoCreateDatabase = bool.Parse(generalSection["AutoCreateDatabase"] ?? "false");
             }
+            if (iniData.Sections.ContainsSection("Ngrok"))
+            {
+                var ngrokSection = iniData.Sections["Ngrok"];
+                settings.NgrokDomain = ngrokSection["Domain"] ?? string.Empty;
+                settings.NgrokApiKey = ngrokSection["ApiKey"] ?? string.Empty;
+            }
+            if (iniData.Sections.ContainsSection("WSL"))
+            {
+                var wslSection = iniData.Sections["WSL"];
+                settings.UseWLS = bool.Parse(wslSection["UseWLS"] ?? "false");
+            }
 
             foreach (var serviceProvider in _settingsFactory.GetAllServiceSettingsProviders())
             {
@@ -402,6 +414,15 @@ namespace DevNest.Core
             generalSection.AddKey("MinimizeToSystemTray", settings.MinimizeToSystemTray.ToString().ToLower());
             generalSection.AddKey("AutoVirtualHosts", settings.AutoVirtualHosts.ToString().ToLower());
             generalSection.AddKey("AutoCreateDatabase", settings.AutoCreateDatabase.ToString().ToLower());
+
+            iniData.Sections.AddSection("Ngrok");
+            var ngrokSection = iniData.Sections["Ngrok"];
+            ngrokSection.AddKey("Domain", settings.NgrokDomain ?? string.Empty);
+            ngrokSection.AddKey("ApiKey", settings.NgrokApiKey ?? string.Empty);
+
+            iniData.Sections.AddSection("WSL");
+            var wslSection = iniData.Sections["WSL"];
+            wslSection.AddKey("UseWLS", settings.UseWLS.ToString().ToLower());
 
             foreach (var serviceProvider in _settingsFactory.GetAllServiceSettingsProviders())
             {

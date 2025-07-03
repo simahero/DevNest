@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DevNest.Core;
-using DevNest.Core.Files;
 using DevNest.Core.Models;
 using System;
 using System.Collections.ObjectModel;
@@ -213,7 +212,7 @@ namespace DevNest.UI.ViewModels
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = "ngrok",
-                    Arguments = $"http --hostname=osprey-epic-seagull.ngrok-free.app --host-header={site.Name.ToLower()}.test:80 80",
+                    Arguments = $"http --api-key {site.Name.ToLower()} hostname=osprey-epic-seagull.ngrok-free.app --host-header={site.Name.ToLower()}.test:80 80",
                     UseShellExecute = false,
                     CreateNoWindow = false,
                     RedirectStandardOutput = false,

@@ -4,12 +4,7 @@ namespace DevNest.Core.Commands
 {
     public class CommandManager
     {
-        private readonly LogManager _logManager;
-
-        public CommandManager(LogManager logManager)
-        {
-            _logManager = logManager;
-        }
+        public CommandManager() { }
 
         public async Task<int> ExecuteCommandAsync(string command, string workingDirectory, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
         {
@@ -31,7 +26,7 @@ namespace DevNest.Core.Commands
             using var process = Process.Start(processInfo);
             if (process == null)
             {
-                _logManager.Log($"Failed to start process for command: {command}");
+                _ = LogManager.Log($"Failed to start process for command: {command}");
                 throw new InvalidOperationException("Failed to start process");
             }
 
@@ -39,7 +34,7 @@ namespace DevNest.Core.Commands
             var errorTask = ReadStreamAsync(process.StandardError, line =>
             {
                 progress?.Report(line);
-                _logManager.Log($"[stderr] {line}");
+                _ = LogManager.Log($"[stderr] {line}");
             }, cancellationToken);
             var outputTask = ReadStreamAsync(process.StandardOutput, line => progress?.Report(line), cancellationToken);
 
@@ -56,7 +51,7 @@ namespace DevNest.Core.Commands
 
             if (exitCode != 0)
             {
-                _logManager.Log($"Command failed with exit code {exitCode}: {command}");
+                _ = LogManager.Log($"Command failed with exit code {exitCode}: {command}");
                 throw new Exception($"Command failed with exit code {exitCode}: {command}");
             }
         }
@@ -81,7 +76,7 @@ namespace DevNest.Core.Commands
                     else
                     {
                         // Malformed, fallback
-                        _logManager.Log($"Malformed command: {command}");
+                        _ = LogManager.Log($"Malformed command: {command}");
                         return null;
                     }
                 }
@@ -96,7 +91,7 @@ namespace DevNest.Core.Commands
                     }
                     else
                     {
-                        _logManager.Log($"Malformed command: {command}");
+                        _ = LogManager.Log($"Malformed command: {command}");
                         return null;
                     }
                 }
@@ -112,27 +107,32 @@ namespace DevNest.Core.Commands
                     RedirectStandardError = true
                 };
 
-                string existingPath = processInfo.Environment["PATH"] ?? Environment.GetEnvironmentVariable("PATH");
+                string existingPath = processInfo.Environment["PATH"] ?? Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
                 processInfo.Environment["PATH"] = workingDirectory;
 
                 var process = Process.Start(processInfo);
 
+                if (process == null)
+                {
+                    _ = LogManager.Log($"Failed to start process for command: {command}");
+                    return null;
+                }
+
                 var errorTask = ReadStreamAsync(process.StandardError, line =>
                 {
-                    _ = _logManager.Log($"[stderr] {line}");
+                    _ = LogManager.Log($"[stderr] {line}");
                 }, cancellationToken);
 
                 var outputTask = ReadStreamAsync(process.StandardOutput, line =>
                 {
-                    _ = _logManager.Log($"[stdout] {line}");
+                    _ = LogManager.Log($"[stdout] {line}");
                 }, cancellationToken);
 
                 return await Task.FromResult(process);
             }
             catch (Exception ex)
             {
-                _ = _logManager.Log($"Error starting process: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Error starting process: {ex.Message}");
+                _ = LogManager.Log($"Error starting process: {ex.Message}");
                 return null;
             }
         }

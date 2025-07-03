@@ -17,6 +17,15 @@ namespace DevNest.Core.Models
         [ObservableProperty]
         private bool _autoCreateDatabase = false;
 
+        [ObservableProperty]
+        private string _ngrokDomain = string.Empty;
+
+        [ObservableProperty]
+        private string _ngrokApiKey = string.Empty;
+
+        [ObservableProperty]
+        private bool _useWLS = false;
+
         public ApacheSettings Apache { get; set; } = new ApacheSettings();
         public MySQLSettings MySQL { get; set; } = new MySQLSettings();
         public PHPSettings PHP { get; set; } = new PHPSettings();
@@ -31,9 +40,6 @@ namespace DevNest.Core.Models
     {
         [ObservableProperty]
         private string _version = "";
-
-        [ObservableProperty]
-        private string _documentRoot = @"C:\DevNest\www";
 
         [ObservableProperty]
         private int _port = 80;
@@ -52,9 +58,6 @@ namespace DevNest.Core.Models
 
         [ObservableProperty]
         private int _port = 3306;
-
-        [ObservableProperty]
-        private string _rootPassword = "";
 
         [ObservableProperty]
         private bool _autoStart = false;

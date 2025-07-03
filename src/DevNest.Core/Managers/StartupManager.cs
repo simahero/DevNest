@@ -1,4 +1,4 @@
-using DevNest.Core.Files;
+using DevNest.Core.Helpers;
 using Microsoft.Win32;
 using System;
 using System.IO;
@@ -7,15 +7,10 @@ namespace DevNest.Core
 {
     public class StartupManager
     {
-        private readonly LogManager _logManager;
-
         private const string RunKey = @"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
         private const string AppName = "DevNest";
 
-        public StartupManager(LogManager logManager)
-        {
-            _logManager = logManager;
-        }
+        public StartupManager() { }
 
         public async Task CopyStarterDirOnStartup()
         {
@@ -42,16 +37,16 @@ namespace DevNest.Core
                 if (sourceDir != null)
                 {
                     await FileSystemManager.CopyDirectory(sourceDir, exePath, true);
-                    _logManager?.Log($"Copying starting directory.");
+                    _ = LogManager.Log($"Copying starting directory.");
                 }
                 else
                 {
-                    _logManager?.Log($"Source Include not found in any known location.");
+                    _ = LogManager.Log($"Source Include not found in any known location.");
                 }
             }
             catch (Exception ex)
             {
-                _logManager?.Log($"Failed to copy Include: {ex.Message}");
+                _ = LogManager.Log($"Failed to copy Include: {ex.Message}");
             }
         }
 
@@ -67,7 +62,7 @@ namespace DevNest.Core
                 string aliasDir = Path.Combine(PathManager.EtcPath, server, "alias");
                 if (!Directory.Exists(aliasDir))
                 {
-                    Directory.CreateDirectory(aliasDir);
+                    _ = Directory.CreateDirectory(aliasDir);
                 }
 
                 var templateFiles = Directory.GetFiles(templateDir, "alias*.tpl").Where(f => f.Contains(server)).ToArray();

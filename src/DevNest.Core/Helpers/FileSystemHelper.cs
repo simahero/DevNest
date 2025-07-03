@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DevNest.Core.Files
+namespace DevNest.Core.Helpers
 {
     public static class FileSystemManager
     {

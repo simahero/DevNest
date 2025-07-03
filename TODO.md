@@ -3,6 +3,8 @@
 -   read databases
 -   on settings change, restart
 
+-   wsl path
+
 Here are some potential optimizations for your codebase based on the provided excerpts:
 
 1. Reduce Synchronous File/Directory Operations in Async Methods

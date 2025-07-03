@@ -25,11 +25,13 @@ namespace DevNest.UI.ViewModels
         private bool _autoCreateDatabase;
 
         [ObservableProperty]
-        private string _installDirectory = @"C:\DevNest";
+        private string _ngrokDomain = string.Empty;
 
         [ObservableProperty]
-        private string _selectedInstallDirectory = @"C:\DevNest";
+        private string _ngrokApiKey = string.Empty;
 
+        [ObservableProperty]
+        private bool _useWLS;
         private bool _isInitializing = true;
 
         public SettingsViewModel(SettingsManager settingsManager)
@@ -76,6 +78,9 @@ namespace DevNest.UI.ViewModels
                 MinimizeToSystemTray = _currentSettings.MinimizeToSystemTray;
                 AutoVirtualHosts = _currentSettings.AutoVirtualHosts;
                 AutoCreateDatabase = _currentSettings.AutoCreateDatabase;
+                NgrokDomain = _currentSettings.NgrokDomain;
+                NgrokApiKey = _currentSettings.NgrokApiKey;
+                UseWLS = _currentSettings.UseWLS;
             }
             catch (Exception ex)
             {
@@ -87,6 +92,24 @@ namespace DevNest.UI.ViewModels
                 IsLoading = false;
                 _isInitializing = false;
             }
+        }
+
+        partial void OnNgrokDomainChanged(string value)
+        {
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.NgrokDomain = value;
+        }
+
+        partial void OnNgrokApiKeyChanged(string value)
+        {
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.NgrokApiKey = value;
+        }
+
+        partial void OnUseWLSChanged(bool value)
+        {
+            if (!_isInitializing && _currentSettings != null)
+                _currentSettings.UseWLS = value;
         }
 
         [RelayCommand]

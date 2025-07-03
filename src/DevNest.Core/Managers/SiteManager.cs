@@ -1,6 +1,6 @@
 using DevNest.Core.Commands;
 using DevNest.Core.Exceptions;
-using DevNest.Core.Files;
+using DevNest.Core.Helpers;
 using DevNest.Core.Models;
 using DevNest.Core.Sites;
 using IniParser.Model;
@@ -12,16 +12,12 @@ namespace DevNest.Core
     {
         private readonly SettingsManager _settingsManager;
         private readonly VirtualHostManager _virtualHostManager;
-        private readonly DownloadManager _downloadManager;
-        private readonly ArchiveExtractionManager _archiveExtractionManager;
         private readonly CommandManager _commandManager;
 
-        public SiteManager(SettingsManager settingsManager, VirtualHostManager virtualHostManager, DownloadManager downloadManager, ArchiveExtractionManager archiveExtractionManager, CommandManager commandManager)
+        public SiteManager(SettingsManager settingsManager, VirtualHostManager virtualHostManager, CommandManager commandManager)
         {
             _settingsManager = settingsManager;
             _virtualHostManager = virtualHostManager;
-            _downloadManager = downloadManager;
-            _archiveExtractionManager = archiveExtractionManager;
             _commandManager = commandManager;
         }
 
@@ -233,8 +229,8 @@ namespace DevNest.Core
             {
                 if (!string.IsNullOrEmpty(siteDefinition.InstallUrl))
                 {
-                    var tempFilePath = await _downloadManager.DownloadToTempAsync(siteDefinition.InstallUrl, progress);
-                    await _archiveExtractionManager.ExtractAsync(tempFilePath, sitePath, siteDefinition.HasAdditionalDir, progress);
+                    var tempFilePath = await DownloadHelper.DownloadToTempAsync(siteDefinition.InstallUrl, progress);
+                    await ArchiveHelper.ExtractAsync(tempFilePath, sitePath, siteDefinition.HasAdditionalDir, progress);
 
                     if (await FileSystemManager.FileExistsAsync(tempFilePath))
                     {

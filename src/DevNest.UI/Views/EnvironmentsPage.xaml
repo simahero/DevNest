@@ -107,8 +107,17 @@
                                 ItemsSource="{x:Bind ViewModel.Apache.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Apache.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
                                 SelectedItem="{x:Bind ViewModel.Apache.Version, Mode=TwoWay}" />
-
                         </Grid>
+
+                        <!--  Install Version Selection  -->
+                        <components:InstallVersionSelector
+                            InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
+                            InstallCommandParameter="Apache"
+                            InstallableVersions="{x:Bind ViewModel.Apache.InstallableVersions, Mode=OneWay}"
+                            InstallationStatus="{x:Bind ViewModel.ApacheInstallationStatus, Mode=OneWay}"
+                            IsInstalling="{x:Bind ViewModel.IsInstallingApache, Mode=OneWay}"
+                            SelectedVersion="{x:Bind ViewModel.SelectedApacheVersion, Mode=TwoWay}"
+                            ShowInstallationPanel="{x:Bind ViewModel.ShowApacheInstallationPanel, Mode=OneWay}" />
 
                         <!--  Apache Configuration  -->
                         <StackPanel Spacing="12">
@@ -147,16 +156,6 @@
                             </Grid>
 
                         </StackPanel>
-
-                        <!--  Install Version Selection  -->
-                        <components:InstallVersionSelector
-                            InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
-                            InstallCommandParameter="Apache"
-                            InstallableVersions="{x:Bind ViewModel.Apache.InstallableVersions, Mode=OneWay}"
-                            InstallationStatus="{x:Bind ViewModel.ApacheInstallationStatus, Mode=OneWay}"
-                            IsInstalling="{x:Bind ViewModel.IsInstallingApache, Mode=OneWay}"
-                            SelectedVersion="{x:Bind ViewModel.SelectedApacheVersion, Mode=TwoWay}"
-                            ShowInstallationPanel="{x:Bind ViewModel.ShowApacheInstallationPanel, Mode=OneWay}" />
 
                     </StackPanel>
                 </Expander>
@@ -454,21 +453,6 @@
                                     Minimum="1"
                                     PlaceholderText="3306"
                                     Value="{x:Bind ViewModel.MySQL.Port, Mode=TwoWay}" />
-                            </Grid>
-
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Root Password" />
-                                <PasswordBox
-                                    Grid.Column="1"
-                                    Password="{x:Bind ViewModel.MySQL.RootPassword, Mode=TwoWay}"
-                                    PlaceholderText="Enter root password" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">

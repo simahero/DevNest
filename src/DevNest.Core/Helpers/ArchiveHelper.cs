@@ -1,10 +1,10 @@
-namespace DevNest.Core.Files
+namespace DevNest.Core.Helpers
 {
-    public class ArchiveExtractionManager
+    public class ArchiveHelper
     {
         private static readonly string[] ArchiveExts = [".zip", ".rar", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2"];
 
-        public async Task ExtractAsync(string filePath, string destination, bool hasAdditionalDir, IProgress<string>? progress = null)
+        public static async Task ExtractAsync(string filePath, string destination, bool hasAdditionalDir, IProgress<string>? progress = null)
         {
             var fileName = Path.GetFileName(filePath);
             progress?.Report($"Extracting {fileName}...");
@@ -26,13 +26,13 @@ namespace DevNest.Core.Files
             }
         }
 
-        public bool IsArchive(string path)
+        public static bool IsArchive(string path)
         {
             string fileName = Path.GetFileName(path);
             return ArchiveExts.Any(e => fileName.EndsWith(e, StringComparison.OrdinalIgnoreCase));
         }
 
-        private async Task ExtractZipFileAsync(string filePath, string destination, bool hasAdditionalDir, IProgress<string>? progress = null)
+        private static async Task ExtractZipFileAsync(string filePath, string destination, bool hasAdditionalDir, IProgress<string>? progress = null)
         {
             var tempExtractPath = Path.Combine(Path.GetTempPath(), $"devnest_extract_{Guid.NewGuid()}");
 

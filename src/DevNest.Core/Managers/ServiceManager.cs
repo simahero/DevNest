@@ -1,9 +1,9 @@
 using DevNest.Core.Commands;
 using DevNest.Core.Enums;
+using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
-using DevNest.Core.Files;
 using IniParser;
 using System.Diagnostics;
 
@@ -13,7 +13,6 @@ namespace DevNest.Core
     public class ServiceManager
     {
         private readonly SettingsManager _settingsManager;
-        private readonly LogManager _logManager = null!;
         private readonly CommandManager _commandManager;
         private readonly IUIDispatcher _uiDispatcher;
 

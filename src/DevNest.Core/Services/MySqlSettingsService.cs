@@ -1,5 +1,5 @@
 using DevNest.Core.Enums;
-using DevNest.Core.Files;
+using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
@@ -20,7 +20,6 @@ namespace DevNest.Core.Services
             {
                 Version = "",
                 Port = 3306,
-                RootPassword = "",
                 AutoStart = false,
             };
         }
@@ -41,8 +40,6 @@ namespace DevNest.Core.Services
                 serviceSettings.MySQL.Port = port;
             }
 
-            serviceSettings.MySQL.RootPassword = section["RootPassword"] ?? "";
-
             if (bool.TryParse(section["AutoStart"], out var autoStart))
             {
                 serviceSettings.MySQL.AutoStart = autoStart;
@@ -56,7 +53,6 @@ namespace DevNest.Core.Services
 
             section.AddKey("Version", serviceSettings.MySQL.Version ?? "");
             section.AddKey("Port", serviceSettings.MySQL.Port.ToString());
-            section.AddKey("RootPassword", serviceSettings.MySQL.RootPassword ?? "");
             section.AddKey("AutoStart", serviceSettings.MySQL.AutoStart.ToString().ToLower());
 
             _ = Task.Run(async () =>
@@ -82,12 +78,10 @@ namespace DevNest.Core.Services
                 var templateContent = await FileSystemManager.ReadAllTextAsync(TemplateFilePath);
 
                 var dataDir = Path.Combine(PathManager.DataPath, settings.MySQL.Version);
-                var password = settings.MySQL.RootPassword;
                 var port = settings.MySQL.Port.ToString();
 
                 var configContent = templateContent
                     .Replace("<<DATADIR>>", dataDir.Replace("\\", "/"))
-                    .Replace("<<PASS>>", password)
                     .Replace("<<PORT>>", port);
 
                 var configDir = Path.Combine(PathManager.BinPath, "MySQL", settings.MySQL.Version);

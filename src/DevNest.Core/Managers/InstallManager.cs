@@ -1,7 +1,7 @@
 using DevNest.Core.Enums;
 using DevNest.Core.Models;
-using DevNest.Core.Files;
 using System.IO.Compression;
+using DevNest.Core.Helpers;
 
 
 namespace DevNest.Core
@@ -9,13 +9,11 @@ namespace DevNest.Core
     public class InstallManager
     {
         private readonly SettingsManager _settingsManager;
-        private readonly LogManager _logManager;
         private readonly HttpClient _httpClient;
 
-        public InstallManager(SettingsManager settingsManager, LogManager logManager)
+        public InstallManager(SettingsManager settingsManager)
         {
             _settingsManager = settingsManager;
-            _logManager = logManager;
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromMinutes(10);
 
@@ -92,7 +90,7 @@ namespace DevNest.Core
                     if (string.IsNullOrEmpty(versionValue))
                     {
                         versionProp?.SetValue(serviceSettings, serviceDefinition.Name);
-                        _ = _logManager.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
+                        _ = LogManager.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
                     }
                 }
 

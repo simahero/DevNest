@@ -122,7 +122,37 @@
                 </StackPanel>
             </Border>
 
-            <!--  About Section  -->
+            <!--  WSL Section  -->
+            <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        FontSize="24"
+                        Style="{StaticResource TitleTextBlockStyle}"
+                        Text="WSL Settings" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock FontWeight="SemiBold" Text="Use WSL" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Use WSL for services and filesystem" />
+                        </StackPanel>
+
+                        <ToggleSwitch
+                            x:Name="UseWSLToggle"
+                            Grid.Column="1"
+                            IsOn="{x:Bind ViewModel.UseWLS, Mode=TwoWay}" />
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
+            <!--  NGORK Section  -->
             <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <StackPanel Spacing="16">
                     <TextBlock
@@ -130,32 +160,15 @@
                         Style="{StaticResource TitleTextBlockStyle}"
                         Text="NGORK" />
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="8">
+                        <TextBlock FontWeight="SemiBold" Text="Domain" />
+                        <TextBox PlaceholderText="Enter your ngrok domain" Text="{x:Bind ViewModel.NgrokDomain, Mode=TwoWay}" />
+                    </StackPanel>
 
-                        <StackPanel Grid.Column="0">
-                            <TextBlock FontWeight="SemiBold" Text="DevNest" />
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Version 1.0.0" />
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="DeadWaves Studio" />
-                        </StackPanel>
-
-                        <StackPanel
-                            Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="8">
-                            <Button Content="Check for Updates" />
-                            <Button Content="About" />
-                        </StackPanel>
-                    </Grid>
+                    <StackPanel Spacing="8">
+                        <TextBlock FontWeight="SemiBold" Text="API Key" />
+                        <PasswordBox Password="{x:Bind ViewModel.NgrokApiKey, Mode=TwoWay}" PlaceholderText="Enter your ngrok API key" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

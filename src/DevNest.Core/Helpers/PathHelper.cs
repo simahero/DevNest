@@ -1,8 +1,8 @@
-﻿namespace DevNest.Core.Files
+﻿namespace DevNest.Core.Helpers
 {
     public static class PathManager
     {
-        public static string BasePath => (System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName is string exePath && Path.GetDirectoryName(exePath) is string dir) ? dir : throw new InvalidOperationException("Could not determine the application's base directory.");
+        public static string BasePath => System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName is string exePath && Path.GetDirectoryName(exePath) is string dir ? dir : throw new InvalidOperationException("Could not determine the application's base directory.");
         public static string BinPath => Path.Combine(BasePath, "bin");
         public static string ConfigPath => Path.Combine(BasePath, "config");
         public static string DataPath => Path.Combine(BasePath, "data");

@@ -1,5 +1,5 @@
 using DevNest.Core.Enums;
-using DevNest.Core.Files;
+using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
@@ -88,7 +88,6 @@ namespace DevNest.Core.Services
 
                 var srvRoot = Path.Combine(PathManager.BinPath, "Apache", settings.Apache.Version).Replace('\\', '/');
                 var logsPath = Path.Combine(PathManager.LogsPath).Replace('\\', '/');
-                var documentRoot = settings.Apache.DocumentRoot.Replace('\\', '/');
                 var port = settings.Apache.Port.ToString();
                 var phpPath = Path.Combine(PathManager.BinPath, "PHP", settings.PHP.Version).Replace('\\', '/');
                 var etcPath = PathManager.EtcPath.Replace('\\', '/');
@@ -97,7 +96,6 @@ namespace DevNest.Core.Services
                     .Replace("<<SRVROOT>>", srvRoot)
                     .Replace("<<LOGSPATH>>", logsPath)
                     .Replace("<<PORT>>", port)
-                    .Replace("<<DOCUMENTROOT>>", documentRoot)
                     .Replace("<<PHPPATH>>", phpPath)
                     .Replace("<<ETCPATH>>", etcPath);
 
