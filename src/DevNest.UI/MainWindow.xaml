@@ -129,11 +129,6 @@
                         <ImageIcon Source="ms-appx:///Assets/Icons/stack.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Services" Tag="Services">
-                    <NavigationViewItem.Icon>
-                        <ImageIcon Source="ms-appx:///Assets/Icons/database.svg" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
                 <NavigationViewItem Content="Settings" Tag="Settings">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="ms-appx:///Assets/Icons/gear.svg" />

@@ -1,7 +1,7 @@
 using DevNest.Core.Enums;
+using DevNest.Core.Helpers;
 using DevNest.Core.Models;
 using System.IO.Compression;
-using DevNest.Core.Helpers;
 
 
 namespace DevNest.Core
@@ -90,7 +90,7 @@ namespace DevNest.Core
                     if (string.IsNullOrEmpty(versionValue))
                     {
                         versionProp?.SetValue(serviceSettings, serviceDefinition.Name);
-                        _ = LogManager.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
+                        _ = Logger.Log($"No version set yet, setting a default version: {serviceDefinition.Name}");
                     }
                 }
 

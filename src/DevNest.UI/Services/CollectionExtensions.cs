@@ -15,7 +15,6 @@ namespace DevNest.UI.Services
 
             // ViewModels
             services.AddSingleton<DashboardViewModel>();
-            services.AddSingleton<ServicesViewModel>();
             services.AddSingleton<SitesViewModel>();
             services.AddTransient<EnvironmentsViewModel>();
             services.AddTransient<SettingsViewModel>();
@@ -23,7 +22,6 @@ namespace DevNest.UI.Services
 
             // Views
             services.AddTransient<DashboardPage>();
-            services.AddTransient<ServicesPage>();
             services.AddTransient<SitesPage>();
             services.AddTransient<EnvironmentsPage>();
             services.AddTransient<SettingsPage>();

@@ -60,12 +60,12 @@ namespace DevNest.Core
                 }
                 else
                 {
-                    _ = LogManager.Log($"{settingsFilePath} doesnt exist.");
+                    _ = Logger.Log($"{settingsFilePath} doesnt exist.");
                 }
             }
             catch (Exception ex)
             {
-                _ = LogManager.Log($"Failed to load settings: {ex.Message}");
+                _ = Logger.Log($"Failed to load settings: {ex.Message}");
             }
             finally
             {
@@ -173,7 +173,7 @@ namespace DevNest.Core
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
-                        _ = LogManager.Log($"Auto-save failed: {ex.Message}");
+                        _ = Logger.Log($"Auto-save failed: {ex.Message}");
                     }
                 }, token);
             }
@@ -195,7 +195,7 @@ namespace DevNest.Core
                 var settingsFilePath = Path.Combine(configPath, "settings.ini");
                 if (string.IsNullOrEmpty(settingsFilePath))
                 {
-                    _ = LogManager.Log($"Saving settings is failed: {settingsFilePath}");
+                    _ = Logger.Log($"Saving settings is failed: {settingsFilePath}");
                     return;
                 }
 

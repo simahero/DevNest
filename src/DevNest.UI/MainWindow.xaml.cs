@@ -1,10 +1,7 @@
 using DevNest.Core;
 using DevNest.UI.Services;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinRT.Interop;
 
 namespace DevNest.UI;
 
@@ -72,9 +69,6 @@ public sealed partial class MainWindow : Window
             {
                 case "Dashboard":
                     _navigationService.NavigateTo<Views.DashboardPage>(NavigationTransitions.Suppress);
-                    break;
-                case "Services":
-                    _navigationService.NavigateTo<Views.ServicesPage>(NavigationTransitions.Suppress);
                     break;
                 case "Sites":
                     _navigationService.NavigateTo<Views.SitesPage>(NavigationTransitions.Suppress);

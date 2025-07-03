@@ -26,7 +26,7 @@ namespace DevNest.Core.Commands
             using var process = Process.Start(processInfo);
             if (process == null)
             {
-                _ = LogManager.Log($"Failed to start process for command: {command}");
+                _ = Logger.Log($"Failed to start process for command: {command}");
                 throw new InvalidOperationException("Failed to start process");
             }
 
@@ -34,7 +34,7 @@ namespace DevNest.Core.Commands
             var errorTask = ReadStreamAsync(process.StandardError, line =>
             {
                 progress?.Report(line);
-                _ = LogManager.Log($"[stderr] {line}");
+                _ = Logger.Log($"[stderr] {line}");
             }, cancellationToken);
             var outputTask = ReadStreamAsync(process.StandardOutput, line => progress?.Report(line), cancellationToken);
 
@@ -51,7 +51,7 @@ namespace DevNest.Core.Commands
 
             if (exitCode != 0)
             {
-                _ = LogManager.Log($"Command failed with exit code {exitCode}: {command}");
+                _ = Logger.Log($"Command failed with exit code {exitCode}: {command}");
                 throw new Exception($"Command failed with exit code {exitCode}: {command}");
             }
         }
@@ -76,7 +76,7 @@ namespace DevNest.Core.Commands
                     else
                     {
                         // Malformed, fallback
-                        _ = LogManager.Log($"Malformed command: {command}");
+                        _ = Logger.Log($"Malformed command: {command}");
                         return null;
                     }
                 }
@@ -91,7 +91,7 @@ namespace DevNest.Core.Commands
                     }
                     else
                     {
-                        _ = LogManager.Log($"Malformed command: {command}");
+                        _ = Logger.Log($"Malformed command: {command}");
                         return null;
                     }
                 }
@@ -114,25 +114,25 @@ namespace DevNest.Core.Commands
 
                 if (process == null)
                 {
-                    _ = LogManager.Log($"Failed to start process for command: {command}");
+                    _ = Logger.Log($"Failed to start process for command: {command}");
                     return null;
                 }
 
                 var errorTask = ReadStreamAsync(process.StandardError, line =>
                 {
-                    _ = LogManager.Log($"[stderr] {line}");
+                    _ = Logger.Log($"[stderr] {line}");
                 }, cancellationToken);
 
                 var outputTask = ReadStreamAsync(process.StandardOutput, line =>
                 {
-                    _ = LogManager.Log($"[stdout] {line}");
+                    _ = Logger.Log($"[stdout] {line}");
                 }, cancellationToken);
 
                 return await Task.FromResult(process);
             }
             catch (Exception ex)
             {
-                _ = LogManager.Log($"Error starting process: {ex.Message}");
+                _ = Logger.Log($"Error starting process: {ex.Message}");
                 return null;
             }
         }

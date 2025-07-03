@@ -26,7 +26,6 @@ namespace DevNest.UI.Services
         private readonly Dictionary<Type, Type> _pageViewModelMap = new(); public NavigationService()
         {
             _pageViewModelMap[typeof(DashboardPage)] = typeof(ViewModels.DashboardViewModel);
-            _pageViewModelMap[typeof(ServicesPage)] = typeof(ViewModels.ServicesViewModel);
             _pageViewModelMap[typeof(SitesPage)] = typeof(ViewModels.SitesViewModel);
             _pageViewModelMap[typeof(EnvironmentsPage)] = typeof(ViewModels.EnvironmentsViewModel);
             _pageViewModelMap[typeof(SettingsPage)] = typeof(ViewModels.SettingsViewModel);

@@ -37,16 +37,16 @@ namespace DevNest.Core
                 if (sourceDir != null)
                 {
                     await FileSystemManager.CopyDirectory(sourceDir, exePath, true);
-                    _ = LogManager.Log($"Copying starting directory.");
+                    _ = Logger.Log($"Copying starting directory.");
                 }
                 else
                 {
-                    _ = LogManager.Log($"Source Include not found in any known location.");
+                    _ = Logger.Log($"Source Include not found in any known location.");
                 }
             }
             catch (Exception ex)
             {
-                _ = LogManager.Log($"Failed to copy Include: {ex.Message}");
+                _ = Logger.Log($"Failed to copy Include: {ex.Message}");
             }
         }
 

@@ -2,10 +2,10 @@ using DevNest.Core.Helpers;
 
 namespace DevNest.Core
 {
-    public class LogManager
+    public class Logger
     {
 
-        public LogManager()
+        public Logger()
         {
 
             Task.Run(async () => await FileSystemManager.CreateDirectoryAsync(PathManager.LogsPath)).Wait();
