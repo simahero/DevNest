@@ -13,10 +13,10 @@ namespace DevNest.Core.Services
             {
                 { ServiceType.Apache, new ApacheSettingsService(serviceProvider) },
                 { ServiceType.MySQL, new MySQLSettingsService() },
-                { ServiceType.PHP, new PHPSettingsService() },
-                { ServiceType.Node, new NodeSettingsService() },
-                { ServiceType.Redis, new RedisSettingsService()  },
-                { ServiceType.PostgreSQL, new PostgreSQLSettingsService() },
+                { ServiceType.PHP, new PHPModelService() },
+                { ServiceType.Node, new NodeModelService() },
+                { ServiceType.Redis, new RedisModelService()  },
+                { ServiceType.PostgreSQL, new PostgreSQLModelService() },
                 { ServiceType.Nginx, new NginxSettingsService(serviceProvider) },
                 { ServiceType.MongoDB, new MongoDBSettingsService() }
             };

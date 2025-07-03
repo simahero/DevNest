@@ -38,7 +38,7 @@ namespace DevNest.Core.Helpers
 
             try
             {
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
                     System.IO.Compression.ZipFile.ExtractToDirectory(filePath, tempExtractPath);
 
@@ -62,11 +62,7 @@ namespace DevNest.Core.Helpers
                         {
                             var dirName = Path.GetFileName(dir);
                             var targetDir = Path.Combine(destination, dirName);
-                            if (Directory.Exists(targetDir))
-                            {
-                                Directory.Delete(targetDir, true);
-                            }
-                            Directory.Move(dir, targetDir);
+                            await FileSystemHelper.CopyDirectory(dir, targetDir, true);
                         }
 
                         foreach (var file in subFiles)

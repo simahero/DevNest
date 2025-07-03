@@ -16,8 +16,8 @@ namespace DevNest.Core
         private readonly SemaphoreSlim _fileLock = new(1, 1);
 
 
-        private SettingsModel? _cachedSettings;
-        public SettingsModel? CurrentSettings => _cachedSettings;
+        private Model? _cachedSettings;
+        public Model? CurrentSettings => _cachedSettings;
 
         private bool _isInitializing = true;
 
@@ -29,7 +29,7 @@ namespace DevNest.Core
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<SettingsModel> LoadSettingsAsync(bool useCache = true)
+        public async Task<Model> LoadSettingsAsync(bool useCache = true)
         {
             if (useCache && _cachedSettings != null)
             {
@@ -42,11 +42,11 @@ namespace DevNest.Core
             {
 
                 _isInitializing = true;
-                var settingsFilePath = Path.Combine(PathManager.ConfigPath, "settings.ini");
+                var settingsFilePath = PathHelper.SettingsPath;
 
-                if (await FileSystemManager.FileExistsAsync(settingsFilePath))
+                if (await FileSystemHelper.FileExistsAsync(settingsFilePath))
                 {
-                    var content = await FileSystemManager.ReadFileWithRetryAsync(settingsFilePath);
+                    var content = await FileSystemHelper.ReadFileWithRetryAsync(settingsFilePath);
                     var iniData = new IniDataParser().Parse(content);
                     var settings = ParseIniToSettings(iniData);
 
@@ -72,7 +72,7 @@ namespace DevNest.Core
                 _fileLock.Release();
             }
 
-            var defaultSettings = new SettingsModel
+            var defaultSettings = new Model
             {
                 StartWithWindows = false,
                 MinimizeToSystemTray = false,
@@ -93,7 +93,7 @@ namespace DevNest.Core
             return defaultSettings;
         }
 
-        private void SetupAutoSave(SettingsModel settings)
+        private void SetupAutoSave(Model settings)
         {
             if (_cachedSettings != null)
             {
@@ -106,7 +106,7 @@ namespace DevNest.Core
             SubscribeToNestedReplacement(settings);
         }
 
-        private void SubscribeNested(SettingsModel settings)
+        private void SubscribeNested(Model settings)
         {
             if (settings.Apache != null) settings.Apache.PropertyChanged += OnNestedSettingsPropertyChanged;
             if (settings.MySQL != null) settings.MySQL.PropertyChanged += OnNestedSettingsPropertyChanged;
@@ -118,7 +118,7 @@ namespace DevNest.Core
             if (settings.MongoDB != null) settings.MongoDB.PropertyChanged += OnNestedSettingsPropertyChanged;
         }
 
-        private void UnsubscribeNested(SettingsModel settings)
+        private void UnsubscribeNested(Model settings)
         {
             if (settings.Apache != null) settings.Apache.PropertyChanged -= OnNestedSettingsPropertyChanged;
             if (settings.MySQL != null) settings.MySQL.PropertyChanged -= OnNestedSettingsPropertyChanged;
@@ -130,9 +130,8 @@ namespace DevNest.Core
             if (settings.MongoDB != null) settings.MongoDB.PropertyChanged -= OnNestedSettingsPropertyChanged;
         }
 
-        private void SubscribeToNestedReplacement(SettingsModel settings)
+        private void SubscribeToNestedReplacement(Model settings)
         {
-            // If any nested property is replaced, re-subscribe
             settings.PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
@@ -184,15 +183,15 @@ namespace DevNest.Core
             OnSettingsPropertyChanged(sender, e);
         }
 
-        private async Task SaveSettingsInternalAsync(SettingsModel settings)
+        private async Task SaveSettingsInternalAsync(Model settings)
         {
 
             await _fileLock.WaitAsync();
 
             try
             {
-                var configPath = PathManager.ConfigPath;
-                var settingsFilePath = Path.Combine(configPath, "settings.ini");
+                var configPath = PathHelper.ConfigPath;
+                var settingsFilePath = PathHelper.SettingsPath;
                 if (string.IsNullOrEmpty(settingsFilePath))
                 {
                     _ = Logger.Log($"Saving settings is failed: {settingsFilePath}");
@@ -202,7 +201,7 @@ namespace DevNest.Core
                 var iniData = ConvertSettingsToIni(settings);
                 var content = iniData.ToString();
 
-                await FileSystemManager.WriteFileWithRetryAsync(settingsFilePath, content);
+                await FileSystemHelper.WriteFileWithRetryAsync(settingsFilePath, content);
             }
             catch (Exception ex)
             {
@@ -215,13 +214,13 @@ namespace DevNest.Core
             }
         }
 
-        public async Task LoadVersionsForSettings(SettingsModel settings)
+        public async Task LoadVersionsForSettings(Model settings)
         {
             await LoadInstalledVersionsForSettings(settings);
             await LoadInstallableVersionsForSettings(settings);
         }
 
-        private async Task LoadInstalledVersionsForSettings(SettingsModel settings)
+        private async Task LoadInstalledVersionsForSettings(Model settings)
         {
             await Task.Run(() =>
             {
@@ -230,7 +229,7 @@ namespace DevNest.Core
                     try
                     {
                         var dirName = serviceType.ToString();
-                        var servicePath = Path.Combine(PathManager.BinPath, dirName);
+                        var servicePath = Path.Combine(PathHelper.BinPath, dirName);
                         if (Directory.Exists(servicePath))
                         {
                             var versionDirectories = Directory.GetDirectories(servicePath)
@@ -292,7 +291,7 @@ namespace DevNest.Core
             });
         }
 
-        private async Task LoadInstallableVersionsForSettings(SettingsModel settings)
+        private async Task LoadInstallableVersionsForSettings(Model settings)
         {
             try
             {
@@ -372,9 +371,9 @@ namespace DevNest.Core
             }
         }
 
-        private SettingsModel ParseIniToSettings(IniData iniData)
+        private Model ParseIniToSettings(IniData iniData)
         {
-            var settings = new SettingsModel();
+            var settings = new Model();
 
             if (iniData.Sections.ContainsSection("General"))
             {
@@ -404,7 +403,7 @@ namespace DevNest.Core
             return settings;
         }
 
-        private IniData ConvertSettingsToIni(SettingsModel settings)
+        private IniData ConvertSettingsToIni(Model settings)
         {
             var iniData = new IniData();
 

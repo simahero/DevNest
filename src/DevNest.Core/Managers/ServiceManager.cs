@@ -1,4 +1,4 @@
-using DevNest.Core.Commands;
+using DevNest.Core.Managers.Commands;
 using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
@@ -13,13 +13,13 @@ namespace DevNest.Core
     public class ServiceManager
     {
         private readonly SettingsManager _settingsManager;
-        private readonly CommandManager _commandManager;
+        private readonly ICommandExecutor _commandExecutor;
         private readonly IUIDispatcher _uiDispatcher;
 
-        public ServiceManager(SettingsManager settingsManager, CommandManager commandManager, IUIDispatcher uiDispatcher)
+        public ServiceManager(SettingsManager settingsManager, ICommandExecutor commandExecutor, IUIDispatcher uiDispatcher)
         {
             _settingsManager = settingsManager;
-            _commandManager = commandManager;
+            _commandExecutor = commandExecutor;
             _uiDispatcher = uiDispatcher;
         }
 
@@ -30,21 +30,21 @@ namespace DevNest.Core
                 var allServices = new List<ServiceModel>();
 
                 var settings = await _settingsManager.LoadSettingsAsync();
-                var binDirectory = PathManager.BinPath;
-                var categoryDirectories = await FileSystemManager.GetDirectoriesAsync(binDirectory);
+                var binDirectory = PathHelper.BinPath;
+                var categoryDirectories = await FileSystemHelper.GetDirectoriesAsync(binDirectory);
                 foreach (var categoryDir in categoryDirectories)
                 {
                     var categoryName = Path.GetFileName(categoryDir);
                     if (Enum.TryParse<ServiceType>(categoryName, out var serviceType))
                     {
-                        var serviceDirectories = await FileSystemManager.GetDirectoriesAsync(categoryDir);
+                        var serviceDirectories = await FileSystemHelper.GetDirectoriesAsync(categoryDir);
                         foreach (var serviceDir in serviceDirectories)
                         {
                             var serviceName = Path.GetFileName(serviceDir);
                             var service = new ServiceModel
                             {
                                 Name = serviceName,
-                                DisplayName = GetServiceDisplayName(serviceName, serviceType),
+                                DisplayName = GetServiceDisplayName(serviceType),
                                 Command = string.Empty,
                                 Path = serviceDir,
                                 ServiceType = serviceType,
@@ -72,12 +72,12 @@ namespace DevNest.Core
 
         public async Task<IEnumerable<ServiceDefinition>> GetAvailableServices()
         {
-            var servicesFilePath = Path.Combine(PathManager.ConfigPath, "services.ini");
-            if (!await FileSystemManager.FileExistsAsync(servicesFilePath))
+            var servicesFilePath = Path.Combine(PathHelper.ConfigPath, "services.ini");
+            if (!await FileSystemHelper.FileExistsAsync(servicesFilePath))
             {
                 return Enumerable.Empty<ServiceDefinition>();
             }
-            var iniContent = await FileSystemManager.ReadAllTextAsync(servicesFilePath);
+            var iniContent = await FileSystemHelper.ReadAllTextAsync(servicesFilePath);
             var parser = new FileIniDataParser();
             var data = parser.Parser.Parse(iniContent);
             var allServices = new List<ServiceDefinition>();
@@ -131,7 +131,7 @@ namespace DevNest.Core
                 service.Status = ServiceStatus.Starting;
 
                 var workingDirectory = service.WorkingDirectory ?? Environment.CurrentDirectory;
-                var process = await _commandManager.StartProcessAsync(service.Command, workingDirectory, default);
+                var process = await _commandExecutor.StartProcessAsync(service.Command, workingDirectory, default);
 
                 if (process != null)
                 {
@@ -226,7 +226,7 @@ namespace DevNest.Core
             }
         }
 
-        private async Task<(string, string)> GetServiceCommandAsync(ServiceModel service, SettingsModel settings)
+        private async Task<(string, string)> GetServiceCommandAsync(ServiceModel service, Model settings)
         {
             try
             {
@@ -235,11 +235,11 @@ namespace DevNest.Core
                     ServiceType.Apache => await ApacheSettingsService.GetCommandAsync(service, settings),
                     ServiceType.MySQL => await MySQLSettingsService.GetCommandAsync(service, settings),
                     ServiceType.Nginx => await NginxSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.Node => await NodeSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.Redis => await RedisSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.PostgreSQL => await PostgreSQLSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.Node => await NodeModelService.GetCommandAsync(service, settings),
+                    ServiceType.Redis => await RedisModelService.GetCommandAsync(service, settings),
+                    ServiceType.PostgreSQL => await PostgreSQLModelService.GetCommandAsync(service, settings),
                     ServiceType.MongoDB => await MongoDBSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.PHP => await PHPSettingsService.GetCommandAsync(service, settings),
+                    ServiceType.PHP => await PHPModelService.GetCommandAsync(service, settings),
                     _ => await Task.FromResult((string.Empty, string.Empty)),
                 };
             }
@@ -249,7 +249,7 @@ namespace DevNest.Core
             }
         }
 
-        private static string GetServiceDisplayName(string serviceName, ServiceType serviceType)
+        private static string GetServiceDisplayName(ServiceType serviceType)
         {
             return serviceType switch
             {
@@ -265,7 +265,7 @@ namespace DevNest.Core
             };
         }
 
-        private static bool IsServiceSelected(ServiceModel service, SettingsModel settings)
+        private static bool IsServiceSelected(ServiceModel service, Model settings)
         {
             var selectedVersion = service.ServiceType switch
             {

@@ -1,7 +1,7 @@
 using DevNest.Core.Helpers;
 using System.Diagnostics;
 
-namespace DevNest.Core.Sites
+namespace DevNest.Core.Managers.Sites
 {
     public class VirtualHostManager
     {
@@ -26,7 +26,7 @@ namespace DevNest.Core.Sites
                 progress?.Report("Creating virtual host...");
 
                 var domain = $"{siteName}.test";
-                var documentRoot = Path.Combine(PathManager.WwwPath, siteName);
+                var documentRoot = Path.Combine(PathHelper.WwwPath, siteName);
 
                 await AddVirtualHostAsync(siteName, domain, documentRoot);
 
@@ -45,46 +45,46 @@ namespace DevNest.Core.Sites
         {
             var apacheConfig = await ProcessApacheSitesEnabledTemplateAsync(siteName, domain, documentRoot);
 
-            var apacheSitesEnabledPath = Path.Combine(PathManager.EtcPath, "apache", "sites-enabled");
+            var apacheSitesEnabledPath = Path.Combine(PathHelper.EtcPath, "apache2", "sites-enabled");
 
-            if (!await FileSystemManager.DirectoryExistsAsync(apacheSitesEnabledPath))
+            if (!await FileSystemHelper.DirectoryExistsAsync(apacheSitesEnabledPath))
             {
-                await FileSystemManager.CreateDirectoryAsync(apacheSitesEnabledPath);
+                await FileSystemHelper.CreateDirectoryAsync(apacheSitesEnabledPath);
             }
 
             var apacheConfigFilePath = Path.Combine(apacheSitesEnabledPath, $"auto.{domain}.conf");
 
-            if (!await FileSystemManager.FileExistsAsync(apacheConfigFilePath))
+            if (!await FileSystemHelper.FileExistsAsync(apacheConfigFilePath))
             {
-                await FileSystemManager.WriteAllTextAsync(apacheConfigFilePath, apacheConfig);
+                await FileSystemHelper.WriteAllTextAsync(apacheConfigFilePath, apacheConfig);
             }
 
 
             var nginxConfig = await ProcessNginxSitesEnabledTemplateAsync(siteName, domain, documentRoot);
 
-            var nginxSitesEnabledPath = Path.Combine(PathManager.EtcPath, "nginx", "sites-enabled");
+            var nginxSitesEnabledPath = Path.Combine(PathHelper.EtcPath, "nginx", "sites-enabled");
 
-            if (!await FileSystemManager.DirectoryExistsAsync(nginxSitesEnabledPath))
+            if (!await FileSystemHelper.DirectoryExistsAsync(nginxSitesEnabledPath))
             {
-                await FileSystemManager.CreateDirectoryAsync(nginxSitesEnabledPath);
+                await FileSystemHelper.CreateDirectoryAsync(nginxSitesEnabledPath);
             }
 
             var nginxConfigFilePath = Path.Combine(nginxSitesEnabledPath, $"auto.{domain}.conf");
 
-            if (!await FileSystemManager.FileExistsAsync(nginxConfigFilePath))
+            if (!await FileSystemHelper.FileExistsAsync(nginxConfigFilePath))
             {
-                await FileSystemManager.WriteAllTextAsync(nginxConfigFilePath, nginxConfig);
+                await FileSystemHelper.WriteAllTextAsync(nginxConfigFilePath, nginxConfig);
             }
 
         }
 
         private async Task<string> ProcessApacheSitesEnabledTemplateAsync(string siteName, string domain, string documentRoot)
         {
-            var apacheTemplatePath = Path.Combine(PathManager.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
+            var apacheTemplatePath = Path.Combine(PathHelper.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
 
             try
             {
-                var templateContent = await FileSystemManager.ReadAllTextAsync(apacheTemplatePath);
+                var templateContent = await FileSystemHelper.ReadAllTextAsync(apacheTemplatePath);
 
                 var processedContent = templateContent
                     .Replace("<<PORT>>", "80")
@@ -103,11 +103,11 @@ namespace DevNest.Core.Sites
 
         private async Task<string> ProcessNginxSitesEnabledTemplateAsync(string siteName, string domain, string documentRoot)
         {
-            var nginxTemplatePath = Path.Combine(PathManager.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
+            var nginxTemplatePath = Path.Combine(PathHelper.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
 
             try
             {
-                var templateContent = await FileSystemManager.ReadAllTextAsync(nginxTemplatePath);
+                var templateContent = await FileSystemHelper.ReadAllTextAsync(nginxTemplatePath);
 
                 var processedContent = templateContent
                     .Replace("<<PORT>>", "8080")
@@ -129,9 +129,9 @@ namespace DevNest.Core.Sites
             var hostsFilePath = @"C:\\Windows\\System32\\drivers\\etc\\hosts";
             var hostsEntry = $"127.0.0.1\t{domain}\t#DevNest";
 
-            if (await FileSystemManager.FileExistsAsync(hostsFilePath))
+            if (await FileSystemHelper.FileExistsAsync(hostsFilePath))
             {
-                var existingContent = await FileSystemManager.ReadAllTextAsync(hostsFilePath);
+                var existingContent = await FileSystemHelper.ReadAllTextAsync(hostsFilePath);
                 if (existingContent.Contains(domain))
                 {
                     return;
@@ -140,9 +140,9 @@ namespace DevNest.Core.Sites
 
             try
             {
-                var currentContent = await FileSystemManager.ReadAllTextAsync(hostsFilePath);
+                var currentContent = await FileSystemHelper.ReadAllTextAsync(hostsFilePath);
                 var newContent = currentContent + Environment.NewLine + hostsEntry;
-                await FileSystemManager.WriteAllTextAsync(hostsFilePath, newContent);
+                await FileSystemHelper.WriteAllTextAsync(hostsFilePath, newContent);
             }
             catch (Exception)
             {

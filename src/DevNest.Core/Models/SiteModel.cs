@@ -23,9 +23,6 @@ namespace DevNest.Core.Models
         private bool _isActive;
 
         [ObservableProperty]
-        private DateTime _createdDate;
-
-        [ObservableProperty]
         private Process? _shareProcess;
 
         public bool IsSharing => ShareProcess != null && !ShareProcess.HasExited;

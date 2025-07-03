@@ -2,7 +2,7 @@
 -   ngrok settings
 -   read databases
 -   on settings change, restart
-
+-   git clone install command
 -   wsl path
 
 Here are some potential optimizations for your codebase based on the provided excerpts:
@@ -52,3 +52,14 @@ Consider using a strongly-typed configuration library or reflection-based mappin
     If loading many services/sites, consider using Parallel.ForEach or Task.WhenAll to speed up initialization, especially if each operation is independent.
 
 If you want targeted code changes for any of these, let me know which area you'd like to focus on!
+
+services.AddSingleton<WindowsServiceInstaller>();
+services.AddSingleton<WslServiceInstaller>();
+services.AddSingleton<WindowsServiceRunner>();
+services.AddSingleton<WslServiceRunner>();
+services.AddSingleton<WindowsCommandExecutor>();
+services.AddSingleton<WslCommandExecutor>();
+services.AddSingleton<IPlatformServiceFactory, PlatformServiceFactory>();
+
+var installer = \_platformServiceFactory.GetInstaller();
+await installer.InstallServiceAsync(...);

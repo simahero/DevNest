@@ -23,7 +23,7 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
-        MainNavigationView.SelectedItem = MainNavigationView.MenuItems[0];
+        // MainNavigationView.SelectedItem = MainNavigationView.MenuItems[0];
         _navigationService.NavigateTo<Views.DashboardPage>(NavigationTransitions.Suppress);
 
         _user32Dll = new User32Dll();

@@ -6,14 +6,14 @@ using DevNest.Core.Helpers;
 
 namespace DevNest.Core.Services
 {
-    public class RedisSettingsService : IServiceSettingsProvider<RedisSettings>
+    public class RedisModelService : IServiceSettingsProvider<RedisModel>
     {
         public ServiceType Type => ServiceType.Redis;
         public string ServiceName => Type.ToString();
 
-        public RedisSettings GetDefaultConfiguration()
+        public RedisModel GetDefaultConfiguration()
         {
-            return new RedisSettings
+            return new RedisModel
             {
                 Version = "",
                 Port = 6379,
@@ -21,7 +21,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
+        public void ParseFromIni(IniData iniData, Model serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -39,7 +39,7 @@ namespace DevNest.Core.Services
 
         }
 
-        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
+        public void SaveToIni(IniData iniData, Model serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -48,13 +48,13 @@ namespace DevNest.Core.Services
             section.AddKey("AutoStart", serviceSettings.Redis.AutoStart.ToString().ToLower());
         }
 
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
         {
             var selectedVersion = settings.Redis.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var redisPath = Path.Combine(service.Path, "redis-server.exe");
-                if (await FileSystemManager.FileExistsAsync(redisPath))
+                if (await FileSystemHelper.FileExistsAsync(redisPath))
                 {
                     return ($"\"{redisPath}\"", Path.GetDirectoryName(redisPath)!);
                 }

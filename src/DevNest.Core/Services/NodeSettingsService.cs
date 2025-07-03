@@ -6,14 +6,14 @@ using DevNest.Core.Helpers;
 
 namespace DevNest.Core.Services
 {
-    public class NodeSettingsService : IServiceSettingsProvider<NodeSettings>
+    public class NodeModelService : IServiceSettingsProvider<NodeModel>
     {
         public ServiceType Type => ServiceType.Node;
         public string ServiceName => Type.ToString();
 
-        public NodeSettings GetDefaultConfiguration()
+        public NodeModel GetDefaultConfiguration()
         {
-            return new NodeSettings
+            return new NodeModel
             {
                 Version = "",
                 DefaultPort = 3000,
@@ -22,7 +22,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
+        public void ParseFromIni(IniData iniData, Model serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -46,7 +46,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
+        public void SaveToIni(IniData iniData, Model serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -57,13 +57,13 @@ namespace DevNest.Core.Services
             section.AddKey("AutoStart", serviceSettings.Node.AutoStart.ToString().ToLower());
         }
 
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
         {
             var selectedVersion = settings.Node.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var nodePath = Path.Combine(service.Path, "node.exe");
-                if (await FileSystemManager.FileExistsAsync(nodePath))
+                if (await FileSystemHelper.FileExistsAsync(nodePath))
                 {
                     return ($"\"{nodePath}\"", Path.GetDirectoryName(nodePath)!);
                 }

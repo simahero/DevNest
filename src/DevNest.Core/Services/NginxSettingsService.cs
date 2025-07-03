@@ -6,7 +6,7 @@ using IniParser.Model;
 
 namespace DevNest.Core.Services
 {
-    public class NginxSettingsService : IServiceSettingsProvider<NginxSettings>
+    public class NginxSettingsService : IServiceSettingsProvider<NginxModel>
     {
         public ServiceType Type => ServiceType.Nginx;
         public string ServiceName => Type.ToString();
@@ -18,9 +18,9 @@ namespace DevNest.Core.Services
             _serviceProvider = serviceProvider;
         }
 
-        public NginxSettings GetDefaultConfiguration()
+        public NginxModel GetDefaultConfiguration()
         {
-            return new NginxSettings
+            return new NginxModel
             {
                 Version = "",
                 Port = 8080,
@@ -28,7 +28,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
+        public void ParseFromIni(IniData iniData, Model serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -50,7 +50,7 @@ namespace DevNest.Core.Services
 
         }
 
-        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
+        public void SaveToIni(IniData iniData, Model serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -66,9 +66,9 @@ namespace DevNest.Core.Services
             });
         }
 
-        private async Task GenerateNginxConfigurationAsync(SettingsModel settings)
+        private async Task GenerateNginxConfigurationAsync(Model settings)
         {
-            string TemplateFilePath = Path.Combine(PathManager.TemplatesPath, "nginx.conf.tpl");
+            string TemplateFilePath = Path.Combine(PathHelper.TemplatesPath, "nginx.conf.tpl");
 
             try
             {
@@ -77,18 +77,18 @@ namespace DevNest.Core.Services
                     return;
                 }
 
-                if (!await FileSystemManager.FileExistsAsync(TemplateFilePath))
+                if (!await FileSystemHelper.FileExistsAsync(TemplateFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"Nginx template file not found: {TemplateFilePath}");
                     return;
                 }
 
-                var templateContent = await FileSystemManager.ReadAllTextAsync(TemplateFilePath);
+                var templateContent = await FileSystemHelper.ReadAllTextAsync(TemplateFilePath);
 
 
-                var srvRoot = Path.Combine(PathManager.BinPath, "Nginx", settings.Nginx.Version).Replace('\\', '/');
-                var logsPath = Path.Combine(PathManager.LogsPath).Replace('\\', '/');
-                var etcPath = PathManager.EtcPath.Replace('\\', '/');
+                var srvRoot = Path.Combine(PathHelper.BinPath, "Nginx", settings.Nginx.Version).Replace('\\', '/');
+                var logsPath = Path.Combine(PathHelper.LogsPath).Replace('\\', '/');
+                var etcPath = PathHelper.EtcPath.Replace('\\', '/');
 
                 var configContent = templateContent
                     .Replace("<<LOGSPATH>>", logsPath)
@@ -97,19 +97,19 @@ namespace DevNest.Core.Services
                 var configDir = Path.Combine(srvRoot, "conf");
 
                 var configFilePath = Path.Combine(configDir, "nginx.conf");
-                await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                await FileSystemHelper.WriteAllTextAsync(configFilePath, configContent);
 
                 var tempPath = Path.Combine(srvRoot, "temp", "client_body_temp");
                 var nginxLogPath = Path.Combine(srvRoot, "logs");
 
                 if (!Directory.Exists(tempPath))
                 {
-                    await FileSystemManager.CreateDirectoryAsync(tempPath);
+                    await FileSystemHelper.CreateDirectoryAsync(tempPath);
                 }
 
                 if (!Directory.Exists(nginxLogPath))
                 {
-                    await FileSystemManager.CreateDirectoryAsync(nginxLogPath);
+                    await FileSystemHelper.CreateDirectoryAsync(nginxLogPath);
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Nginx configuration generated: {configFilePath}");
@@ -120,7 +120,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        private async Task GenerateNginxVirtualHosts(SettingsModel settings)
+        private async Task GenerateNginxVirtualHosts(Model settings)
         {
             var siteManager = (SiteManager?)_serviceProvider.GetService(typeof(SiteManager));
 
@@ -130,11 +130,11 @@ namespace DevNest.Core.Services
             }
 
             var sites = await siteManager.GetInstalledSitesAsync();
-            var nginxTemplatePath = Path.Combine(PathManager.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
+            var nginxTemplatePath = Path.Combine(PathHelper.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
 
-            var templateContent = await FileSystemManager.ReadAllTextAsync(nginxTemplatePath);
+            var templateContent = await FileSystemHelper.ReadAllTextAsync(nginxTemplatePath);
 
-            var nginxSitesEnabledPath = Path.Combine(PathManager.EtcPath, "nginx", "sites-enabled");
+            var nginxSitesEnabledPath = Path.Combine(PathHelper.EtcPath, "nginx", "sites-enabled");
 
             if (Directory.Exists(nginxSitesEnabledPath))
             {
@@ -152,16 +152,16 @@ namespace DevNest.Core.Services
             {
                 try
                 {
-                    var srvRoot = Path.Combine(PathManager.BinPath, "Nginx", settings.Nginx.Version).Replace('\\', '/');
+                    var srvRoot = Path.Combine(PathHelper.BinPath, "Nginx", settings.Nginx.Version).Replace('\\', '/');
 
                     var processedContent = templateContent
                         .Replace("<<PORT>>", settings.Nginx.Port.ToString())
-                        .Replace("<<PROJECT_DIR>>", Path.Combine(PathManager.WwwPath, site.Name).Replace('\\', '/'))
+                        .Replace("<<PROJECT_DIR>>", Path.Combine(PathHelper.WwwPath, site.Name).Replace('\\', '/'))
                         .Replace("<<HOSTNAME>>", $"{site.Name}.test")
                         .Replace("<<SRVROOT>>", srvRoot);
 
                     var nginxConfigFilePath = Path.Combine(nginxSitesEnabledPath, $"auto.{site.Name}.test.conf");
-                    await FileSystemManager.WriteAllTextAsync(nginxConfigFilePath, processedContent);
+                    await FileSystemHelper.WriteAllTextAsync(nginxConfigFilePath, processedContent);
                 }
                 catch (Exception ex)
                 {
@@ -170,13 +170,13 @@ namespace DevNest.Core.Services
             }
         }
 
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
         {
             var selectedVersion = settings.Nginx.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var nginxPath = Path.Combine(service.Path, "nginx.exe");
-                if (await FileSystemManager.FileExistsAsync(nginxPath))
+                if (await FileSystemHelper.FileExistsAsync(nginxPath))
                 {
                     return ($"\"{nginxPath}\"", Path.GetDirectoryName(nginxPath)!);
                 }

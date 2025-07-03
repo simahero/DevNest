@@ -6,22 +6,22 @@ using IniParser.Model;
 
 namespace DevNest.Core.Services
 {
-    public class PHPSettingsService : IServiceSettingsProvider<PHPSettings>
+    public class PHPModelService : IServiceSettingsProvider<PHPModel>
     {
         public ServiceType Type => ServiceType.PHP;
         public string ServiceName => Type.ToString();
 
-        public PHPSettingsService() { }
+        public PHPModelService() { }
 
-        public PHPSettings GetDefaultConfiguration()
+        public PHPModel GetDefaultConfiguration()
         {
-            return new PHPSettings
+            return new PHPModel
             {
                 Version = "",
             };
         }
 
-        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
+        public void ParseFromIni(IniData iniData, Model serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -32,7 +32,7 @@ namespace DevNest.Core.Services
             serviceSettings.PHP.Version = section["Version"] ?? "";
         }
 
-        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
+        public void SaveToIni(IniData iniData, Model serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -42,42 +42,42 @@ namespace DevNest.Core.Services
             _ = Task.Run(async () => await GeneratePHPConfigurationAsync(serviceSettings));
         }
 
-        private async Task GeneratePHPConfigurationAsync(SettingsModel settings)
+        private async Task GeneratePHPConfigurationAsync(Model settings)
         {
-            var phpBinDir = Path.Combine(PathManager.BinPath, "PHP", settings.PHP.Version);
+            var phpBinDir = Path.Combine(PathHelper.BinPath, "PHP", settings.PHP.Version);
             var iniDevPath = Path.Combine(phpBinDir, "php.ini-development");
             var iniPath = Path.Combine(phpBinDir, "php.ini");
 
-            if (!await FileSystemManager.FileExistsAsync(iniDevPath))
+            if (!await FileSystemHelper.FileExistsAsync(iniDevPath))
             {
                 return;
             }
 
-            if (!await FileSystemManager.FileExistsAsync(iniPath))
+            if (!await FileSystemHelper.FileExistsAsync(iniPath))
             {
-                await FileSystemManager.CopyFileAsync(iniDevPath, iniPath);
+                await FileSystemHelper.CopyFileAsync(iniDevPath, iniPath);
 
-                var autoloadPath = Path.Combine(PathManager.EtcPath, "php", "DevNestDumper", "index.php");
+                var autoloadPath = Path.Combine(PathHelper.EtcPath, "php", "DevNestDumper", "index.php");
                 var prepend = $"auto_prepend_file = {autoloadPath}";
 
-                await FileSystemManager.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
-                await FileSystemManager.AppendAllTextAsync(iniPath, $"{prepend}\n");
-                await FileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912\n");
-                await FileSystemManager.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
-                await FileSystemManager.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
-                await FileSystemManager.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"{prepend}\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
 
             }
 
         }
 
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
         {
             var selectedVersion = settings.PHP.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var binPath = Path.Combine(service.Path, "php-cgi.exe");
-                if (await FileSystemManager.FileExistsAsync(binPath))
+                if (await FileSystemHelper.FileExistsAsync(binPath))
                 {
                     return ($"\"{binPath}\" -b 127.0.0.1:9003", service.Path);
                 }

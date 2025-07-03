@@ -84,7 +84,7 @@ namespace DevNest.UI.ViewModels
         [RelayCommand]
         private void OpenLog()
         {
-            var logPath = Path.Combine(PathManager.LogsPath);
+            var logPath = Path.Combine(PathHelper.LogsPath);
             if (Directory.Exists(logPath))
             {
                 Process.Start(new ProcessStartInfo

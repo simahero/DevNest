@@ -1,7 +1,4 @@
 using DevNest.Core.Helpers;
-using Microsoft.Win32;
-using System;
-using System.IO;
 
 namespace DevNest.Core
 {
@@ -14,7 +11,7 @@ namespace DevNest.Core
 
         public async Task CopyStarterDirOnStartup()
         {
-            string exePath = PathManager.BasePath;
+            string exePath = PathHelper.BasePath;
 
             string[] possibleSources = new[]
             {
@@ -28,6 +25,9 @@ namespace DevNest.Core
                 if (Directory.Exists(src))
                 {
                     sourceDir = src;
+
+                    _ = Logger.Log($"{sourceDir}");
+
                     break;
                 }
             }
@@ -36,7 +36,7 @@ namespace DevNest.Core
             {
                 if (sourceDir != null)
                 {
-                    await FileSystemManager.CopyDirectory(sourceDir, exePath, true);
+                    await FileSystemHelper.CopyDirectory(sourceDir, exePath, false);
                     _ = Logger.Log($"Copying starting directory.");
                 }
                 else
@@ -52,14 +52,14 @@ namespace DevNest.Core
 
         public async Task EnsureAliasConfs()
         {
-            string[] servers = { "apache", "nginx" };
+            string[] servers = { "apache2", "nginx" };
 
-            string templateDir = PathManager.TemplatesPath;
+            string templateDir = PathHelper.TemplatesPath;
 
 
             foreach (var server in servers)
             {
-                string aliasDir = Path.Combine(PathManager.EtcPath, server, "alias");
+                string aliasDir = Path.Combine(PathHelper.EtcPath, server, "alias");
                 if (!Directory.Exists(aliasDir))
                 {
                     _ = Directory.CreateDirectory(aliasDir);
@@ -69,8 +69,8 @@ namespace DevNest.Core
 
                 foreach (var tplFile in templateFiles)
                 {
-                    var templateContent = await FileSystemManager.ReadAllTextAsync(tplFile);
-                    var rootPath = PathManager.BasePath.Replace('\\', '/');
+                    var templateContent = await FileSystemHelper.ReadAllTextAsync(tplFile);
+                    var rootPath = PathHelper.BasePath.Replace('\\', '/');
                     var configContent = templateContent.Replace("<<ROOT>>", rootPath);
 
                     var tplFileName = Path.GetFileName(tplFile);
@@ -78,7 +78,7 @@ namespace DevNest.Core
                     string configFileName = tplFileName.Replace(prefix, "").Replace(".tpl", "");
                     var configFilePath = Path.Combine(aliasDir, configFileName);
 
-                    await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                    await FileSystemHelper.WriteAllTextAsync(configFilePath, configContent);
                 }
             }
         }

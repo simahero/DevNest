@@ -1,61 +1,10 @@
+﻿using DevNest.Core.Interfaces;
 using System.Diagnostics;
 
-namespace DevNest.Core.Commands
+namespace DevNest.Core.Managers.Commands
 {
-    public class CommandManager
+    public class WINCommandExecutor : ICommandExecutor
     {
-        public CommandManager() { }
-
-        public async Task<int> ExecuteCommandAsync(string command, string workingDirectory, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
-        {
-            progress?.Report($"Executing: {command}");
-
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c cd /d \"{workingDirectory}\" && {command}",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = workingDirectory
-            };
-
-            progress?.Report("Starting command execution...");
-
-            using var process = Process.Start(processInfo);
-            if (process == null)
-            {
-                _ = Logger.Log($"Failed to start process for command: {command}");
-                throw new InvalidOperationException("Failed to start process");
-            }
-
-            // Read output and error streams asynchronously
-            var errorTask = ReadStreamAsync(process.StandardError, line =>
-            {
-                progress?.Report(line);
-                _ = Logger.Log($"[stderr] {line}");
-            }, cancellationToken);
-            var outputTask = ReadStreamAsync(process.StandardOutput, line => progress?.Report(line), cancellationToken);
-
-            await process.WaitForExitAsync(cancellationToken);
-            await Task.WhenAll(outputTask, errorTask);
-
-            progress?.Report($"Command completed with exit code: {process.ExitCode}");
-            return process.ExitCode;
-        }
-
-        public async Task ExecuteCommandWithSuccessCheckAsync(string command, string workingDirectory, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
-        {
-            var exitCode = await ExecuteCommandAsync(command, workingDirectory, progress, cancellationToken);
-
-            if (exitCode != 0)
-            {
-                _ = Logger.Log($"Command failed with exit code {exitCode}: {command}");
-                throw new Exception($"Command failed with exit code {exitCode}: {command}");
-            }
-        }
-
         public async Task<Process?> StartProcessAsync(string command, string workingDirectory, CancellationToken cancellationToken = default)
         {
             try
@@ -118,14 +67,22 @@ namespace DevNest.Core.Commands
                     return null;
                 }
 
-                var errorTask = ReadStreamAsync(process.StandardError, line =>
+                var errorTask = Task.Run(async () =>
                 {
-                    _ = Logger.Log($"[stderr] {line}");
+                    string? line;
+                    while ((line = await process.StandardError.ReadLineAsync()) != null && !cancellationToken.IsCancellationRequested)
+                    {
+                        _ = Logger.Log($"[stderr] {line}");
+                    }
                 }, cancellationToken);
 
-                var outputTask = ReadStreamAsync(process.StandardOutput, line =>
+                var outputTask = Task.Run(async () =>
                 {
-                    _ = Logger.Log($"[stdout] {line}");
+                    string? line;
+                    while ((line = await process.StandardOutput.ReadLineAsync()) != null && !cancellationToken.IsCancellationRequested)
+                    {
+                        _ = Logger.Log($"[stdout] {line}");
+                    }
                 }, cancellationToken);
 
                 return await Task.FromResult(process);
@@ -137,13 +94,55 @@ namespace DevNest.Core.Commands
             }
         }
 
-        private async Task ReadStreamAsync(StreamReader reader, Action<string> onLineRead, CancellationToken cancellationToken = default)
+        public async Task<int> ExecuteCommandAsync(string command, string workingDirectory, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
         {
-            string? line;
-            while ((line = await reader.ReadLineAsync()) != null && !cancellationToken.IsCancellationRequested)
+            progress?.Report($"Executing: {command}");
+
+            var processInfo = new ProcessStartInfo
             {
-                onLineRead(line);
+                FileName = "cmd.exe",
+                Arguments = $"{command}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = workingDirectory
+            };
+
+            progress?.Report("Starting command execution...");
+
+            using var process = Process.Start(processInfo);
+            if (process == null)
+            {
+                _ = Logger.Log($"Failed to start process for command: {command}");
+                progress?.Report($"Failed to start process for command: {command}");
+                throw new InvalidOperationException("Failed to start process");
             }
+
+            var errorTask = Task.Run(async () =>
+            {
+                string? line;
+                while ((line = await process.StandardError.ReadLineAsync()) != null && !cancellationToken.IsCancellationRequested)
+                {
+                    _ = Logger.Log($"[stderr] {line}");
+                }
+            }, cancellationToken);
+
+            var outputTask = Task.Run(async () =>
+            {
+                string? line;
+                while ((line = await process.StandardOutput.ReadLineAsync()) != null && !cancellationToken.IsCancellationRequested)
+                {
+                    _ = Logger.Log($"[stdout] {line}");
+                }
+            }, cancellationToken);
+
+            await process.WaitForExitAsync(cancellationToken);
+            await Task.WhenAll(outputTask, errorTask);
+
+            progress?.Report($"Command completed with exit code: {process.ExitCode}");
+            return process.ExitCode;
         }
+
     }
 }

@@ -6,14 +6,14 @@ using DevNest.Core.Helpers;
 
 namespace DevNest.Core.Services
 {
-    public class PostgreSQLSettingsService : IServiceSettingsProvider<PostgreSQLSettings>
+    public class PostgreSQLModelService : IServiceSettingsProvider<PostgreSQLModel>
     {
         public ServiceType Type => ServiceType.PostgreSQL;
         public string ServiceName => Type.ToString();
 
-        public PostgreSQLSettings GetDefaultConfiguration()
+        public PostgreSQLModel GetDefaultConfiguration()
         {
-            return new PostgreSQLSettings
+            return new PostgreSQLModel
             {
                 Version = "",
                 Port = 5432,
@@ -21,7 +21,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
+        public void ParseFromIni(IniData iniData, Model serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
                 return;
@@ -35,7 +35,7 @@ namespace DevNest.Core.Services
 
         }
 
-        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
+        public void SaveToIni(IniData iniData, Model serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -44,13 +44,13 @@ namespace DevNest.Core.Services
             section.AddKey("AutoStart", serviceSettings.PostgreSQL.AutoStart.ToString().ToLower());
         }
 
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
         {
             var selectedVersion = settings.PostgreSQL.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var postgresPath = Path.Combine(service.Path, "bin", "postgres.exe");
-                if (await FileSystemManager.FileExistsAsync(postgresPath))
+                if (await FileSystemHelper.FileExistsAsync(postgresPath))
                 {
                     return ($"\"{postgresPath}\"", Path.GetDirectoryName(postgresPath)!);
                 }

@@ -16,31 +16,30 @@ namespace DevNest.UI.ViewModels
     public partial class EnvironmentsViewModel : BaseViewModel
     {
         private readonly SettingsManager _settingsManager;
-        private readonly InstallManager _installManager;
 
         [ObservableProperty]
-        private ApacheSettings? _apache;
+        private ApacheModel? _apache;
 
         [ObservableProperty]
-        private MySQLSettings? _mySQL;
+        private MySQLModel? _mySQL;
 
         [ObservableProperty]
-        private PHPSettings? _php;
+        private PHPModel? _php;
 
         [ObservableProperty]
-        private NodeSettings? _node;
+        private NodeModel? _node;
 
         [ObservableProperty]
-        private RedisSettings? _redis;
+        private RedisModel? _redis;
 
         [ObservableProperty]
-        private PostgreSQLSettings? _postgreSQL;
+        private PostgreSQLModel? _postgreSQL;
 
         [ObservableProperty]
-        private NginxSettings? _nginx;
+        private NginxModel? _nginx;
 
         [ObservableProperty]
-        private MongoDBSettings? _mongoDB;
+        private MongoDBModel? _mongoDB;
 
 
         [ObservableProperty]
@@ -149,17 +148,16 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private string? _selectedRedisVersion;
 
-        public EnvironmentsViewModel(SettingsManager settingsManager, InstallManager installManager)
+        public EnvironmentsViewModel(SettingsManager settingsManager)
         {
             _settingsManager = settingsManager;
-            _installManager = installManager;
             Title = "Environments";
         }
 
         [RelayCommand]
         private void OpenSettings()
         {
-            var settingsPath = Path.Combine(PathManager.ConfigPath, "settings.ini");
+            var settingsPath = PathHelper.SettingsPath;
             if (File.Exists(settingsPath))
             {
                 Process.Start(new ProcessStartInfo
@@ -173,7 +171,7 @@ namespace DevNest.UI.ViewModels
         [RelayCommand]
         private void OpenEtc()
         {
-            var etcPath = Path.Combine(PathManager.EtcPath);
+            var etcPath = Path.Combine(PathHelper.EtcPath);
             if (Directory.Exists(etcPath))
             {
                 Process.Start(new ProcessStartInfo
@@ -189,7 +187,7 @@ namespace DevNest.UI.ViewModels
         {
             if (_settingsManager.CurrentSettings?.PHP?.Version != null)
             {
-                var phpIniPath = Path.Combine(PathManager.BinPath, "PHP", _settingsManager.CurrentSettings.PHP.Version, "php.ini");
+                var phpIniPath = Path.Combine(PathHelper.BinPath, "PHP", _settingsManager.CurrentSettings.PHP.Version, "php.ini");
                 if (File.Exists(phpIniPath))
                 {
                     Process.Start(new ProcessStartInfo
@@ -206,7 +204,7 @@ namespace DevNest.UI.ViewModels
         {
             if (_settingsManager.CurrentSettings?.PHP?.Version != null)
             {
-                var phpIniPath = Path.Combine(PathManager.BinPath, "PHP", _settingsManager.CurrentSettings.PHP.Version, "php.ini");
+                var phpIniPath = Path.Combine(PathHelper.BinPath, "PHP", _settingsManager.CurrentSettings.PHP.Version, "php.ini");
 
                 var extWindow = new PHPExtensionWindow(phpIniPath);
                 extWindow.Activate();
@@ -327,17 +325,16 @@ namespace DevNest.UI.ViewModels
                     SetInstallationStatus(serviceType, message);
                 });
 
-                var result = await _installManager.InstallServiceAsync(selectedService, progress);
+                // Download the archive to a temp file
+                string downloadUrl = selectedService.Url;
+                string archivePath = await DownloadHelper.DownloadToTempAsync(downloadUrl, progress);
 
-                if (result.Success)
-                {
-                    SetInstallationStatus(serviceType, result.Message);
-                    UpdateVersionCollections(serviceType, selectedService);
-                }
-                else
-                {
-                    SetInstallationStatus(serviceType, result.Message);
-                }
+                // Extract the archive
+                string extractPath = Path.Combine(PathHelper.BinPath, serviceType.ToString(), version);
+                await ArchiveHelper.ExtractAsync(archivePath, extractPath, selectedService.HasAdditionalDir, progress);
+
+                SetInstallationStatus(serviceType, $"{serviceType} {version} installed successfully.");
+                UpdateVersionCollections(serviceType, selectedService);
             }
             catch (Exception ex)
             {

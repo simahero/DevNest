@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace DevNest.Core.Models
 {
-    public partial class SettingsModel : ObservableObject
+    public partial class Model : ObservableObject
     {
         [ObservableProperty]
         private bool _startWithWindows = false;
@@ -26,17 +26,17 @@ namespace DevNest.Core.Models
         [ObservableProperty]
         private bool _useWLS = false;
 
-        public ApacheSettings Apache { get; set; } = new ApacheSettings();
-        public MySQLSettings MySQL { get; set; } = new MySQLSettings();
-        public PHPSettings PHP { get; set; } = new PHPSettings();
-        public NodeSettings Node { get; set; } = new NodeSettings();
-        public RedisSettings Redis { get; set; } = new RedisSettings();
-        public PostgreSQLSettings PostgreSQL { get; set; } = new PostgreSQLSettings();
-        public NginxSettings Nginx { get; set; } = new NginxSettings();
-        public MongoDBSettings MongoDB { get; set; } = new MongoDBSettings();
+        public ApacheModel Apache { get; set; } = new ApacheModel();
+        public MySQLModel MySQL { get; set; } = new MySQLModel();
+        public PHPModel PHP { get; set; } = new PHPModel();
+        public NodeModel Node { get; set; } = new NodeModel();
+        public RedisModel Redis { get; set; } = new RedisModel();
+        public PostgreSQLModel PostgreSQL { get; set; } = new PostgreSQLModel();
+        public NginxModel Nginx { get; set; } = new NginxModel();
+        public MongoDBModel MongoDB { get; set; } = new MongoDBModel();
     }
 
-    public partial class ApacheSettings : ObservableObject
+    public partial class ApacheModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -51,7 +51,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class MySQLSettings : ObservableObject
+    public partial class MySQLModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -66,7 +66,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class PHPSettings : ObservableObject
+    public partial class PHPModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -75,7 +75,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class NodeSettings : ObservableObject
+    public partial class NodeModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -93,7 +93,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class RedisSettings : ObservableObject
+    public partial class RedisModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -108,7 +108,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class PostgreSQLSettings : ObservableObject
+    public partial class PostgreSQLModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -123,7 +123,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class NginxSettings : ObservableObject
+    public partial class NginxModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
@@ -138,7 +138,7 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class MongoDBSettings : ObservableObject
+    public partial class MongoDBModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";

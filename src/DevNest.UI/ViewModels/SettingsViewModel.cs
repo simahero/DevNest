@@ -10,7 +10,7 @@ namespace DevNest.UI.ViewModels
     public partial class SettingsViewModel : BaseViewModel
     {
         private readonly SettingsManager _settingsManager;
-        private SettingsModel? _currentSettings;
+        private Model? _currentSettings;
 
         [ObservableProperty]
         private bool _startWithWindows;

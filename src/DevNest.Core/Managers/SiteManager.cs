@@ -1,48 +1,44 @@
-using DevNest.Core.Commands;
+using DevNest.Core.Managers.Commands;
 using DevNest.Core.Exceptions;
 using DevNest.Core.Helpers;
+using DevNest.Core.Interfaces;
+using DevNest.Core.Managers.Sites;
 using DevNest.Core.Models;
-using DevNest.Core.Sites;
-using IniParser.Model;
 using IniParser.Parser;
 
 namespace DevNest.Core
 {
     public class SiteManager
     {
-        private readonly SettingsManager _settingsManager;
         private readonly VirtualHostManager _virtualHostManager;
-        private readonly CommandManager _commandManager;
+        private readonly ICommandExecutor _commandExecutor;
 
-        public SiteManager(SettingsManager settingsManager, VirtualHostManager virtualHostManager, CommandManager commandManager)
+        public SiteManager(VirtualHostManager virtualHostManager, ICommandExecutor commandExecutor)
         {
-            _settingsManager = settingsManager;
             _virtualHostManager = virtualHostManager;
-            _commandManager = commandManager;
+            _commandExecutor = commandExecutor;
         }
 
         public async Task<IEnumerable<SiteModel>> GetInstalledSitesAsync()
         {
-            var sitesPath = PathManager.WwwPath;
+            var sitesPath = PathHelper.WwwPath;
 
-            if (!await FileSystemManager.DirectoryExistsAsync(sitesPath))
+            if (!await FileSystemHelper.DirectoryExistsAsync(sitesPath))
             {
                 return new List<SiteModel>();
             }
 
             var sites = new List<SiteModel>();
-            var siteDirectories = await FileSystemManager.GetDirectoriesAsync(sitesPath);
+            var siteDirectories = await FileSystemHelper.GetDirectoriesAsync(sitesPath);
 
             foreach (var siteDir in siteDirectories)
             {
                 var siteName = Path.GetFileName(siteDir);
-                var createdDate = await FileSystemManager.GetDirectoryCreationTimeAsync(siteDir);
                 var site = new SiteModel
                 {
                     Name = siteName,
                     Path = siteDir,
                     Url = $"http://{siteName}.test",
-                    CreatedDate = createdDate,
                     IsActive = true
                 };
 
@@ -56,15 +52,49 @@ namespace DevNest.Core
         {
             try
             {
-                var sitesIniPath = Path.Combine(PathManager.ConfigPath, "sites.ini");
-                if (!await FileSystemManager.FileExistsAsync(sitesIniPath))
+                var sitesIniPath = Path.Combine(PathHelper.ConfigPath, "sites.ini");
+                if (!await FileSystemHelper.FileExistsAsync(sitesIniPath))
                 {
                     return new List<SiteDefinition>();
                 }
 
-                var content = await FileSystemManager.ReadAllTextAsync(sitesIniPath);
+                var content = await FileSystemHelper.ReadAllTextAsync(sitesIniPath);
                 var iniData = new IniDataParser().Parse(content);
-                var siteDefinitions = ParseIniToSiteDefinitions(iniData);
+                var siteDefinitions = new List<SiteDefinition>();
+
+                if (iniData.Sections.ContainsSection("SiteTypes"))
+                {
+                    var siteDefinitionsSection = iniData.Sections["SiteTypes"];
+                    var siteDefinitionGroups = siteDefinitionsSection.GroupBy(key => key.KeyName.Split('.')[0]);
+
+                    foreach (var group in siteDefinitionGroups)
+                    {
+                        var siteDefinition = new SiteDefinition();
+                        foreach (var key in group)
+                        {
+                            var property = key.KeyName.Split('.')[1];
+                            switch (property)
+                            {
+                                case "Name":
+                                    siteDefinition.Name = key.Value ?? string.Empty;
+                                    break;
+                                case "InstallType":
+                                    siteDefinition.InstallType = key.Value ?? string.Empty;
+                                    break;
+                                case "InstallUrl":
+                                    siteDefinition.InstallUrl = key.Value ?? string.Empty;
+                                    break;
+                                case "InstallCommand":
+                                    siteDefinition.InstallCommand = key.Value ?? string.Empty;
+                                    break;
+                                case "HasAdditionalDir":
+                                    siteDefinition.HasAdditionalDir = bool.Parse(key.Value ?? "false");
+                                    break;
+                            }
+                        }
+                        siteDefinitions.Add(siteDefinition);
+                    }
+                }
 
                 return siteDefinitions;
             }
@@ -76,47 +106,6 @@ namespace DevNest.Core
             }
         }
 
-        private IEnumerable<SiteDefinition> ParseIniToSiteDefinitions(IniData iniData)
-        {
-            var siteDefinitions = new List<SiteDefinition>();
-
-            if (iniData.Sections.ContainsSection("SiteTypes"))
-            {
-                var siteDefinitionsSection = iniData.Sections["SiteTypes"];
-                var siteDefinitionGroups = siteDefinitionsSection.GroupBy(key => key.KeyName.Split('.')[0]);
-
-                foreach (var group in siteDefinitionGroups)
-                {
-                    var siteDefinition = new SiteDefinition();
-                    foreach (var key in group)
-                    {
-                        var property = key.KeyName.Split('.')[1];
-                        switch (property)
-                        {
-                            case "Name":
-                                siteDefinition.Name = key.Value ?? string.Empty;
-                                break;
-                            case "InstallType":
-                                siteDefinition.InstallType = key.Value ?? string.Empty;
-                                break;
-                            case "InstallUrl":
-                                siteDefinition.InstallUrl = key.Value ?? string.Empty;
-                                break;
-                            case "InstallCommand":
-                                siteDefinition.InstallCommand = key.Value ?? string.Empty;
-                                break;
-                            case "HasAdditionalDir":
-                                siteDefinition.HasAdditionalDir = bool.Parse(key.Value ?? "false");
-                                break;
-                        }
-                    }
-                    siteDefinitions.Add(siteDefinition);
-                }
-            }
-
-            return siteDefinitions;
-        }
-
         public async Task<SiteModel> InstallSiteAsync(string siteDefinitionName, string name, IProgress<string>? progress = null)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -124,7 +113,7 @@ namespace DevNest.Core
                 throw new SiteException(name, "Site name cannot be empty.");
             }
 
-            if (await IsSiteInstalledAsync(name))
+            if (await FileSystemHelper.DirectoryExistsAsync(Path.Combine(PathHelper.WwwPath, name)))
             {
                 throw new SiteException(name, $"Site '{name}' already exists.");
             }
@@ -137,14 +126,14 @@ namespace DevNest.Core
                 throw new SiteException(name, $"Site type '{siteDefinitionName}' not found.");
             }
 
-            var sitesPath = PathManager.WwwPath;
+            var sitesPath = PathHelper.WwwPath;
             var sitePath = Path.Combine(sitesPath, name);
 
             try
             {
-                if (!await FileSystemManager.DirectoryExistsAsync(sitesPath))
+                if (!await FileSystemHelper.DirectoryExistsAsync(sitesPath))
                 {
-                    await FileSystemManager.CreateDirectoryAsync(sitesPath);
+                    await FileSystemHelper.CreateDirectoryAsync(sitesPath);
                 }
 
                 await CreateSiteStructureAsync(siteDefinition, sitePath, progress);
@@ -154,7 +143,6 @@ namespace DevNest.Core
                     Name = name,
                     Path = sitePath,
                     Url = $"http://{name}.test",
-                    CreatedDate = DateTime.Now,
                     IsActive = true
                 };
 
@@ -170,47 +158,31 @@ namespace DevNest.Core
             }
         }
 
-        public async Task<bool> IsSiteInstalledAsync(string siteName)
-        {
-            var sites = await GetInstalledSitesAsync();
-            return sites.Any(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-        }
-
-        public async Task RemoveSiteAsync(string siteName)
-        {
-            if (string.IsNullOrWhiteSpace(siteName))
-            {
-                throw new SiteException(siteName, "Site name cannot be empty.");
-            }
-
-            var sites = await GetInstalledSitesAsync();
-            var site = sites.FirstOrDefault(s => s.Name.Equals(siteName, StringComparison.OrdinalIgnoreCase));
-
-            if (site == null)
-            {
-                throw new SiteException(siteName, $"Site '{siteName}' not found.");
-            }
-
-            try
-            {
-                await FileSystemManager.DeleteDirectoryAsync(site.Path, true);
-            }
-            catch (Exception ex)
-            {
-                throw new SiteException(siteName, $"Failed to remove site '{siteName}': {ex.Message}", ex);
-            }
-        }
-
         private async Task CreateSiteStructureAsync(SiteDefinition siteDefinition, string sitePath, IProgress<string>? progress = null)
         {
             if (siteDefinition.InstallType.ToLower() == "none")
             {
-                if (!await FileSystemManager.DirectoryExistsAsync(sitePath))
+                if (!await FileSystemHelper.DirectoryExistsAsync(sitePath))
                 {
-                    await FileSystemManager.CreateDirectoryAsync(sitePath);
+                    await FileSystemHelper.CreateDirectoryAsync(sitePath);
                 }
                 return;
             }
+
+            if (siteDefinition.InstallType.ToLower() == "clone")
+            {
+                if (!string.IsNullOrEmpty(siteDefinition.InstallCommand))
+                {
+                    string actualCommand = siteDefinition.InstallCommand.Replace("%s", Path.GetFileName(sitePath));
+                    string workingDirectory = Path.GetDirectoryName(PathHelper.WwwPath) ?? throw new ArgumentException("Invalid site path", nameof(sitePath));
+
+                    progress?.Report("Installing dependencies and setting up project...");
+                    await _commandExecutor.ExecuteCommandAsync(actualCommand, workingDirectory, progress);
+                    progress?.Report("Installation completed successfully!");
+                }
+                return;
+            }
+
             if (siteDefinition.InstallType.ToLower() == "command")
             {
                 if (!string.IsNullOrEmpty(siteDefinition.InstallCommand))
@@ -219,7 +191,7 @@ namespace DevNest.Core
                     string workingDirectory = Path.GetDirectoryName(sitePath) ?? throw new ArgumentException("Invalid site path", nameof(sitePath));
 
                     progress?.Report("Installing dependencies and setting up project...");
-                    await _commandManager.ExecuteCommandWithSuccessCheckAsync(actualCommand, workingDirectory, progress);
+                    await _commandExecutor.ExecuteCommandAsync(actualCommand, workingDirectory, progress);
                     progress?.Report("Installation completed successfully!");
                 }
                 return;
@@ -232,9 +204,9 @@ namespace DevNest.Core
                     var tempFilePath = await DownloadHelper.DownloadToTempAsync(siteDefinition.InstallUrl, progress);
                     await ArchiveHelper.ExtractAsync(tempFilePath, sitePath, siteDefinition.HasAdditionalDir, progress);
 
-                    if (await FileSystemManager.FileExistsAsync(tempFilePath))
+                    if (await FileSystemHelper.FileExistsAsync(tempFilePath))
                     {
-                        await FileSystemManager.DeleteFileAsync(tempFilePath);
+                        await FileSystemHelper.DeleteFileAsync(tempFilePath);
                     }
                 }
                 return;

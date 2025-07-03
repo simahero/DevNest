@@ -6,16 +6,16 @@ using IniParser.Model;
 
 namespace DevNest.Core.Services
 {
-    public class MongoDBSettingsService : IServiceSettingsProvider<MongoDBSettings>
+    public class MongoDBSettingsService : IServiceSettingsProvider<MongoDBModel>
     {
         public ServiceType Type => ServiceType.MongoDB;
         public string ServiceName => Type.ToString();
 
         public MongoDBSettingsService() { }
 
-        public MongoDBSettings GetDefaultConfiguration()
+        public MongoDBModel GetDefaultConfiguration()
         {
-            return new MongoDBSettings
+            return new MongoDBModel
             {
                 Version = "",
                 Port = 27017,
@@ -23,7 +23,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
+        public void ParseFromIni(IniData iniData, Model serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -45,7 +45,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
+        public void SaveToIni(IniData iniData, Model serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -60,36 +60,36 @@ namespace DevNest.Core.Services
             });
         }
 
-        private async Task GenerateMongoDBConfigurationAsync(SettingsModel settings)
+        private async Task GenerateMongoDBConfigurationAsync(Model settings)
         {
-            string TemplateFilePath = Path.Combine(PathManager.TemplatesPath, "mongod.cfg.tpl");
+            string TemplateFilePath = Path.Combine(PathHelper.TemplatesPath, "mongod.cfg.tpl");
 
             try
             {
 
-                if (!await FileSystemManager.FileExistsAsync(TemplateFilePath))
+                if (!await FileSystemHelper.FileExistsAsync(TemplateFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"MongoDB template file not found: {TemplateFilePath}");
                     return;
                 }
 
-                var templateContent = await FileSystemManager.ReadAllTextAsync(TemplateFilePath);
+                var templateContent = await FileSystemHelper.ReadAllTextAsync(TemplateFilePath);
 
-                var dataDir = Path.Combine(PathManager.DataPath, settings.MongoDB.Version);
-                var logPath = Path.Combine(PathManager.LogsPath, settings.MongoDB.Version + ".log");
+                var dataDir = Path.Combine(PathHelper.DataPath, settings.MongoDB.Version);
+                var logPath = Path.Combine(PathHelper.LogsPath, settings.MongoDB.Version + ".log");
 
                 var configContent = templateContent
                     .Replace("<<DATADIR>>", dataDir.Replace("\\", "/"))
                     .Replace("<<LOGPATH>>", logPath.Replace("\\", "/"));
 
-                var configDir = Path.Combine(PathManager.BinPath, "MongoDB", settings.MongoDB.Version, "bin");
+                var configDir = Path.Combine(PathHelper.BinPath, "MongoDB", settings.MongoDB.Version, "bin");
 
                 var configFilePath = Path.Combine(configDir, "mongod.cfg");
-                await FileSystemManager.WriteAllTextAsync(configFilePath, configContent);
+                await FileSystemHelper.WriteAllTextAsync(configFilePath, configContent);
 
-                if (!await FileSystemManager.DirectoryExistsAsync(dataDir))
+                if (!await FileSystemHelper.DirectoryExistsAsync(dataDir))
                 {
-                    await FileSystemManager.CreateDirectoryAsync(dataDir);
+                    await FileSystemHelper.CreateDirectoryAsync(dataDir);
                 }
 
                 System.Diagnostics.Debug.WriteLine($"MongoDB configuration generated: {configFilePath}");
@@ -103,7 +103,7 @@ namespace DevNest.Core.Services
         /// <summary>
         /// Returns the command and working directory for MongoDB, or (string.Empty, string.Empty) if not found.
         /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, SettingsModel settings)
+        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
         {
             var selectedVersion = settings.MongoDB.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
@@ -111,7 +111,7 @@ namespace DevNest.Core.Services
                 var mongoDBPath = Path.Combine(service.Path, "bin", "mongod.exe");
                 var configPath = Path.Combine(service.Path, "bin", "mongod.cfg");
 
-                if (await FileSystemManager.FileExistsAsync(mongoDBPath))
+                if (await FileSystemHelper.FileExistsAsync(mongoDBPath))
                 {
                     return ($"\"{mongoDBPath}\" --config \"{configPath}\"", Path.GetDirectoryName(mongoDBPath)!);
                 }

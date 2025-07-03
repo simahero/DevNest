@@ -1,11 +1,6 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace DevNest.Core.Helpers
 {
-    public static class FileSystemManager
+    public static class FileSystemHelper
     {
         public static Task<bool> DirectoryExistsAsync(string path)
         {
@@ -41,6 +36,12 @@ namespace DevNest.Core.Helpers
         {
             await Task.Run(() =>
             {
+
+                if (overwrite && Directory.Exists(destDir))
+                {
+                    Directory.Delete(destDir, true);
+                }
+
                 Directory.CreateDirectory(destDir);
                 foreach (var dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
                 {
