@@ -175,11 +175,7 @@ namespace DevNest.Core.Services
             var selectedVersion = settings.Nginx.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                var nginxPath = Path.Combine(service.Path, "nginx.exe");
-                if (await FileSystemHelper.FileExistsAsync(nginxPath))
-                {
-                    return ($"\"{nginxPath}\"", Path.GetDirectoryName(nginxPath)!);
-                }
+                return ($"nginx.exe", service.Path);
             }
             return (string.Empty, string.Empty);
         }

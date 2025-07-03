@@ -3,7 +3,7 @@
     public static class PathHelper
     {
 
-        static readonly bool useWSL = true;
+        static readonly bool useWSL = false;
 
         public static string BasePath
         {

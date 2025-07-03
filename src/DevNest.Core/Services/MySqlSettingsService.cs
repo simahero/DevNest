@@ -139,11 +139,8 @@ namespace DevNest.Core.Services
             if (!string.IsNullOrEmpty(selectedVersion))
             {
                 var binPath = Path.Combine(service.Path, "bin");
-                var mysqldPath = Path.Combine(binPath, "mysqld.exe");
-                if (await FileSystemHelper.FileExistsAsync(mysqldPath))
-                {
-                    return ($"\"{mysqldPath}\"", binPath);
-                }
+
+                return ($"mysqld.exe", binPath);
             }
             return (string.Empty, string.Empty);
         }

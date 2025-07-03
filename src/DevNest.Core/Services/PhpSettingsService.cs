@@ -76,11 +76,7 @@ namespace DevNest.Core.Services
             var selectedVersion = settings.PHP.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                var binPath = Path.Combine(service.Path, "php-cgi.exe");
-                if (await FileSystemHelper.FileExistsAsync(binPath))
-                {
-                    return ($"\"{binPath}\" -b 127.0.0.1:9003", service.Path);
-                }
+                return ($"php-cgi.exe -b 127.0.0.1:9003", service.Path);
             }
             return (string.Empty, string.Empty);
         }

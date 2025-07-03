@@ -62,11 +62,7 @@ namespace DevNest.Core.Services
             var selectedVersion = settings.Node.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                var nodePath = Path.Combine(service.Path, "node.exe");
-                if (await FileSystemHelper.FileExistsAsync(nodePath))
-                {
-                    return ($"\"{nodePath}\"", Path.GetDirectoryName(nodePath)!);
-                }
+                return ($"node.exe", service.Path);
             }
             return (string.Empty, string.Empty);
         }

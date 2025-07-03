@@ -11,43 +11,36 @@ namespace DevNest.Core.Managers.Commands
             {
                 string executable;
                 string arguments = string.Empty;
-                if (command.StartsWith("\""))
+
+                var commandParts = command.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+                if (commandParts.Length > 0)
                 {
-                    var endQuoteIndex = command.IndexOf('"', 1);
-                    if (endQuoteIndex > 0)
+                    executable = commandParts[0];
+                    if (commandParts.Length > 1)
                     {
-                        executable = command.Substring(1, endQuoteIndex - 1);
-                        if (command.Length > endQuoteIndex + 1)
-                        {
-                            arguments = command.Substring(endQuoteIndex + 1).Trim();
-                        }
-                    }
-                    else
-                    {
-                        // Malformed, fallback
-                        _ = Logger.Log($"Malformed command: {command}");
-                        return null;
+                        arguments = commandParts[1];
                     }
                 }
                 else
                 {
-                    var commandParts = command.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                    if (commandParts.Length > 0)
-                    {
-                        executable = commandParts[0];
-                        if (commandParts.Length > 1)
-                            arguments = commandParts[1];
-                    }
-                    else
-                    {
-                        _ = Logger.Log($"Malformed command: {command}");
-                        return null;
-                    }
+                    _ = Logger.Log($"Malformed command: {command}");
+                    return null;
                 }
+
+                var executablePath = Path.Combine(workingDirectory, executable);
+                if (!File.Exists(executablePath))
+                {
+                    _ = Logger.Log($"Executable not found at: {executablePath}");
+                    return null;
+                }
+
+                _ = Logger.Log($"executable: {executable}");
+                _ = Logger.Log($"arguments: {arguments}");
 
                 var processInfo = new ProcessStartInfo
                 {
-                    FileName = executable,
+                    FileName = executablePath,
                     Arguments = arguments,
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -57,7 +50,7 @@ namespace DevNest.Core.Managers.Commands
                 };
 
                 string existingPath = processInfo.Environment["PATH"] ?? Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-                processInfo.Environment["PATH"] = workingDirectory;
+                processInfo.Environment["PATH"] = $"{workingDirectory};{existingPath}";
 
                 var process = Process.Start(processInfo);
 

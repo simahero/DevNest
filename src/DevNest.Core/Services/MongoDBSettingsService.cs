@@ -108,13 +108,10 @@ namespace DevNest.Core.Services
             var selectedVersion = settings.MongoDB.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                var mongoDBPath = Path.Combine(service.Path, "bin", "mongod.exe");
+                var binPath = Path.Combine(service.Path, "bin");
                 var configPath = Path.Combine(service.Path, "bin", "mongod.cfg");
 
-                if (await FileSystemHelper.FileExistsAsync(mongoDBPath))
-                {
-                    return ($"\"{mongoDBPath}\" --config \"{configPath}\"", Path.GetDirectoryName(mongoDBPath)!);
-                }
+                return ($"mongod.exe --config \"{configPath}\"", binPath);
             }
             return (string.Empty, string.Empty);
         }

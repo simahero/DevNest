@@ -85,8 +85,8 @@ namespace DevNest.Core.Services
 
                 var templateContent = await FileSystemHelper.ReadAllTextAsync(TemplateFilePath);
 
-
                 var srvRoot = Path.Combine(PathHelper.BinPath, "Apache", settings.Apache.Version).Replace('\\', '/');
+                var wwwPath = PathHelper.WwwPath.Replace('\\', '/');
                 var logsPath = Path.Combine(PathHelper.LogsPath).Replace('\\', '/');
                 var port = settings.Apache.Port.ToString();
                 var phpPath = Path.Combine(PathHelper.BinPath, "PHP", settings.PHP.Version).Replace('\\', '/');
@@ -94,6 +94,7 @@ namespace DevNest.Core.Services
 
                 var configContent = templateContent
                     .Replace("<<SRVROOT>>", srvRoot)
+                    .Replace("<<DOCUMENTROOT>>", wwwPath)
                     .Replace("<<LOGSPATH>>", logsPath)
                     .Replace("<<PORT>>", port)
                     .Replace("<<PHPPATH>>", phpPath)
@@ -165,11 +166,8 @@ namespace DevNest.Core.Services
             {
                 var binPath = Path.Combine(service.Path, "bin");
                 var apacheRoot = service.Path;
-                var httpdPath = Path.Combine(binPath, "httpd.exe");
-                if (await FileSystemHelper.FileExistsAsync(httpdPath))
-                {
-                    return ($"\"{httpdPath}\" -d \"{apacheRoot}\" -D FOREGROUND", binPath);
-                }
+
+                return ($"httpd.exe -d \"{apacheRoot}\" -D FOREGROUND", binPath);
             }
             return (string.Empty, string.Empty);
         }

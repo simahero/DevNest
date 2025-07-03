@@ -53,11 +53,7 @@ namespace DevNest.Core.Services
             var selectedVersion = settings.Redis.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                var redisPath = Path.Combine(service.Path, "redis-server.exe");
-                if (await FileSystemHelper.FileExistsAsync(redisPath))
-                {
-                    return ($"\"{redisPath}\"", Path.GetDirectoryName(redisPath)!);
-                }
+                return ($"redis-server.exe", service.Path);
             }
             return (string.Empty, string.Empty);
         }

@@ -49,11 +49,8 @@ namespace DevNest.Core.Services
             var selectedVersion = settings.PostgreSQL.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                var postgresPath = Path.Combine(service.Path, "bin", "postgres.exe");
-                if (await FileSystemHelper.FileExistsAsync(postgresPath))
-                {
-                    return ($"\"{postgresPath}\"", Path.GetDirectoryName(postgresPath)!);
-                }
+                var binPath = Path.Combine(service.Path, "bin");
+                return ($"postgres.exe", binPath);
             }
             return (string.Empty, string.Empty);
         }
