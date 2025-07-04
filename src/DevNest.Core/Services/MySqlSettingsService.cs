@@ -24,7 +24,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, Model serviceSettings)
+        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -46,7 +46,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        public void SaveToIni(IniData iniData, Model serviceSettings)
+        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -62,7 +62,7 @@ namespace DevNest.Core.Services
 
         }
 
-        private async Task GenerateMySQLConfigurationAsync(Model settings)
+        private async Task GenerateMySQLConfigurationAsync(SettingsModel settings)
         {
             string TemplateFilePath = Path.Combine(PathHelper.TemplatesPath, "mysql.ini.tpl");
 
@@ -128,21 +128,6 @@ namespace DevNest.Core.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Error generating MySQL configuration: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        /// Returns the command and working directory for MySQL, or (string.Empty, string.Empty) if not found.
-        /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
-        {
-            var selectedVersion = settings.MySQL.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var binPath = Path.Combine(service.Path, "bin");
-
-                return ($"mysqld.exe", binPath);
-            }
-            return (string.Empty, string.Empty);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.Managers.Commands;
 using System.Diagnostics;
 
 namespace DevNest.Core.Managers.ServiceRunners
@@ -11,7 +12,7 @@ namespace DevNest.Core.Managers.ServiceRunners
         private readonly ICommandExecutor _commandExecutor;
         private readonly IUIDispatcher _uiDispatcher;
 
-        public WINServiceRunner(ICommandExecutor commandExecutor, IUIDispatcher uiDispatcher)
+        public WINServiceRunner(WINCommandExecutor commandExecutor, IUIDispatcher uiDispatcher)
         {
             _commandExecutor = commandExecutor ?? throw new ArgumentNullException(nameof(commandExecutor));
             _uiDispatcher = uiDispatcher ?? throw new ArgumentNullException(nameof(uiDispatcher));

@@ -2,6 +2,7 @@ using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.State;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -11,11 +12,11 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.Apache;
         public string ServiceName => Type.ToString();
 
-        private readonly IServiceProvider _serviceProvider;
+        private readonly AppState _appState;
 
-        public ApacheSettingsService(IServiceProvider serviceProvider)
+        public ApacheSettingsService(AppState appState)
         {
-            _serviceProvider = serviceProvider;
+            _appState = appState;
         }
 
         public ApacheModel GetDefaultConfiguration()
@@ -28,7 +29,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, Model serviceSettings)
+        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -50,7 +51,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        public void SaveToIni(IniData iniData, Model serviceSettings)
+        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -66,7 +67,7 @@ namespace DevNest.Core.Services
             });
         }
 
-        private async Task GenerateApacheConfigurationAsync(Model settings)
+        private async Task GenerateApacheConfigurationAsync(SettingsModel settings)
         {
             string TemplateFilePath = Path.Combine(PathHelper.TemplatesPath, "httpd.conf.tpl");
 
@@ -113,19 +114,16 @@ namespace DevNest.Core.Services
             }
         }
 
-        private async Task GenerateApacheVirtualHosts(Model settings)
+        private async Task GenerateApacheVirtualHosts(SettingsModel settings)
         {
-            var siteManager = (SiteManager?)_serviceProvider.GetService(typeof(SiteManager));
-            if (siteManager == null)
-            {
-                throw new InvalidOperationException("SiteManager service is not registered in the service provider.");
-            }
-            var sites = await siteManager.GetInstalledSitesAsync();
+
+            var sites = _appState.Sites;
             var apacheTemplatePath = Path.Combine(PathHelper.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
 
             var templateContent = await FileSystemHelper.ReadAllTextAsync(apacheTemplatePath);
 
-            var apacheSitesEnabledPath = Path.Combine(PathHelper.EtcPath, "apache", "sites-enabled");
+            var apacheSitesEnabledPath = Path.Combine(PathHelper.EtcPath, "apache2", "sites-enabled");
+            var phpPath = Path.Combine(PathHelper.BinPath, "PHP", _appState.Settings.PHP.Version).Replace('\\', '/');
 
             if (Directory.Exists(apacheSitesEnabledPath))
             {
@@ -145,7 +143,8 @@ namespace DevNest.Core.Services
                 {
                     var processedContent = templateContent
                         .Replace("<<PORT>>", settings.Apache.Port.ToString())
-                        .Replace("<<PROJECT_DIR>>", Path.Combine(PathHelper.WwwPath, site.Name))
+                        .Replace("<<PROJECT_DIR>>", Path.Combine(PathHelper.WwwPath, site.Name).Replace('\\', '/'))
+                        .Replace("<<PHPPATH>>", phpPath)
                         .Replace("<<HOSTNAME>>", $"{site.Name}.test")
                         .Replace("<<SITENAME>>", site.Name);
 
@@ -157,19 +156,6 @@ namespace DevNest.Core.Services
                     throw new Exception($"Failed to process template: {ex.Message}");
                 }
             }
-        }
-
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
-        {
-            var selectedVersion = settings.Apache.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var binPath = Path.Combine(service.Path, "bin");
-                var apacheRoot = service.Path;
-
-                return ($"httpd.exe -d \"{apacheRoot}\" -D FOREGROUND", binPath);
-            }
-            return (string.Empty, string.Empty);
         }
     }
 }

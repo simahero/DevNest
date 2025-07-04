@@ -2,6 +2,7 @@ using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.State;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -11,11 +12,11 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.Nginx;
         public string ServiceName => Type.ToString();
 
-        private readonly IServiceProvider _serviceProvider;
+        private readonly AppState _appState;
 
-        public NginxSettingsService(IServiceProvider serviceProvider)
+        public NginxSettingsService(AppState appState)
         {
-            _serviceProvider = serviceProvider;
+            _appState = appState;
         }
 
         public NginxModel GetDefaultConfiguration()
@@ -28,7 +29,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, Model serviceSettings)
+        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -50,7 +51,7 @@ namespace DevNest.Core.Services
 
         }
 
-        public void SaveToIni(IniData iniData, Model serviceSettings)
+        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -66,7 +67,7 @@ namespace DevNest.Core.Services
             });
         }
 
-        private async Task GenerateNginxConfigurationAsync(Model settings)
+        private async Task GenerateNginxConfigurationAsync(SettingsModel settings)
         {
             string TemplateFilePath = Path.Combine(PathHelper.TemplatesPath, "nginx.conf.tpl");
 
@@ -120,16 +121,9 @@ namespace DevNest.Core.Services
             }
         }
 
-        private async Task GenerateNginxVirtualHosts(Model settings)
+        private async Task GenerateNginxVirtualHosts(SettingsModel settings)
         {
-            var siteManager = (SiteManager?)_serviceProvider.GetService(typeof(SiteManager));
-
-            if (siteManager == null)
-            {
-                throw new InvalidOperationException("SiteManager service is not registered in the service provider.");
-            }
-
-            var sites = await siteManager.GetInstalledSitesAsync();
+            var sites = _appState.Sites;
             var nginxTemplatePath = Path.Combine(PathHelper.TemplatesPath, "auto.nginx.sites-enabled.conf.tpl");
 
             var templateContent = await FileSystemHelper.ReadAllTextAsync(nginxTemplatePath);
@@ -168,16 +162,6 @@ namespace DevNest.Core.Services
                     throw new Exception($"Failed to process template: {ex.Message}");
                 }
             }
-        }
-
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
-        {
-            var selectedVersion = settings.Nginx.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                return ($"nginx.exe", service.Path);
-            }
-            return (string.Empty, string.Empty);
         }
     }
 }

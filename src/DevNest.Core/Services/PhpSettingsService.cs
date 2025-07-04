@@ -21,7 +21,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, Model serviceSettings)
+        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -32,7 +32,7 @@ namespace DevNest.Core.Services
             serviceSettings.PHP.Version = section["Version"] ?? "";
         }
 
-        public void SaveToIni(IniData iniData, Model serviceSettings)
+        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -42,7 +42,7 @@ namespace DevNest.Core.Services
             _ = Task.Run(async () => await GeneratePHPConfigurationAsync(serviceSettings));
         }
 
-        private async Task GeneratePHPConfigurationAsync(Model settings)
+        private async Task GeneratePHPConfigurationAsync(SettingsModel settings)
         {
             var phpBinDir = Path.Combine(PathHelper.BinPath, "PHP", settings.PHP.Version);
             var iniDevPath = Path.Combine(phpBinDir, "php.ini-development");
@@ -70,16 +70,5 @@ namespace DevNest.Core.Services
             }
 
         }
-
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
-        {
-            var selectedVersion = settings.PHP.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                return ($"php-cgi.exe -b 127.0.0.1:9003", service.Path);
-            }
-            return (string.Empty, string.Empty);
-        }
-
     }
 }

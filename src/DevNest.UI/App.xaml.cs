@@ -1,12 +1,15 @@
+using DevNest.Core;
 using DevNest.Core.Dump;
-using DevNest.Core.Interfaces;
+using DevNest.Core.Helpers;
+using DevNest.Core.Managers;
+using DevNest.Core.State;
 using DevNest.UI.Services;
-using DevNest.UI.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
+
 
 namespace DevNest.UI;
 
@@ -21,14 +24,15 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
-        ConfigureServices();
 
-        // Get the VarDumperServer from DI container and start it
-        if (_host != null)
+        Application.Current.UnhandledException += (sender, e) =>
         {
-            var server = _host.Services.GetRequiredService<VarDumperServer>();
-            _ = Task.Run(async () => await server.StartAsync());
-        }
+            Debug.WriteLine($"Unhandled: {e.Exception}");
+            Debug.WriteLine($"Message: {e.Exception.Message}");
+            Debug.WriteLine($"Stack: {e.Exception.StackTrace}");
+        };
+
+        ConfigureServices();
     }
 
     private void ConfigureServices()
@@ -45,18 +49,42 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-
         var keys = new[]
         {
             "ApacheLogo", "MySqlLogo", "NginxLogo", "NodeLogo", "PhpLogo", "PhpMyAdminLogo", "PostgreSqlLogo", "RedisLogo", "MongoLogo"
         };
         foreach (var key in keys)
         {
-            var _ = Current.Resources[key];
+            _ = Current.Resources[key];
         }
 
         _window = new MainWindow();
         _window.Activate();
+
+        if (Services?.GetService(typeof(AppState)) is AppState appState)
+        {
+            _ = Task.Run(async () =>
+            {
+                await appState.LoadAsync();
+
+                if (appState.Settings != null)
+                {
+                    PathHelper.SetUseWSL(appState.Settings.UseWLS);
+                }
+
+                if (Services?.GetService(typeof(SettingsManager)) is SettingsManager settingsManager)
+                {
+                    var autoSaveManager = new AutoSaveManager(appState, settingsManager);
+                }
+            });
+        }
+
+
+        if (Services?.GetService(typeof(VarDumperServer)) is VarDumperServer server)
+        {
+            _ = Task.Run(async () => await server.StartAsync());
+
+        }
     }
 
 }

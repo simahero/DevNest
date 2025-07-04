@@ -1,26 +1,23 @@
-using DevNest.Core.Managers.Commands;
 using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
+using DevNest.Core.State;
 using IniParser;
-using System.Diagnostics;
 
 
 namespace DevNest.Core
 {
     public class ServiceManager
     {
-        private readonly SettingsManager _settingsManager;
-        private readonly ICommandExecutor _commandExecutor;
-        private readonly IUIDispatcher _uiDispatcher;
+        private readonly AppState _appState;
+        private readonly IPlatformServiceFactory _platformServiceFactory;
 
-        public ServiceManager(SettingsManager settingsManager, ICommandExecutor commandExecutor, IUIDispatcher uiDispatcher)
+        public ServiceManager(AppState appState, IPlatformServiceFactory platformServiceFactory)
         {
-            _settingsManager = settingsManager;
-            _commandExecutor = commandExecutor;
-            _uiDispatcher = uiDispatcher;
+            _appState = appState;
+            _platformServiceFactory = platformServiceFactory;
         }
 
         public async Task<IEnumerable<ServiceModel>> GetServicesAsync()
@@ -29,9 +26,10 @@ namespace DevNest.Core
             {
                 var allServices = new List<ServiceModel>();
 
-                var settings = await _settingsManager.LoadSettingsAsync();
+                var settings = _appState.Settings;
                 var binDirectory = PathHelper.BinPath;
                 var categoryDirectories = await FileSystemHelper.GetDirectoriesAsync(binDirectory);
+
                 foreach (var categoryDir in categoryDirectories)
                 {
                     var categoryName = Path.GetFileName(categoryDir);
@@ -53,10 +51,12 @@ namespace DevNest.Core
                                 IsSelected = false
                             };
 
-                            var (command, workingDirectory) = await GetServiceCommandAsync(service, settings);
+                            var (command, workingDirectory) = settings != null
+                                ? await _platformServiceFactory.GetCommandManager().GetCommand(service, settings)
+                                : (string.Empty, string.Empty);
                             service.Command = command;
                             service.WorkingDirectory = workingDirectory;
-                            service.IsSelected = IsServiceSelected(service, settings);
+                            service.IsSelected = settings != null && IsServiceSelected(service, settings);
                             allServices.Add(service);
                         }
                     }
@@ -121,134 +121,6 @@ namespace DevNest.Core
             return allServices;
         }
 
-        public async Task<bool> StartServiceAsync(ServiceModel service)
-        {
-            if (service == null) return false;
-
-            try
-            {
-                service.IsLoading = true;
-                service.Status = ServiceStatus.Starting;
-
-                var workingDirectory = service.WorkingDirectory ?? Environment.CurrentDirectory;
-                var process = await _commandExecutor.StartProcessAsync(service.Command, workingDirectory, default);
-
-                if (process != null)
-                {
-                    process.EnableRaisingEvents = true;
-
-                    process.Exited += (sender, e) =>
-                    {
-                        _uiDispatcher.TryEnqueue(() =>
-                        {
-                            service.Status = ServiceStatus.Stopped;
-                            service.Process = null;
-                        });
-                    };
-
-                    service.Process = process;
-                    service.Status = ServiceStatus.Running;
-                    return true;
-                }
-                else
-                {
-                    service.Status = ServiceStatus.Stopped;
-                    return false;
-                }
-            }
-            catch (Exception)
-            {
-                service.Status = ServiceStatus.Stopped;
-                return false;
-            }
-            finally
-            {
-                service.IsLoading = false;
-            }
-        }
-
-        public async Task<bool> StopServiceAsync(ServiceModel service)
-        {
-            if (service == null) return false;
-
-            try
-            {
-                service.IsLoading = true;
-                service.Status = ServiceStatus.Stopping;
-
-                if (service.Process != null)
-                {
-                    var killTree = new ProcessStartInfo
-                    {
-                        FileName = "taskkill",
-                        Arguments = $"/PID {service.Process.Id} /T /F",
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    };
-                    Process.Start(killTree)?.WaitForExit();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to kill process tree: {ex.Message}");
-            }
-            finally
-            {
-                if (service.Process != null)
-                {
-                    service.Process.Dispose();
-                    service.Process = null;
-                }
-
-                service.IsLoading = false;
-            }
-
-            service.Status = ServiceStatus.Stopped;
-
-            await Task.CompletedTask;
-            return true;
-        }
-
-        public async Task<bool> ToggleServiceAsync(ServiceModel service)
-        {
-            if (service == null)
-            {
-                return false;
-            }
-
-            if (service.IsRunning)
-            {
-                return await StopServiceAsync(service);
-            }
-            else
-            {
-                return await StartServiceAsync(service);
-            }
-        }
-
-        private async Task<(string, string)> GetServiceCommandAsync(ServiceModel service, Model settings)
-        {
-            try
-            {
-                return service.ServiceType switch
-                {
-                    ServiceType.Apache => await ApacheSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.MySQL => await MySQLSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.Nginx => await NginxSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.Node => await NodeModelService.GetCommandAsync(service, settings),
-                    ServiceType.Redis => await RedisModelService.GetCommandAsync(service, settings),
-                    ServiceType.PostgreSQL => await PostgreSQLModelService.GetCommandAsync(service, settings),
-                    ServiceType.MongoDB => await MongoDBSettingsService.GetCommandAsync(service, settings),
-                    ServiceType.PHP => await PHPModelService.GetCommandAsync(service, settings),
-                    _ => await Task.FromResult((string.Empty, string.Empty)),
-                };
-            }
-            catch (Exception)
-            {
-                return (string.Empty, string.Empty);
-            }
-        }
-
         private static string GetServiceDisplayName(ServiceType serviceType)
         {
             return serviceType switch
@@ -265,7 +137,7 @@ namespace DevNest.Core
             };
         }
 
-        private static bool IsServiceSelected(ServiceModel service, Model settings)
+        private static bool IsServiceSelected(ServiceModel service, SettingsModel settings)
         {
             var selectedVersion = service.ServiceType switch
             {
@@ -283,11 +155,5 @@ namespace DevNest.Core
             return !string.IsNullOrEmpty(selectedVersion) && service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
         }
 
-        public Task<bool> IsServiceRunningAsync(ServiceModel service)
-        {
-            if (service == null) return Task.FromResult(false);
-
-            return Task.FromResult(service.IsRunning);
-        }
     }
 }

@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.Input;
-using DevNest.Core;
 using DevNest.Core.Helpers;
+using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using DevNest.UI.Services;
+using DevNest.Core.State;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -14,29 +14,29 @@ namespace DevNest.UI.ViewModels
 {
     public partial class DashboardViewModel : BaseViewModel
     {
-        private readonly ServiceManager _serviceManager;
+
+        private readonly AppState _appState;
+        private readonly IPlatformServiceFactory _platformServiceFactory;
 
         public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
 
-        public DashboardViewModel(ServiceManager serviceManager)
+        public DashboardViewModel(AppState appState, IPlatformServiceFactory platformServiceFactory)
         {
-            _serviceManager = serviceManager;
+            _appState = appState;
+            _platformServiceFactory = platformServiceFactory;
             Title = "Dashboard";
         }
 
         [RelayCommand]
         private async Task LoadDashboardDataAsync()
         {
-            await RefreshDashboardAsync();
-        }
-
-        [RelayCommand]
-        private async Task RefreshDashboardAsync()
-        {
             IsLoading = true;
             try
             {
-                var services = await _serviceManager.GetServicesAsync();
+
+                await _appState.ReloadServices();
+
+                var services = _appState.Services;
 
                 var selectedServices = services.Where(s => !string.IsNullOrEmpty(s.ServiceType.ToString()) && s.IsSelected).ToList();
 
@@ -56,6 +56,15 @@ namespace DevNest.UI.ViewModels
                     }
                 }
 
+                foreach (var installed in InstalledServices.ToList())
+                {
+                    if (!selectedServices.Any(selected => selected.Name == installed.Name))
+                    {
+                        InstalledServices.Remove(installed);
+                    }
+                }
+
+
             }
             catch (Exception)
             {
@@ -74,7 +83,8 @@ namespace DevNest.UI.ViewModels
 
             try
             {
-                await _serviceManager.ToggleServiceAsync(service);
+                var serviceRunner = _platformServiceFactory.GetServiceRunner();
+                await serviceRunner.ToggleServiceAsync(service);
             }
             catch (Exception)
             {

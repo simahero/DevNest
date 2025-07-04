@@ -60,7 +60,7 @@
                             x:Name="StartWithWindowsToggle"
                             Grid.Column="1"
                             CornerRadius="0"
-                            IsOn="{x:Bind ViewModel.StartWithWindows, Mode=TwoWay}" />
+                            IsOn="{x:Bind ViewModel.AppState.Settings.StartWithWindows, Mode=TwoWay}" />
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -78,7 +78,7 @@
                         <ToggleSwitch
                             x:Name="MinimizeToTrayToggle"
                             Grid.Column="1"
-                            IsOn="{x:Bind ViewModel.MinimizeToSystemTray, Mode=TwoWay}" />
+                            IsOn="{x:Bind ViewModel.AppState.Settings.MinimizeToSystemTray, Mode=TwoWay}" />
                     </Grid>
 
                     <Grid>
@@ -97,7 +97,7 @@
                         <ToggleSwitch
                             x:Name="AutoVirtualHostsToggle"
                             Grid.Column="1"
-                            IsOn="{x:Bind ViewModel.AutoVirtualHosts, Mode=TwoWay}" />
+                            IsOn="{x:Bind ViewModel.AppState.Settings.AutoVirtualHosts, Mode=TwoWay}" />
                     </Grid>
 
                     <Grid>
@@ -116,7 +116,7 @@
                         <ToggleSwitch
                             x:Name="AutoCreateDatabaseToggle"
                             Grid.Column="1"
-                            IsOn="{x:Bind ViewModel.AutoCreateDatabase, Mode=TwoWay}" />
+                            IsOn="{x:Bind ViewModel.AppState.Settings.AutoCreateDatabase, Mode=TwoWay}" />
                     </Grid>
 
                 </StackPanel>
@@ -146,7 +146,7 @@
                         <ToggleSwitch
                             x:Name="UseWSLToggle"
                             Grid.Column="1"
-                            IsOn="{x:Bind ViewModel.UseWLS, Mode=TwoWay}" />
+                            IsOn="{x:Bind ViewModel.AppState.Settings.UseWLS, Mode=TwoWay}" />
                     </Grid>
 
                 </StackPanel>
@@ -162,12 +162,12 @@
 
                     <StackPanel Spacing="8">
                         <TextBlock FontWeight="SemiBold" Text="Domain" />
-                        <TextBox PlaceholderText="Enter your ngrok domain" Text="{x:Bind ViewModel.NgrokDomain, Mode=TwoWay}" />
+                        <TextBox PlaceholderText="Enter your ngrok domain" Text="{x:Bind ViewModel.AppState.Settings.NgrokDomain, Mode=TwoWay}" />
                     </StackPanel>
 
                     <StackPanel Spacing="8">
                         <TextBlock FontWeight="SemiBold" Text="API Key" />
-                        <PasswordBox Password="{x:Bind ViewModel.NgrokApiKey, Mode=TwoWay}" PlaceholderText="Enter your ngrok API key" />
+                        <PasswordBox Password="{x:Bind ViewModel.AppState.Settings.NgrokApiKey, Mode=TwoWay}" PlaceholderText="Enter your ngrok API key" />
                     </StackPanel>
                 </StackPanel>
             </Border>

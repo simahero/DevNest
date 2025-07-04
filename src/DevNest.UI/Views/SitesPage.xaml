@@ -47,7 +47,7 @@
                 Margin="0,0,12,0"
                 HorizontalAlignment="Stretch"
                 DisplayMemberPath="Name"
-                ItemsSource="{x:Bind ViewModel.AvailableSiteDefinitions, Mode=OneWay}"
+                ItemsSource="{x:Bind ViewModel.AppState.AvailableSites, Mode=OneWay}"
                 PlaceholderText="Select site type..."
                 SelectedItem="{x:Bind ViewModel.SelectedSiteDefinition, Mode=TwoWay}" />
 
@@ -87,7 +87,7 @@
                 Margin="0"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                ItemsSource="{x:Bind ViewModel.Sites, Mode=OneWay}"
+                ItemsSource="{x:Bind ViewModel.AppState.Sites, Mode=OneWay}"
                 SelectionMode="None">
 
                 <ListView.ItemContainerStyle>

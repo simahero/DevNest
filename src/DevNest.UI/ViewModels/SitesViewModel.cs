@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DevNest.Core;
 using DevNest.Core.Models;
+using DevNest.Core.State;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -11,8 +12,12 @@ namespace DevNest.UI.ViewModels
 {
     public partial class SitesViewModel : BaseViewModel
     {
+
+        private readonly AppState _appState;
         private readonly SiteManager _siteManager;
-        private readonly SettingsManager _settingsManager;
+
+        public AppState AppState => _appState;
+
 
         [ObservableProperty]
         private string _selectedSiteName = string.Empty;
@@ -29,57 +34,11 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private bool _showInstallationPanel;
 
-        public ObservableCollection<SiteModel> Sites { get; } = new();
-        public ObservableCollection<SiteDefinition> AvailableSiteDefinitions { get; } = new();
-
-        public SitesViewModel(SiteManager siteManager, SettingsManager settingsManager)
+        public SitesViewModel(AppState appState, SiteManager siteManager)
         {
+            _appState = appState;
             _siteManager = siteManager;
-            _settingsManager = settingsManager;
             Title = "Sites";
-        }
-
-        [RelayCommand]
-        private async Task LoadSitesAsync()
-        {
-            IsLoading = true;
-            try
-            {
-                var sites = await _siteManager.GetInstalledSitesAsync();
-                Sites.Clear();
-                foreach (var site in sites)
-                {
-                    Sites.Add(site);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading sites: {ex.Message}");
-                // TODO: Show error to user
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        [RelayCommand]
-        private async Task LoadSiteDefinitionsAsync()
-        {
-            try
-            {
-                var siteDefinitions = await _siteManager.GetAvailableSiteDefinitionsAsync();
-                AvailableSiteDefinitions.Clear();
-                foreach (var siteDefinition in siteDefinitions)
-                {
-                    AvailableSiteDefinitions.Add(siteDefinition);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading site types: {ex.Message}");
-                // TODO: Show error to user
-            }
         }
 
         [RelayCommand]
@@ -103,7 +62,7 @@ namespace DevNest.UI.ViewModels
 
                 InstallationStatus = "Site created successfully!";
 
-                await LoadSitesAsync();
+                await _appState.ReloadSites();
 
                 SelectedSiteDefinition = null;
                 SelectedSiteName = string.Empty;
@@ -264,16 +223,5 @@ namespace DevNest.UI.ViewModels
             catch (Exception) { }
         }
 
-        [RelayCommand]
-        private async Task RefreshSitesAsync()
-        {
-            await LoadSitesAsync();
-        }
-
-        protected override async Task OnLoadedAsync()
-        {
-            await LoadSitesAsync();
-            await LoadSiteDefinitionsAsync();
-        }
     }
 }

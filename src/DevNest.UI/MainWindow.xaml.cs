@@ -35,10 +35,7 @@ public sealed partial class MainWindow : Window
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
-        // Prevent the window from actually closing and hide it instead
         args.Handled = true;
-
-        // Hide the window to system tray
         _user32Dll.HideWindow();
     }
 

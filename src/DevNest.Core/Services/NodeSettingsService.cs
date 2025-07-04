@@ -2,7 +2,6 @@ using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
-using DevNest.Core.Helpers;
 
 namespace DevNest.Core.Services
 {
@@ -22,7 +21,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, Model serviceSettings)
+        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -46,7 +45,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        public void SaveToIni(IniData iniData, Model serviceSettings)
+        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -55,16 +54,6 @@ namespace DevNest.Core.Services
             section.AddKey("DefaultPort", serviceSettings.Node.DefaultPort.ToString());
             section.AddKey("PackageManager", serviceSettings.Node.PackageManager ?? "npm");
             section.AddKey("AutoStart", serviceSettings.Node.AutoStart.ToString().ToLower());
-        }
-
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
-        {
-            var selectedVersion = settings.Node.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                return ($"node.exe", service.Path);
-            }
-            return (string.Empty, string.Empty);
         }
     }
 }

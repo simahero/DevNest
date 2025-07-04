@@ -1,9 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using DevNest.Core.Helpers;
 using System.Collections.ObjectModel;
 
 namespace DevNest.Core.Models
 {
-    public partial class Model : ObservableObject
+    public partial class SettingsModel : ObservableObject
     {
         [ObservableProperty]
         private bool _startWithWindows = false;
@@ -36,13 +37,13 @@ namespace DevNest.Core.Models
         public MongoDBModel MongoDB { get; set; } = new MongoDBModel();
     }
 
-    public partial class ApacheModel : ObservableObject
+    public partial class ServiceSettingsModel : ObservableObject
     {
         [ObservableProperty]
         private string _version = "";
 
         [ObservableProperty]
-        private int _port = 80;
+        private int _port;
 
         [ObservableProperty]
         private bool _autoStart = false;
@@ -51,106 +52,74 @@ namespace DevNest.Core.Models
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 
-    public partial class MySQLModel : ObservableObject
+    public partial class ApacheModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
-
-        [ObservableProperty]
-        private int _port = 3306;
-
-        [ObservableProperty]
-        private bool _autoStart = false;
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public ApacheModel()
+        {
+            Port = 80;
+        }
     }
 
-    public partial class PHPModel : ObservableObject
+    public partial class MySQLModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public MySQLModel()
+        {
+            Port = 3306;
+        }
     }
 
-    public partial class NodeModel : ObservableObject
+    public partial class PHPModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
+        public PHPModel()
+        {
+            Port = 0;
+        }
+    }
 
+    public partial class NodeModel : ServiceSettingsModel
+    {
         [ObservableProperty]
         private int _defaultPort = 3000;
 
         [ObservableProperty]
         private string _packageManager = "npm";
 
-        [ObservableProperty]
-        private bool _autoStart = false;
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public NodeModel()
+        {
+            Port = 3000;
+        }
     }
 
-    public partial class RedisModel : ObservableObject
+    public partial class RedisModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
-
-        [ObservableProperty]
-        private int _port = 6379;
-
-        [ObservableProperty]
-        private bool _autoStart = false;
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public RedisModel()
+        {
+            Port = 6379;
+        }
     }
 
-    public partial class PostgreSQLModel : ObservableObject
+    public partial class PostgreSQLModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
-
-        [ObservableProperty]
-        private int _port = 5432;
-
-        [ObservableProperty]
-        private bool _autoStart = false;
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public PostgreSQLModel()
+        {
+            Port = 5432;
+        }
     }
 
-    public partial class NginxModel : ObservableObject
+    public partial class NginxModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
-
-        [ObservableProperty]
-        private int _port = 8080;
-
-        [ObservableProperty]
-        private bool _autoStart = false;
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public NginxModel()
+        {
+            Port = 8080;
+        }
     }
 
-    public partial class MongoDBModel : ObservableObject
+    public partial class MongoDBModel : ServiceSettingsModel
     {
-        [ObservableProperty]
-        private string _version = "";
-
-        [ObservableProperty]
-        private int _port = 27017;
-
-        [ObservableProperty]
-        private bool _autoStart = false;
-
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
-        public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
+        public MongoDBModel()
+        {
+            Port = 27017;
+        }
     }
 
 }

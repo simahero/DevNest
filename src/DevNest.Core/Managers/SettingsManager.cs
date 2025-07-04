@@ -1,6 +1,7 @@
 using DevNest.Core.Helpers;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
+using DevNest.Core.State;
 using IniParser.Model;
 using IniParser.Parser;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,216 +12,87 @@ namespace DevNest.Core
     public class SettingsManager
     {
 
+        private readonly AppState _appState;
         private readonly SettingsFactory _settingsFactory;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly SemaphoreSlim _fileLock = new(1, 1);
 
-
-        private Model? _cachedSettings;
-        public Model? CurrentSettings => _cachedSettings;
-
-        private bool _isInitializing = true;
-
-        private CancellationTokenSource? _autoSaveCts;
-
-        public SettingsManager(SettingsFactory settingsFactory, IServiceProvider serviceProvider)
+        public SettingsManager(AppState appState, SettingsFactory settingsFactory)
         {
+            _appState = appState;
             _settingsFactory = settingsFactory;
-            _serviceProvider = serviceProvider;
         }
 
-        public async Task<Model> LoadSettingsAsync(bool useCache = true)
+        public async Task<SettingsModel> LoadSettingsAsync()
         {
-            if (useCache && _cachedSettings != null)
-            {
-                return _cachedSettings;
-            }
-
-            await _fileLock.WaitAsync();
-
             try
             {
-
-                _isInitializing = true;
-                var settingsFilePath = PathHelper.SettingsPath;
-
-                if (await FileSystemHelper.FileExistsAsync(settingsFilePath))
+                var baseSettingsPath = PathHelper.BaseSettingsPath;
+                var settings = new SettingsModel
                 {
-                    var content = await FileSystemHelper.ReadFileWithRetryAsync(settingsFilePath);
-                    var iniData = new IniDataParser().Parse(content);
-                    var settings = ParseIniToSettings(iniData);
+                    StartWithWindows = false,
+                    MinimizeToSystemTray = false,
+                    AutoVirtualHosts = true,
+                    AutoCreateDatabase = false,
+                    NgrokDomain = string.Empty,
+                    NgrokApiKey = string.Empty,
+                    UseWLS = false,
+                };
 
-                    await LoadVersionsForSettings(settings);
-
-                    _cachedSettings = settings;
-                    _isInitializing = false;
-                    SetupAutoSave(_cachedSettings);
-
-                    return settings;
+                if (await FileSystemHelper.FileExistsAsync(baseSettingsPath))
+                {
+                    var baseContent = await FileSystemHelper.ReadFileWithRetryAsync(baseSettingsPath);
+                    var baseIniData = new IniDataParser().Parse(baseContent);
+                    settings = ParseIniToSettings(baseIniData);
                 }
                 else
                 {
-                    _ = Logger.Log($"{settingsFilePath} doesnt exist.");
+                    _ = Logger.Log($"{baseSettingsPath} doesn't exist, using defaults.");
                 }
+
+                PathHelper.SetUseWSL(settings.UseWLS);
+
+                var platformSettingsPath = PathHelper.SettingsPath;
+
+                if (await FileSystemHelper.FileExistsAsync(platformSettingsPath))
+                {
+                    var platformContent = await FileSystemHelper.ReadFileWithRetryAsync(platformSettingsPath);
+                    var platformIniData = new IniDataParser().Parse(platformContent);
+
+                    MergePlatformSettings(settings, platformIniData);
+                }
+                else
+                {
+                    _ = Logger.Log($"{platformSettingsPath} doesn't exist.");
+                }
+
+                await LoadVersionsForSettings(settings);
+                return settings;
             }
             catch (Exception ex)
             {
                 _ = Logger.Log($"Failed to load settings: {ex.Message}");
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
 
-            var defaultSettings = new Model
-            {
-                StartWithWindows = false,
-                MinimizeToSystemTray = false,
-                AutoVirtualHosts = true,
-                AutoCreateDatabase = false,
-                NgrokDomain = string.Empty,
-                NgrokApiKey = string.Empty,
-                UseWLS = false,
-            };
-            await LoadVersionsForSettings(defaultSettings);
-
-            _cachedSettings = defaultSettings;
-            _isInitializing = false;
-            SetupAutoSave(_cachedSettings);
-
-            await SaveSettingsInternalAsync(defaultSettings);
-
-            return defaultSettings;
-        }
-
-        private void SetupAutoSave(Model settings)
-        {
-            if (_cachedSettings != null)
-            {
-                _cachedSettings.PropertyChanged -= OnSettingsPropertyChanged;
-                UnsubscribeNested(_cachedSettings);
-            }
-
-            settings.PropertyChanged += OnSettingsPropertyChanged;
-            SubscribeNested(settings);
-            SubscribeToNestedReplacement(settings);
-        }
-
-        private void SubscribeNested(Model settings)
-        {
-            if (settings.Apache != null) settings.Apache.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.MySQL != null) settings.MySQL.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.PHP != null) settings.PHP.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.Node != null) settings.Node.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.Redis != null) settings.Redis.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.PostgreSQL != null) settings.PostgreSQL.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.Nginx != null) settings.Nginx.PropertyChanged += OnNestedSettingsPropertyChanged;
-            if (settings.MongoDB != null) settings.MongoDB.PropertyChanged += OnNestedSettingsPropertyChanged;
-        }
-
-        private void UnsubscribeNested(Model settings)
-        {
-            if (settings.Apache != null) settings.Apache.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.MySQL != null) settings.MySQL.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.PHP != null) settings.PHP.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.Node != null) settings.Node.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.Redis != null) settings.Redis.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.PostgreSQL != null) settings.PostgreSQL.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.Nginx != null) settings.Nginx.PropertyChanged -= OnNestedSettingsPropertyChanged;
-            if (settings.MongoDB != null) settings.MongoDB.PropertyChanged -= OnNestedSettingsPropertyChanged;
-        }
-
-        private void SubscribeToNestedReplacement(Model settings)
-        {
-            settings.PropertyChanged += (s, e) =>
-            {
-                switch (e.PropertyName)
+                var defaultSettings = new SettingsModel
                 {
-                    case nameof(settings.Apache):
-                    case nameof(settings.MySQL):
-                    case nameof(settings.PHP):
-                    case nameof(settings.Node):
-                    case nameof(settings.Redis):
-                    case nameof(settings.PostgreSQL):
-                    case nameof(settings.Nginx):
-                    case nameof(settings.MongoDB):
-                        UnsubscribeNested(settings);
-                        SubscribeNested(settings);
-                        break;
-                }
-            };
-        }
-
-        private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (!_isInitializing && _cachedSettings != null)
-            {
-                _autoSaveCts?.Cancel();
-                _autoSaveCts = new CancellationTokenSource();
-                var token = _autoSaveCts.Token;
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await Task.Delay(2000, token); // Debounce delay
-                        if (!token.IsCancellationRequested)
-                        {
-                            await SaveSettingsInternalAsync(_cachedSettings);
-                        }
-                    }
-                    catch (TaskCanceledException) { }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
-                        _ = Logger.Log($"Auto-save failed: {ex.Message}");
-                    }
-                }, token);
+                    StartWithWindows = false,
+                    MinimizeToSystemTray = false,
+                    AutoVirtualHosts = true,
+                    AutoCreateDatabase = false,
+                    NgrokDomain = string.Empty,
+                    NgrokApiKey = string.Empty,
+                    UseWLS = false,
+                };
+                await LoadVersionsForSettings(defaultSettings);
+                return defaultSettings;
             }
         }
 
-        private void OnNestedSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            OnSettingsPropertyChanged(sender, e);
-        }
-
-        private async Task SaveSettingsInternalAsync(Model settings)
-        {
-
-            await _fileLock.WaitAsync();
-
-            try
-            {
-                var configPath = PathHelper.ConfigPath;
-                var settingsFilePath = PathHelper.SettingsPath;
-                if (string.IsNullOrEmpty(settingsFilePath))
-                {
-                    _ = Logger.Log($"Saving settings is failed: {settingsFilePath}");
-                    return;
-                }
-
-                var iniData = ConvertSettingsToIni(settings);
-                var content = iniData.ToString();
-
-                await FileSystemHelper.WriteFileWithRetryAsync(settingsFilePath, content);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to save settings: {ex.Message}");
-                throw;
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
-        }
-
-        public async Task LoadVersionsForSettings(Model settings)
+        public async Task LoadVersionsForSettings(SettingsModel settings)
         {
             await LoadInstalledVersionsForSettings(settings);
             await LoadInstallableVersionsForSettings(settings);
         }
 
-        private async Task LoadInstalledVersionsForSettings(Model settings)
+        private async Task LoadInstalledVersionsForSettings(SettingsModel settings)
         {
             await Task.Run(() =>
             {
@@ -291,89 +163,91 @@ namespace DevNest.Core
             });
         }
 
-        private async Task LoadInstallableVersionsForSettings(Model settings)
+        private async Task LoadInstallableVersionsForSettings(SettingsModel settings)
         {
-            try
+            await Task.Run(() =>
             {
-                var serviceManager = _serviceProvider.GetRequiredService<ServiceManager>();
-                var availableServices = await serviceManager.GetAvailableServices();
-
-                var servicesByType = availableServices.GroupBy(s => s.ServiceType);
-
-                foreach (var serviceGroup in servicesByType)
+                try
                 {
-                    var serviceType = serviceGroup.Key;
-                    var serviceDefinitions = serviceGroup.ToList();
+                    var availableServices = _appState.AvailableServices;
 
-                    var installedVersions = serviceType switch
+                    var servicesByType = availableServices.GroupBy(s => s.ServiceType);
+
+                    foreach (var serviceGroup in servicesByType)
                     {
-                        Enums.ServiceType.Apache => settings.Apache.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.MySQL => settings.MySQL.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.PHP => settings.PHP.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.Node => settings.Node.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.Redis => settings.Redis.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.PostgreSQL => settings.PostgreSQL.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.Nginx => settings.Nginx.AvailableVersions.ToHashSet(),
-                        Enums.ServiceType.MongoDB => settings.MongoDB.AvailableVersions.ToHashSet(),
-                        _ => new HashSet<string>()
-                    };
+                        var serviceType = serviceGroup.Key;
+                        var serviceDefinitions = serviceGroup.ToList();
 
-                    var installableServiceDefinitions = serviceDefinitions.Where(s => !installedVersions.Contains(s.Name)).ToList();
+                        var installedVersions = serviceType switch
+                        {
+                            Enums.ServiceType.Apache => settings.Apache.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.MySQL => settings.MySQL.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.PHP => settings.PHP.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.Node => settings.Node.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.Redis => settings.Redis.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.PostgreSQL => settings.PostgreSQL.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.Nginx => settings.Nginx.AvailableVersions.ToHashSet(),
+                            Enums.ServiceType.MongoDB => settings.MongoDB.AvailableVersions.ToHashSet(),
+                            _ => new HashSet<string>()
+                        };
 
-                    switch (serviceType)
-                    {
-                        case Enums.ServiceType.Apache:
-                            settings.Apache.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.Apache.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.MySQL:
-                            settings.MySQL.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.MySQL.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.PHP:
-                            settings.PHP.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.PHP.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.Node:
-                            settings.Node.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.Node.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.Redis:
-                            settings.Redis.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.Redis.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.PostgreSQL:
-                            settings.PostgreSQL.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.PostgreSQL.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.Nginx:
-                            settings.Nginx.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.Nginx.InstallableVersions.Add(serviceDefinition);
-                            break;
-                        case Enums.ServiceType.MongoDB:
-                            settings.MongoDB.InstallableVersions.Clear();
-                            foreach (var serviceDefinition in installableServiceDefinitions)
-                                settings.MongoDB.InstallableVersions.Add(serviceDefinition);
-                            break;
+                        var installableServiceDefinitions = serviceDefinitions.Where(s => !installedVersions.Contains(s.Name)).ToList();
+
+                        switch (serviceType)
+                        {
+                            case Enums.ServiceType.Apache:
+                                settings.Apache.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.Apache.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.MySQL:
+                                settings.MySQL.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.MySQL.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.PHP:
+                                settings.PHP.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.PHP.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.Node:
+                                settings.Node.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.Node.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.Redis:
+                                settings.Redis.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.Redis.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.PostgreSQL:
+                                settings.PostgreSQL.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.PostgreSQL.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.Nginx:
+                                settings.Nginx.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.Nginx.InstallableVersions.Add(serviceDefinition);
+                                break;
+                            case Enums.ServiceType.MongoDB:
+                                settings.MongoDB.InstallableVersions.Clear();
+                                foreach (var serviceDefinition in installableServiceDefinitions)
+                                    settings.MongoDB.InstallableVersions.Add(serviceDefinition);
+                                break;
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading installable versions: {ex.Message}");
-            }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading installable versions: {ex.Message}");
+                }
+            });
         }
 
-        private Model ParseIniToSettings(IniData iniData)
+        private SettingsModel ParseIniToSettings(IniData iniData)
         {
-            var settings = new Model();
+            var settings = new SettingsModel();
 
             if (iniData.Sections.ContainsSection("General"))
             {
@@ -403,7 +277,7 @@ namespace DevNest.Core
             return settings;
         }
 
-        private IniData ConvertSettingsToIni(Model settings)
+        public IniData ConvertSettingsToIni(SettingsModel settings)
         {
             var iniData = new IniData();
 
@@ -423,6 +297,13 @@ namespace DevNest.Core
             var wslSection = iniData.Sections["WSL"];
             wslSection.AddKey("UseWLS", settings.UseWLS.ToString().ToLower());
 
+            return iniData;
+        }
+
+        public IniData ConvertPlatformSettingsToIni(SettingsModel settings)
+        {
+            var iniData = new IniData();
+
             foreach (var serviceProvider in _settingsFactory.GetAllServiceSettingsProviders())
             {
                 serviceProvider.SaveToIni(iniData, settings);
@@ -430,5 +311,19 @@ namespace DevNest.Core
 
             return iniData;
         }
+
+        public void MergePlatformSettings(SettingsModel settings, IniData platformIniData)
+        {
+            foreach (var serviceProvider in _settingsFactory.GetAllServiceSettingsProviders())
+            {
+                serviceProvider.ParseFromIni(platformIniData, settings);
+            }
+        }
+
+        public void MergePlatformSettingsFromIni(IniData platformIniData, SettingsModel settings)
+        {
+            MergePlatformSettings(settings, platformIniData);
+        }
+
     }
 }

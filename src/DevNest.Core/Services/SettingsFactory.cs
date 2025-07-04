@@ -1,5 +1,6 @@
 using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
+using DevNest.Core.State;
 
 namespace DevNest.Core.Services
 {
@@ -7,17 +8,17 @@ namespace DevNest.Core.Services
     {
         private readonly Dictionary<ServiceType, IServiceSettingsProvider> _providers;
 
-        public SettingsFactory(IServiceProvider serviceProvider)
+        public SettingsFactory(AppState appState)
         {
             _providers = new Dictionary<ServiceType, IServiceSettingsProvider>
             {
-                { ServiceType.Apache, new ApacheSettingsService(serviceProvider) },
+                { ServiceType.Apache, new ApacheSettingsService(appState) },
                 { ServiceType.MySQL, new MySQLSettingsService() },
                 { ServiceType.PHP, new PHPModelService() },
                 { ServiceType.Node, new NodeModelService() },
                 { ServiceType.Redis, new RedisModelService()  },
                 { ServiceType.PostgreSQL, new PostgreSQLModelService() },
-                { ServiceType.Nginx, new NginxSettingsService(serviceProvider) },
+                { ServiceType.Nginx, new NginxSettingsService(appState) },
                 { ServiceType.MongoDB, new MongoDBSettingsService() }
             };
         }

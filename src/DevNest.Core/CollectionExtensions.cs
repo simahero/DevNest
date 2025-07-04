@@ -8,6 +8,7 @@ using DevNest.Core.Managers.ServiceRunners;
 using DevNest.Core.Managers.Sites;
 using DevNest.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
+using DevNest.Core.State;
 
 namespace DevNest.UI.Services
 {
@@ -15,21 +16,20 @@ namespace DevNest.UI.Services
     {
         public static IServiceCollection AddCoreServices(this IServiceCollection services)
         {
+            // Register both Windows and WSL implementations
+            services.AddSingleton<WINServiceRunner>();
+            services.AddSingleton<WSLServiceRunner>();
+            services.AddSingleton<WINServiceInstaller>();
+            services.AddSingleton<WslServiceInstaller>();
+            services.AddSingleton<WINCommandExecutor>();
+            services.AddSingleton<WSLCommandExecutor>();
+            services.AddSingleton<WINCommandManager>();
+            services.AddSingleton<WSLCommandManager>();
 
-            var useWSL = false;
+            // Register the factory that will choose the correct implementation at runtime
+            services.AddSingleton<IPlatformServiceFactory, PlatformServiceFactory>();
 
-            if (useWSL)
-            {
-                services.AddSingleton<IServiceRunner, WSLServiceRunner>();
-                services.AddSingleton<IServiceInstaller, WslServiceInstaller>();
-                services.AddSingleton<ICommandExecutor, WSLCommandExecutor>();
-            }
-            else
-            {
-                services.AddSingleton<IServiceRunner, WINServiceRunner>();
-                services.AddSingleton<IServiceInstaller, WINServiceInstaller>();
-                services.AddSingleton<ICommandExecutor, WINCommandExecutor>();
-            }
+            services.AddSingleton<AppState>();
 
             services.AddSingleton<ArchiveHelper>();
             services.AddSingleton<DownloadHelper>();

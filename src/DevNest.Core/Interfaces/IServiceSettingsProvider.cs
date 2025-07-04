@@ -8,8 +8,8 @@ namespace DevNest.Core.Interfaces
     {
         string ServiceName { get; }
         ServiceType Type { get; }
-        void ParseFromIni(IniData iniData, Model serviceSettings);
-        void SaveToIni(IniData iniData, Model serviceSettings);
+        void ParseFromIni(IniData iniData, SettingsModel serviceSettings);
+        void SaveToIni(IniData iniData, SettingsModel serviceSettings);
     }
 
     public interface IServiceSettingsProvider<T> : IServiceSettingsProvider

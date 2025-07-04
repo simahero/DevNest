@@ -23,7 +23,7 @@ namespace DevNest.Core.Services
             };
         }
 
-        public void ParseFromIni(IniData iniData, Model serviceSettings)
+        public void ParseFromIni(IniData iniData, SettingsModel serviceSettings)
         {
             if (!iniData.Sections.ContainsSection(ServiceName))
             {
@@ -45,7 +45,7 @@ namespace DevNest.Core.Services
             }
         }
 
-        public void SaveToIni(IniData iniData, Model serviceSettings)
+        public void SaveToIni(IniData iniData, SettingsModel serviceSettings)
         {
             iniData.Sections.AddSection(ServiceName);
             var section = iniData.Sections[ServiceName];
@@ -60,7 +60,7 @@ namespace DevNest.Core.Services
             });
         }
 
-        private async Task GenerateMongoDBConfigurationAsync(Model settings)
+        private async Task GenerateMongoDBConfigurationAsync(SettingsModel settings)
         {
             string TemplateFilePath = Path.Combine(PathHelper.TemplatesPath, "mongod.cfg.tpl");
 
@@ -98,22 +98,6 @@ namespace DevNest.Core.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Error generating MongoDB configuration: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        /// Returns the command and working directory for MongoDB, or (string.Empty, string.Empty) if not found.
-        /// </summary>
-        public static async Task<(string, string)> GetCommandAsync(ServiceModel service, Model settings)
-        {
-            var selectedVersion = settings.MongoDB.Version;
-            if (!string.IsNullOrEmpty(selectedVersion))
-            {
-                var binPath = Path.Combine(service.Path, "bin");
-                var configPath = Path.Combine(service.Path, "bin", "mongod.cfg");
-
-                return ($"mongod.exe --config \"{configPath}\"", binPath);
-            }
-            return (string.Empty, string.Empty);
         }
     }
 }
