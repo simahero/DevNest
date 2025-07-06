@@ -129,6 +129,11 @@
                         <ImageIcon Source="ms-appx:///Assets/Icons/stack.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="Mail" Tag="Mail">
+                    <NavigationViewItem.Icon>
+                        <ImageIcon Source="ms-appx:///Assets/Icons/mail.svg" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="Settings" Tag="Settings">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="ms-appx:///Assets/Icons/gear.svg" />

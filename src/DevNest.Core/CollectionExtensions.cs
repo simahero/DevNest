@@ -1,14 +1,15 @@
 using DevNest.Core;
-using DevNest.Core.Managers.Commands;
-using DevNest.Core.Dump;
 using DevNest.Core.Helpers;
 using DevNest.Core.Installers;
 using DevNest.Core.Interfaces;
+using DevNest.Core.Managers.Commands;
+using DevNest.Core.Managers.Dump;
 using DevNest.Core.Managers.ServiceRunners;
 using DevNest.Core.Managers.Sites;
+using DevNest.Core.Managers.SMTP;
 using DevNest.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
 using DevNest.Core.State;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevNest.UI.Services
 {
@@ -39,6 +40,7 @@ namespace DevNest.UI.Services
             services.AddSingleton<VirtualHostManager>();
             services.AddSingleton<StartupManager>();
             services.AddSingleton<VarDumperServer>();
+            services.AddSingleton<SMTP>();
 
             services.AddSingleton<SettingsFactory>();
 

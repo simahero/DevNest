@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using DevNest.Core.Models;
 
 namespace DevNest.UI.ViewModels
 {
@@ -15,7 +16,7 @@ namespace DevNest.UI.ViewModels
         private readonly string _iniFilePath;
         private List<string> _originalLines;
 
-        public ObservableCollection<PhpExtensionViewModel> Extensions { get; } = new();
+        public ObservableCollection<PhpExtension> Extensions { get; } = new();
 
         public event EventHandler? CloseRequested;
 
@@ -51,20 +52,17 @@ namespace DevNest.UI.ViewModels
                         var isEnabled = trimmed.StartsWith("extension=");
                         var extensionPart = isEnabled ? trimmed.Substring("extension=".Length) : trimmed.Substring(";extension=".Length);
 
-                        // Split by semicolon to separate extension name from comment
                         var parts = extensionPart.Split(';', 2);
                         var extensionName = parts[0].Trim();
                         var comment = parts.Length > 1 ? parts[1].Trim() : string.Empty;
 
-                        // Skip if extension name is empty
                         if (string.IsNullOrEmpty(extensionName))
                             continue;
 
-                        // Check if this extension already exists (in case of duplicates)
                         var existing = Extensions.FirstOrDefault(e => e.Name.Equals(extensionName, StringComparison.OrdinalIgnoreCase));
                         if (existing == null)
                         {
-                            Extensions.Add(new PhpExtensionViewModel
+                            Extensions.Add(new PhpExtension
                             {
                                 Name = extensionName,
                                 Enabled = isEnabled,
@@ -99,30 +97,25 @@ namespace DevNest.UI.ViewModels
                         var isEnabled = trimmed.StartsWith("extension=");
                         var extensionPart = isEnabled ? trimmed.Substring("extension=".Length) : trimmed.Substring(";extension=".Length);
 
-                        // Split by semicolon to separate extension name from comment
                         var parts = extensionPart.Split(';', 2);
                         var extensionName = parts[0].Trim();
                         var comment = parts.Length > 1 ? ";" + parts[1] : string.Empty;
 
-                        // Find the corresponding extension in our collection
                         var ext = Extensions.FirstOrDefault(e => e.Name.Equals(extensionName, StringComparison.OrdinalIgnoreCase));
 
                         if (ext != null)
                         {
-                            // Reconstruct the line with the current enabled state and preserve comments
                             var prefix = ext.Enabled ? "extension=" : ";extension=";
                             var newLine = prefix + ext.Name + comment;
                             newLines.Add(newLine);
                         }
                         else
                         {
-                            // Keep the original line if we don't have it in our collection
                             newLines.Add(line);
                         }
                     }
                     else
                     {
-                        // Keep non-extension lines as-is
                         newLines.Add(line);
                     }
                 }

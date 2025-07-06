@@ -1,4 +1,4 @@
-using DevNest.Core.Dump;
+using DevNest.Core.Managers.Dump;
 using DevNest.UI.Models;
 using Microsoft.UI.Dispatching;
 using System.Collections.ObjectModel;

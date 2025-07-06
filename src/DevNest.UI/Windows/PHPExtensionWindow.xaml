@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:DevNest.UI.Windows"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="using:DevNest.UI.ViewModels"
+    xmlns:vm="using:DevNest.Core.Models"
     Title="PHP Extensions"
     mc:Ignorable="d">
 
@@ -91,7 +91,7 @@
                     </GridView.ItemsPanel>
 
                     <GridView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:PhpExtensionViewModel">
+                        <DataTemplate x:DataType="vm:PhpExtension">
                             <Border
                                 MinWidth="200"
                                 Padding="12"
@@ -103,13 +103,6 @@
                                         FontWeight="SemiBold"
                                         Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                         IsChecked="{x:Bind Enabled, Mode=TwoWay}" />
-                                    <TextBlock
-                                        Margin="0,4,0,0"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind Comment}"
-                                        TextWrapping="Wrap"
-                                        Visibility="{x:Bind CommentVisibility}" />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>

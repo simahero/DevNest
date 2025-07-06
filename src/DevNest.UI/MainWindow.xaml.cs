@@ -79,6 +79,9 @@ public sealed partial class MainWindow : Window
                 case "Settings":
                     _navigationService.NavigateTo<Views.SettingsPage>(NavigationTransitions.Suppress);
                     break;
+                case "Mail":
+                    _navigationService.NavigateTo<Views.MailPage>(NavigationTransitions.Suppress);
+                    break;
             }
         }
     }

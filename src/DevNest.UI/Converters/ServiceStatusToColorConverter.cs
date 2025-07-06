@@ -28,6 +28,13 @@ namespace DevNest.UI.Converters
                     : new SolidColorBrush(Microsoft.UI.Colors.Red);
             }
 
+            if (value is string stringStatus)
+            {
+                return stringStatus == "Running"
+                    ? new SolidColorBrush(Microsoft.UI.Colors.Green)
+                    : new SolidColorBrush(Microsoft.UI.Colors.Red);
+            }
+
             return new SolidColorBrush(Microsoft.UI.Colors.Gray);
         }
 

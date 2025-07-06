@@ -1,7 +1,8 @@
 using DevNest.Core;
-using DevNest.Core.Dump;
 using DevNest.Core.Helpers;
 using DevNest.Core.Managers;
+using DevNest.Core.Managers.Dump;
+using DevNest.Core.Managers.SMTP;
 using DevNest.Core.State;
 using DevNest.UI.Services;
 using Microsoft.Extensions.Hosting;
@@ -83,6 +84,12 @@ public partial class App : Application
         if (Services?.GetService(typeof(VarDumperServer)) is VarDumperServer server)
         {
             _ = Task.Run(async () => await server.StartAsync());
+
+        }
+
+        if (Services?.GetService(typeof(SMTP)) is SMTP smtp)
+        {
+            _ = Task.Run(async () => await smtp.StartAsync());
 
         }
     }

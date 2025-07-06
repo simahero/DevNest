@@ -16,6 +16,7 @@ namespace DevNest.UI.ViewModels
         public EnvironmentsViewModel EnvironmentsViewModel { get; }
         public DumpsViewModel DumpsViewModel { get; }
         public SettingsViewModel SettingsViewModel { get; }
+        public MailViewModel MailViewModel { get; }
 
 
         public MainViewModel(
@@ -23,13 +24,15 @@ namespace DevNest.UI.ViewModels
             SitesViewModel sitesViewModel,
             EnvironmentsViewModel environmentsViewModel,
             DumpsViewModel dumpsViewModel,
-            SettingsViewModel settingsViewModel)
+            SettingsViewModel settingsViewModel,
+            MailViewModel mailViewModel)
         {
             DashboardViewModel = dashboardViewModel;
             SitesViewModel = sitesViewModel;
             EnvironmentsViewModel = environmentsViewModel;
             DumpsViewModel = dumpsViewModel;
             SettingsViewModel = settingsViewModel;
+            MailViewModel = mailViewModel;
 
             Title = "DevNest";
 
@@ -49,6 +52,7 @@ namespace DevNest.UI.ViewModels
                 "Environments" => EnvironmentsViewModel,
                 "Dumps" => DumpsViewModel,
                 "Settings" => SettingsViewModel,
+                "Mail" => MailViewModel,
                 _ => DashboardViewModel
             };
 

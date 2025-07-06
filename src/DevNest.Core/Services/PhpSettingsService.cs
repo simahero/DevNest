@@ -59,6 +59,8 @@ namespace DevNest.Core.Services
 
                 var autoloadPath = Path.Combine(PathHelper.EtcPath, "php", "DevNestDumper", "index.php");
                 var prepend = $"auto_prepend_file = {autoloadPath}";
+                var version = settings.PHP.Version.Replace("PHP", "php_xdebug");
+                var xDebug = Path.Combine(PathHelper.EtcPath, "php", "xDebug", version + ".dll");
 
                 await FileSystemHelper.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
                 await FileSystemHelper.AppendAllTextAsync(iniPath, $"{prepend}\n");
@@ -66,6 +68,14 @@ namespace DevNest.Core.Services
                 await FileSystemHelper.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
                 await FileSystemHelper.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
                 await FileSystemHelper.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
+
+
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"\n[Xdebug]\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"zend_extension = \"{xDebug}\"\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.mode = debug\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.start_with_request = yes\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.client_host = 127.0.0.1\n");
+                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.client_port = 9003\n");
 
             }
 

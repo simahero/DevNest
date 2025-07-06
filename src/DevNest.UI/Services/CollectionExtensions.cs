@@ -19,6 +19,7 @@ namespace DevNest.UI.Services
             services.AddTransient<EnvironmentsViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<DumpsViewModel>();
+            services.AddTransient<MailViewModel>();
 
             // Views
             services.AddTransient<DashboardPage>();
@@ -26,6 +27,7 @@ namespace DevNest.UI.Services
             services.AddTransient<EnvironmentsPage>();
             services.AddTransient<SettingsPage>();
             services.AddTransient<DumpsPage>();
+            services.AddTransient<MailPage>();
 
             // Logging
             services.AddLogging(builder =>

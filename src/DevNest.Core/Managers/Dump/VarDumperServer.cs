@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-namespace DevNest.Core.Dump;
+namespace DevNest.Core.Managers.Dump;
 
 public class VarDumperServer
 {

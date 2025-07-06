@@ -30,6 +30,7 @@ namespace DevNest.UI.Services
             _pageViewModelMap[typeof(EnvironmentsPage)] = typeof(ViewModels.EnvironmentsViewModel);
             _pageViewModelMap[typeof(SettingsPage)] = typeof(ViewModels.SettingsViewModel);
             _pageViewModelMap[typeof(DumpsPage)] = typeof(ViewModels.DumpsViewModel);
+            _pageViewModelMap[typeof(MailPage)] = typeof(ViewModels.MailViewModel);
         }
         public void SetFrame(Frame frame)
         {

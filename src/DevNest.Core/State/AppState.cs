@@ -25,9 +25,6 @@ namespace DevNest.Core.State
 
         public async Task LoadAsync()
         {
-            _settingsManager ??= (SettingsManager)_serviceProvider.GetService(typeof(SettingsManager))!;
-            Settings = await _settingsManager.LoadSettingsAsync();
-
             _serviceManager ??= (ServiceManager)_serviceProvider.GetService(typeof(ServiceManager))!;
 
             var services = await _serviceManager.GetServicesAsync();
@@ -59,6 +56,9 @@ namespace DevNest.Core.State
             {
                 AvailableSites.Add(site);
             }
+
+            _settingsManager ??= (SettingsManager)_serviceProvider.GetService(typeof(SettingsManager))!;
+            Settings = await _settingsManager.LoadSettingsAsync();
         }
 
         public async Task Reload()

@@ -114,7 +114,7 @@ namespace DevNest.Core.Managers.Commands
             var selectedVersion = settings.PHP.Version;
             if (!string.IsNullOrEmpty(selectedVersion))
             {
-                return Task.FromResult(($"php-cgi.exe -b 127.0.0.1:9003", service.Path));
+                return Task.FromResult(($"php-cgi.exe -b 127.0.0.1:9103", service.Path));
             }
             return Task.FromResult((string.Empty, string.Empty));
         }
