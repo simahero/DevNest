@@ -1,5 +1,6 @@
 using DevNest.Core;
 using DevNest.Core.Helpers;
+using DevNest.Core.Interfaces;
 using DevNest.Core.Managers;
 using DevNest.Core.Managers.Dump;
 using DevNest.Core.Managers.SMTP;
@@ -8,7 +9,6 @@ using DevNest.UI.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 
@@ -26,12 +26,12 @@ public partial class App : Application
     {
         this.InitializeComponent();
 
-        Application.Current.UnhandledException += (sender, e) =>
-        {
-            Debug.WriteLine($"Unhandled: {e.Exception}");
-            Debug.WriteLine($"Message: {e.Exception.Message}");
-            Debug.WriteLine($"Stack: {e.Exception.StackTrace}");
-        };
+        // Application.Current.UnhandledException += (sender, e) =>
+        // {
+        //     Debug.WriteLine($"Unhandled: {e.Exception}");
+        //     Debug.WriteLine($"Message: {e.Exception.Message}");
+        //     Debug.WriteLine($"Stack: {e.Exception.StackTrace}");
+        // };
 
         ConfigureServices();
     }
@@ -62,20 +62,25 @@ public partial class App : Application
         _window = new MainWindow();
         _window.Activate();
 
-        if (Services?.GetService(typeof(AppState)) is AppState appState)
+        if (Services != null)
         {
             _ = Task.Run(async () =>
             {
-                await appState.LoadAsync();
+                var appState = Services.GetService(typeof(AppState)) as AppState;
 
-                if (appState.Settings != null)
+                if (appState != null)
                 {
-                    PathHelper.SetUseWSL(appState.Settings.UseWLS);
-                }
+                    await appState.LoadAsync();
 
-                if (Services?.GetService(typeof(SettingsManager)) is SettingsManager settingsManager)
-                {
-                    var autoSaveManager = new AutoSaveManager(appState, settingsManager);
+                    if (appState.Settings != null)
+                    {
+                        PathHelper.SetUseWSL(appState.Settings.UseWLS);
+                    }
+
+                    if (Services.GetService(typeof(SettingsManager)) is SettingsManager settingsManager)
+                    {
+                        var autoSaveManager = new AutoSaveManager(appState, settingsManager);
+                    }
                 }
             });
         }

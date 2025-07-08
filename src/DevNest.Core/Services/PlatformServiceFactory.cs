@@ -1,28 +1,40 @@
+using DevNest.Core.Installers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Managers.Commands;
 using DevNest.Core.Managers.ServiceRunners;
-using DevNest.Core.Installers;
-using DevNest.Core.State;
+using DevNest.Core.Managers.Sites;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DevNest.Core.Services
 {
-    public class PlatformServiceFactory : IPlatformServiceFactory
+    public class PlatformServiceFactory
     {
-        private readonly AppState _appState;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ISettingsRepository _settingsRepository;
 
-        public PlatformServiceFactory(AppState appState, IServiceProvider serviceProvider)
+        public PlatformServiceFactory(IServiceProvider serviceProvider, ISettingsRepository settingsRepository)
         {
-            _appState = appState;
             _serviceProvider = serviceProvider;
+            _settingsRepository = settingsRepository;
+        }
+
+        public IServiceLoader GetServiceLoader()
+        {
+            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings.UseWLS)
+            {
+                return _serviceProvider.GetRequiredService<WSLServiceLoader>();
+            }
+            else
+            {
+                return _serviceProvider.GetRequiredService<WINServiceLoader>();
+            }
         }
 
         public IServiceRunner GetServiceRunner()
         {
-            var useWSL = _appState.Settings?.UseWLS ?? false;
-
-            if (useWSL)
+            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings.UseWLS)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceRunner>();
             }
@@ -34,11 +46,10 @@ namespace DevNest.Core.Services
 
         public IServiceInstaller GetServiceInstaller()
         {
-            var useWSL = _appState.Settings?.UseWLS ?? false;
-
-            if (useWSL)
+            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings.UseWLS)
             {
-                return _serviceProvider.GetRequiredService<WslServiceInstaller>();
+                return _serviceProvider.GetRequiredService<WSLServiceInstaller>();
             }
             else
             {
@@ -46,11 +57,23 @@ namespace DevNest.Core.Services
             }
         }
 
+        public IVirtualHostManager GetVirtualHostManager()
+        {
+            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings.UseWLS)
+            {
+                return _serviceProvider.GetRequiredService<WSLVirtualHostManager>();
+            }
+            else
+            {
+                return _serviceProvider.GetRequiredService<WINVirtualHostManager>();
+            }
+        }
+
         public ICommandExecutor GetCommandExecutor()
         {
-            var useWSL = _appState.Settings?.UseWLS ?? false;
-
-            if (useWSL)
+            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings.UseWLS)
             {
                 return _serviceProvider.GetRequiredService<WSLCommandExecutor>();
             }
@@ -62,9 +85,8 @@ namespace DevNest.Core.Services
 
         public ICommandManager GetCommandManager()
         {
-            var useWSL = _appState.Settings?.UseWLS ?? false;
-
-            if (useWSL)
+            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings.UseWLS)
             {
                 return _serviceProvider.GetRequiredService<WSLCommandManager>();
             }

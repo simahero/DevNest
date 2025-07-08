@@ -119,7 +119,7 @@
                         <ImageIcon Source="ms-appx:///Assets/Icons/server.svg" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Sites" Tag="Sites">
+                <NavigationViewItem Content="Webites" Tag="Sites">
                     <NavigationViewItem.Icon>
                         <ImageIcon Source="ms-appx:///Assets/Icons/globe.svg" />
                     </NavigationViewItem.Icon>

@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input;
 
 namespace DevNest.UI.ViewModels
 {
@@ -31,9 +32,12 @@ namespace DevNest.UI.ViewModels
         public event Action<string?>? ShowEmailBodyRequested;
         public event EventHandler? CloseRequested;
 
+        public IRelayCommand<EmailAttachment> OpenAttachmentCommand { get; }
+
         public MailWindowViewModel()
         {
             Title = "Mails";
+            OpenAttachmentCommand = new RelayCommand<EmailAttachment>(OpenAttachment);
         }
 
 
@@ -83,6 +87,59 @@ namespace DevNest.UI.ViewModels
             else
             {
                 ShowEmailBodyRequested?.Invoke(null);
+            }
+        }
+
+        private static string SanitizeFileName(string fileName)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                fileName = fileName.Replace(c, '_');
+            }
+            return fileName;
+        }
+
+        private async void OpenAttachment(EmailAttachment? attachment)
+        {
+            if (attachment == null || SelectedEmail == null)
+            {
+                return;
+            }
+
+            var emailFilePath = SelectedEmail.FilePath;
+            if (string.IsNullOrEmpty(emailFilePath) || !System.IO.File.Exists(emailFilePath))
+            {
+                return;
+            }
+
+            try
+            {
+                using var stream = File.OpenRead(emailFilePath);
+                var message = await Task.Run(() => MimeMessage.Load(stream));
+                var mimePart = message.Attachments
+                    .OfType<MimePart>()
+                    .FirstOrDefault(p => p.FileName == attachment.FileName);
+                if (mimePart == null)
+                    return;
+
+                var safeFileName = SanitizeFileName(attachment.FileName);
+                var tempPath = Path.Combine(Path.GetTempPath(), safeFileName);
+                using (var fileStream = File.Create(tempPath))
+                {
+                    mimePart.Content.DecodeTo(fileStream);
+                }
+
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = tempPath,
+                    UseShellExecute = true
+                };
+
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to open attachment: {ex.Message}");
             }
         }
 

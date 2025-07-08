@@ -85,21 +85,21 @@
                         Margin="0,0,0,8"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="SMTP Credentials" />
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
                         <TextBlock FontWeight="Bold" Text="IP: " />
-                        <TextBlock Text="127.0.0.1" />
+                        <TextBlock Margin="8,0,0,0" Text="127.0.0.1" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
                         <TextBlock FontWeight="Bold" Text="Port: " />
-                        <TextBlock Text="{x:Bind ViewModel.SmtpServer.Port, Mode=OneWay}" />
+                        <TextBlock Margin="8,0,0,0" Text="{x:Bind ViewModel.SmtpServer.Port, Mode=OneWay}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
                         <TextBlock FontWeight="Bold" Text="Username: " />
-                        <TextBlock Text="-" />
+                        <TextBlock Margin="8,0,0,0" Text="-" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
                         <TextBlock FontWeight="Bold" Text="Password: " />
-                        <TextBlock Text="-" />
+                        <TextBlock Margin="8,0,0,0" Text="-" />
                     </StackPanel>
                 </StackPanel>
             </Border>

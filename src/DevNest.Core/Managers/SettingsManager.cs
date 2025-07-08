@@ -1,23 +1,17 @@
 using DevNest.Core.Helpers;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
-using DevNest.Core.State;
 using IniParser.Model;
 using IniParser.Parser;
-using Microsoft.Extensions.DependencyInjection;
-using System.ComponentModel;
 
 namespace DevNest.Core
 {
     public class SettingsManager
     {
-
-        private readonly AppState _appState;
         private readonly SettingsFactory _settingsFactory;
 
-        public SettingsManager(AppState appState, SettingsFactory settingsFactory)
+        public SettingsManager(SettingsFactory settingsFactory)
         {
-            _appState = appState;
             _settingsFactory = settingsFactory;
         }
 
@@ -64,7 +58,6 @@ namespace DevNest.Core
                     _ = Logger.Log($"{platformSettingsPath} doesn't exist.");
                 }
 
-                await LoadVersionsForSettings(settings);
                 return settings;
             }
             catch (Exception ex)
@@ -81,168 +74,8 @@ namespace DevNest.Core
                     NgrokApiKey = string.Empty,
                     UseWLS = false,
                 };
-                await LoadVersionsForSettings(defaultSettings);
                 return defaultSettings;
             }
-        }
-
-        public async Task LoadVersionsForSettings(SettingsModel settings)
-        {
-            await LoadInstalledVersionsForSettings(settings);
-            await LoadInstallableVersionsForSettings(settings);
-        }
-
-        private async Task LoadInstalledVersionsForSettings(SettingsModel settings)
-        {
-            await Task.Run(() =>
-            {
-                foreach (var serviceType in Enum.GetValues(typeof(Enums.ServiceType)).Cast<Enums.ServiceType>())
-                {
-                    try
-                    {
-                        var dirName = serviceType.ToString();
-                        var servicePath = Path.Combine(PathHelper.BinPath, dirName);
-                        if (Directory.Exists(servicePath))
-                        {
-                            var versionDirectories = Directory.GetDirectories(servicePath)
-                                .Select(dir => Path.GetFileName(dir))
-                                .Where(dir => !string.IsNullOrEmpty(dir))
-                                .OrderBy(version => version)
-                                .ToList();
-
-                            switch (serviceType)
-                            {
-                                case Enums.ServiceType.Apache:
-                                    settings.Apache.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.Apache.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.MySQL:
-                                    settings.MySQL.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.MySQL.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.PHP:
-                                    settings.PHP.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.PHP.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.Node:
-                                    settings.Node.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.Node.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.Redis:
-                                    settings.Redis.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.Redis.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.PostgreSQL:
-                                    settings.PostgreSQL.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.PostgreSQL.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.Nginx:
-                                    settings.Nginx.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.Nginx.AvailableVersions.Add(version);
-                                    break;
-                                case Enums.ServiceType.MongoDB:
-                                    settings.MongoDB.AvailableVersions.Clear();
-                                    foreach (var version in versionDirectories)
-                                        settings.MongoDB.AvailableVersions.Add(version);
-                                    break;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading {serviceType} versions: {ex.Message}");
-                    }
-                }
-            });
-        }
-
-        private async Task LoadInstallableVersionsForSettings(SettingsModel settings)
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    var availableServices = _appState.AvailableServices;
-
-                    var servicesByType = availableServices.GroupBy(s => s.ServiceType);
-
-                    foreach (var serviceGroup in servicesByType)
-                    {
-                        var serviceType = serviceGroup.Key;
-                        var serviceDefinitions = serviceGroup.ToList();
-
-                        var installedVersions = serviceType switch
-                        {
-                            Enums.ServiceType.Apache => settings.Apache.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.MySQL => settings.MySQL.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.PHP => settings.PHP.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.Node => settings.Node.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.Redis => settings.Redis.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.PostgreSQL => settings.PostgreSQL.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.Nginx => settings.Nginx.AvailableVersions.ToHashSet(),
-                            Enums.ServiceType.MongoDB => settings.MongoDB.AvailableVersions.ToHashSet(),
-                            _ => new HashSet<string>()
-                        };
-
-                        var installableServiceDefinitions = serviceDefinitions.Where(s => !installedVersions.Contains(s.Name)).ToList();
-
-                        switch (serviceType)
-                        {
-                            case Enums.ServiceType.Apache:
-                                settings.Apache.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.Apache.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.MySQL:
-                                settings.MySQL.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.MySQL.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.PHP:
-                                settings.PHP.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.PHP.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.Node:
-                                settings.Node.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.Node.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.Redis:
-                                settings.Redis.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.Redis.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.PostgreSQL:
-                                settings.PostgreSQL.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.PostgreSQL.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.Nginx:
-                                settings.Nginx.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.Nginx.InstallableVersions.Add(serviceDefinition);
-                                break;
-                            case Enums.ServiceType.MongoDB:
-                                settings.MongoDB.InstallableVersions.Clear();
-                                foreach (var serviceDefinition in installableServiceDefinitions)
-                                    settings.MongoDB.InstallableVersions.Add(serviceDefinition);
-                                break;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading installable versions: {ex.Message}");
-                }
-            });
         }
 
         private SettingsModel ParseIniToSettings(IniData iniData)

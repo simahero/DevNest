@@ -78,8 +78,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.Apache.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.Apache.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.Apache.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Apache.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -104,17 +104,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.Apache.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.Apache.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.Apache.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.Apache.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.Apache.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.Apache.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.Apache.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.Apache.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install Version Selection  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="Apache"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.Apache.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.Apache.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.ApacheStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.ApacheStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.ApacheStatus.SelectedVersion, Mode=TwoWay}"
@@ -141,7 +141,7 @@
                                     Maximum="65535"
                                     Minimum="1"
                                     PlaceholderText="80"
-                                    Value="{x:Bind ViewModel.AppState.Settings.Apache.Port, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Settings.Apache.Port, Mode=TwoWay}" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">
@@ -153,7 +153,7 @@
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
                                     Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.AppState.Settings.Apache.AutoStart, Mode=TwoWay}" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Settings.Apache.AutoStart, Mode=TwoWay}" />
                             </Grid>
 
                         </StackPanel>
@@ -191,8 +191,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.Nginx.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.Nginx.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.Nginx.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Nginx.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -216,17 +216,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.Nginx.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.Nginx.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.Nginx.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.Nginx.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.Nginx.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.Nginx.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.Nginx.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.Nginx.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="Nginx"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.Nginx.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.Nginx.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.NginxStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.NginxStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.NginxStatus.SelectedVersion, Mode=TwoWay}"
@@ -253,7 +253,7 @@
                                     Maximum="65535"
                                     Minimum="1"
                                     PlaceholderText="8080"
-                                    Value="{x:Bind ViewModel.AppState.Settings.Nginx.Port, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Settings.Nginx.Port, Mode=TwoWay}" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">
@@ -265,7 +265,7 @@
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
                                     Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.AppState.Settings.Nginx.AutoStart, Mode=TwoWay}" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Settings.Nginx.AutoStart, Mode=TwoWay}" />
                             </Grid>
 
                         </StackPanel>
@@ -302,8 +302,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.PHP.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.PHP.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.PHP.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.PHP.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -327,17 +327,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.PHP.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.PHP.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.PHP.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.PHP.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.PHP.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.PHP.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.PHP.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.PHP.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="PHP"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.PHP.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.PHP.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.PHPStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.PHPStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.PHPStatus.SelectedVersion, Mode=TwoWay}"
@@ -388,8 +388,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.MySQL.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.MySQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.MySQL.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.MySQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -414,17 +414,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.MySQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.MySQL.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.MySQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.MySQL.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.MySQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.MySQL.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.MySQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.MySQL.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="MySQL"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.MySQL.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.MySQL.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.MySQLStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.MySQLStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.MySQLStatus.SelectedVersion, Mode=TwoWay}"
@@ -450,7 +450,7 @@
                                     Maximum="65535"
                                     Minimum="1"
                                     PlaceholderText="3306"
-                                    Value="{x:Bind ViewModel.AppState.Settings.MySQL.Port, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Settings.MySQL.Port, Mode=TwoWay}" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">
@@ -462,7 +462,7 @@
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
                                     Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.AppState.Settings.MySQL.AutoStart, Mode=TwoWay}" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Settings.MySQL.AutoStart, Mode=TwoWay}" />
                             </Grid>
 
                         </StackPanel>
@@ -499,8 +499,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.PostgreSQL.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.PostgreSQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.PostgreSQL.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.PostgreSQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -524,17 +524,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.PostgreSQL.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.PostgreSQL.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.PostgreSQL.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.PostgreSQL.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="PostgreSQL"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.PostgreSQL.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.PostgreSQL.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.PostgreSQLStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.PostgreSQLStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.PostgreSQLStatus.SelectedVersion, Mode=TwoWay}"
@@ -561,7 +561,7 @@
                                     Maximum="65535"
                                     Minimum="1"
                                     PlaceholderText="5432"
-                                    Value="{x:Bind ViewModel.AppState.Settings.PostgreSQL.Port, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Settings.PostgreSQL.Port, Mode=TwoWay}" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">
@@ -573,7 +573,7 @@
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
                                     Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.AppState.Settings.PostgreSQL.AutoStart, Mode=TwoWay}" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Settings.PostgreSQL.AutoStart, Mode=TwoWay}" />
                             </Grid>
 
                         </StackPanel>
@@ -610,8 +610,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.MongoDB.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.MongoDB.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.MongoDB.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.MongoDB.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -635,17 +635,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.MongoDB.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.MongoDB.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.MongoDB.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.MongoDB.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="MongoDB"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.MongoDB.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.MongoDB.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.MongoDBStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.MongoDBStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.MongoDBStatus.SelectedVersion, Mode=TwoWay}"
@@ -672,7 +672,7 @@
                                     Maximum="65535"
                                     Minimum="1"
                                     PlaceholderText="27017"
-                                    Value="{x:Bind ViewModel.AppState.Settings.MongoDB.Port, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Settings.MongoDB.Port, Mode=TwoWay}" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">
@@ -684,7 +684,7 @@
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
                                     Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.AppState.Settings.MongoDB.AutoStart, Mode=TwoWay}" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Settings.MongoDB.AutoStart, Mode=TwoWay}" />
                             </Grid>
 
                         </StackPanel>
@@ -721,8 +721,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.Node.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.Node.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.Node.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Node.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -747,17 +747,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.Node.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.Node.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.Node.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.Node.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.Node.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.Node.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.Node.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.Node.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="Node"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.Node.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.Node.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.NodeStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.NodeStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.NodeStatus.SelectedVersion, Mode=TwoWay}"
@@ -796,8 +796,8 @@
                                 <TextBlock
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.AppState.Settings.Redis.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.AppState.Settings.Redis.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.Settings.Redis.Version, Converter={StaticResource VersionToVisibilityConverter}}">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Redis.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
                         </Grid>
@@ -821,17 +821,17 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
-                                IsEnabled="{x:Bind ViewModel.AppState.Settings.Redis.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
-                                ItemsSource="{x:Bind ViewModel.AppState.Settings.Redis.AvailableVersions, Mode=OneWay}"
-                                PlaceholderText="{x:Bind ViewModel.AppState.Settings.Redis.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.AppState.Settings.Redis.Version, Mode=TwoWay}" />
+                                IsEnabled="{x:Bind ViewModel.Settings.Redis.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.Settings.Redis.AvailableVersions, Mode=OneWay}"
+                                PlaceholderText="{x:Bind ViewModel.Settings.Redis.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
+                                SelectedItem="{x:Bind ViewModel.Settings.Redis.Version, Mode=TwoWay}" />
                         </Grid>
 
                         <!--  Install New Version  -->
                         <components:InstallVersionSelector
                             InstallCommand="{x:Bind ViewModel.InstallServiceCommand}"
                             InstallCommandParameter="Redis"
-                            InstallableVersions="{x:Bind ViewModel.AppState.Settings.Redis.InstallableVersions, Mode=OneWay}"
+                            InstallableVersions="{x:Bind ViewModel.Settings.Redis.InstallableVersions, Mode=OneWay}"
                             InstallationStatus="{x:Bind ViewModel.RedisStatus.InstallationStatus, Mode=OneWay}"
                             IsInstalling="{x:Bind ViewModel.RedisStatus.IsInstalling, Mode=OneWay}"
                             SelectedVersion="{x:Bind ViewModel.RedisStatus.SelectedVersion, Mode=TwoWay}"
@@ -858,7 +858,7 @@
                                     Maximum="65535"
                                     Minimum="1"
                                     PlaceholderText="6379"
-                                    Value="{x:Bind ViewModel.AppState.Settings.Redis.Port, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Settings.Redis.Port, Mode=TwoWay}" />
                             </Grid>
 
                             <Grid Margin="0,0,0,8">
@@ -870,7 +870,7 @@
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
                                     Text="Auto Start" />
-                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.AppState.Settings.Redis.AutoStart, Mode=TwoWay}" />
+                                <ToggleSwitch Grid.Column="1" IsOn="{x:Bind ViewModel.Settings.Redis.AutoStart, Mode=TwoWay}" />
                             </Grid>
 
                         </StackPanel>

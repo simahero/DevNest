@@ -3,7 +3,7 @@ using DevNest.Core.Models;
 
 namespace DevNest.Core.Installers
 {
-    internal class WslServiceInstaller : IServiceInstaller
+    internal class WSLServiceInstaller : IServiceInstaller
     {
         public async Task InstallServiceAsync(ServiceDefinition service, IProgress<string>? progress = null)
         {

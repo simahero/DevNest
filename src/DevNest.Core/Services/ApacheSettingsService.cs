@@ -2,7 +2,6 @@ using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using DevNest.Core.State;
 using IniParser.Model;
 
 namespace DevNest.Core.Services
@@ -12,11 +11,13 @@ namespace DevNest.Core.Services
         public ServiceType Type => ServiceType.Apache;
         public string ServiceName => Type.ToString();
 
-        private readonly AppState _appState;
+        private readonly ISettingsRepository _settingsRepository;
+        private readonly ISiteRepository _siteRepository;
 
-        public ApacheSettingsService(AppState appState)
+        public ApacheSettingsService(ISettingsRepository settingsRepository, ISiteRepository siteRepository)
         {
-            _appState = appState;
+            _settingsRepository = settingsRepository;
+            _siteRepository = siteRepository;
         }
 
         public ApacheModel GetDefaultConfiguration()
@@ -116,14 +117,13 @@ namespace DevNest.Core.Services
 
         private async Task GenerateApacheVirtualHosts(SettingsModel settings)
         {
-
-            var sites = _appState.Sites;
+            var sites = await _siteRepository.GetSitesAsync();
             var apacheTemplatePath = Path.Combine(PathHelper.TemplatesPath, "auto.apache.sites-enabled.conf.tpl");
 
             var templateContent = await FileSystemHelper.ReadAllTextAsync(apacheTemplatePath);
 
             var apacheSitesEnabledPath = Path.Combine(PathHelper.EtcPath, "apache2", "sites-enabled");
-            var phpPath = Path.Combine(PathHelper.BinPath, "PHP", _appState.Settings.PHP.Version).Replace('\\', '/');
+            var phpPath = Path.Combine(PathHelper.BinPath, "PHP", settings.PHP.Version).Replace('\\', '/');
 
             if (Directory.Exists(apacheSitesEnabledPath))
             {

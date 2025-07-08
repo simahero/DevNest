@@ -1,82 +1,78 @@
-﻿using DevNest.Core.Models;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using DevNest.Core.Enums;
+using DevNest.Core.Interfaces;
+using DevNest.Core.Models;
 using System.Collections.ObjectModel;
 
 namespace DevNest.Core.State
 {
-    public class AppState : IDisposable
+    public partial class AppState : ObservableObject, IDisposable
     {
-        private readonly IServiceProvider _serviceProvider;
-        private SettingsManager? _settingsManager;
-        private ServiceManager? _serviceManager;
-        private SiteManager? _siteManager;
+        private readonly ISettingsRepository _settingsRepository;
+        private readonly ISiteRepository _siteRepository;
+        private readonly IServiceRepository _serviceRepository;
 
-        public SettingsModel? Settings { get; private set; }
+        public SettingsModel Settings => _settingsRepository.Settings!;
 
-        public ObservableCollection<SiteModel> Sites { get; private set; } = new();
-        public ObservableCollection<SiteDefinition> AvailableSites { get; private set; } = new();
+        public ObservableCollection<SiteModel> Sites { get; } = new();
+        public ObservableCollection<SiteDefinition> AvailableSites { get; } = new();
 
-        public ObservableCollection<ServiceModel> Services { get; private set; } = new();
-        public ObservableCollection<ServiceDefinition> AvailableServices { get; private set; } = new();
+        public ObservableCollection<ServiceModel> Services { get; } = new();
+        public ObservableCollection<ServiceDefinition> AvailableServices { get; } = new();
 
-        public AppState(IServiceProvider serviceProvider)
+        public AppState(
+            ISettingsRepository settingsRepository,
+            ISiteRepository siteRepository,
+            IServiceRepository serviceRepository)
         {
-            _serviceProvider = serviceProvider;
+            _settingsRepository = settingsRepository;
+            _siteRepository = siteRepository;
+            _serviceRepository = serviceRepository;
         }
 
         public async Task LoadAsync()
         {
-            _serviceManager ??= (ServiceManager)_serviceProvider.GetService(typeof(ServiceManager))!;
+            await LoadSettingsAsync();
 
-            var services = await _serviceManager.GetServicesAsync();
-            Services.Clear();
-            foreach (var service in services)
-            {
-                Services.Add(service);
-            }
+            await LoadSitesAsync();
+            await LoadAvailableSitesAsync();
 
-            var availableService = await _serviceManager.GetAvailableServices();
-            AvailableServices.Clear();
-            foreach (var service in availableService)
-            {
-                AvailableServices.Add(service);
-            }
+            await LoadServicesAsync();
+            await LoadAvailableServicesAsync();
 
-            _siteManager ??= (SiteManager)_serviceProvider.GetService(typeof(SiteManager))!;
+            await LoadServiceVersions();
+        }
 
-            var sites = await _siteManager.GetSitesAsync();
+        public async Task Reload() => await LoadAsync();
+
+        public async Task LoadSettingsAsync()
+        {
+            await _settingsRepository.GetSettingsAsync();
+        }
+
+        public async Task LoadSitesAsync()
+        {
+            var sites = await _siteRepository.GetSitesAsync();
             Sites.Clear();
             foreach (var site in sites)
             {
                 Sites.Add(site);
             }
+        }
 
-            var availableSites = await _siteManager.GetAvailableSitesAsync();
+        public async Task LoadAvailableSitesAsync()
+        {
+            var availableSites = await _siteRepository.GetAvailableSitesAsync();
             AvailableSites.Clear();
             foreach (var site in availableSites)
             {
                 AvailableSites.Add(site);
             }
-
-            _settingsManager ??= (SettingsManager)_serviceProvider.GetService(typeof(SettingsManager))!;
-            Settings = await _settingsManager.LoadSettingsAsync();
         }
 
-        public async Task Reload()
+        public async Task LoadServicesAsync()
         {
-            await LoadAsync();
-        }
-
-        public async Task ReloadSettings()
-        {
-            _settingsManager ??= (SettingsManager)_serviceProvider.GetService(typeof(SettingsManager))!;
-            Settings = await _settingsManager.LoadSettingsAsync();
-        }
-
-        public async Task ReloadServices()
-        {
-            _serviceManager ??= (ServiceManager)_serviceProvider.GetService(typeof(ServiceManager))!;
-            var services = await _serviceManager.GetServicesAsync();
-
+            var services = await _serviceRepository.GetServicesAsync();
             Services.Clear();
             foreach (var service in services)
             {
@@ -84,21 +80,30 @@ namespace DevNest.Core.State
             }
         }
 
-        public async Task ReloadSites()
+        public async Task LoadAvailableServicesAsync()
         {
-            _siteManager ??= (SiteManager)_serviceProvider.GetService(typeof(SiteManager))!;
-            var sites = await _siteManager.GetSitesAsync();
-
-            Sites.Clear();
-            foreach (var site in sites)
+            var availableServices = await _serviceRepository.GetAvailableServicesAsync();
+            AvailableServices.Clear();
+            foreach (var service in availableServices)
             {
-                Sites.Add(site);
+                AvailableServices.Add(service);
             }
+        }
+
+        public async Task LoadServiceVersions()
+        {
+            await _settingsRepository.PopulateServiceVersionsAsync(Services, AvailableServices);
+        }
+
+        public async Task CreateSiteAsync(string siteDefinitionName, string siteName, IProgress<string>? progress = null)
+        {
+            await _siteRepository.CreateSiteAsync(siteDefinitionName, siteName, progress);
+            await LoadSitesAsync();
         }
 
         public void Dispose()
         {
-
+            // Individual repositories are managed by DI container
         }
     }
 }

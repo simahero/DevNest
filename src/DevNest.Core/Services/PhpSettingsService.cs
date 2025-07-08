@@ -3,6 +3,7 @@ using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using IniParser.Model;
+using IniParser;
 
 namespace DevNest.Core.Services
 {
@@ -62,20 +63,31 @@ namespace DevNest.Core.Services
                 var version = settings.PHP.Version.Replace("PHP", "php_xdebug");
                 var xDebug = Path.Combine(PathHelper.EtcPath, "php", "xDebug", version + ".dll");
 
-                await FileSystemHelper.AppendAllTextAsync(iniPath, "\n;DEVNEST\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"{prepend}\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_SERVER] = tcp://127.0.0.1:9912\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"env[VAR_DUMPER_FORMAT] = server\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"extension_dir = \"ext\"\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"extension=mysqli\n");
+                var iniContent = await FileSystemHelper.ReadAllTextAsync(iniPath);
+                var parser = new FileIniDataParser();
+                var iniData = parser.Parser.Parse(iniContent);
 
 
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"\n[Xdebug]\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"zend_extension = \"{xDebug}\"\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.mode = debug\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.start_with_request = yes\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.client_host = 127.0.0.1\n");
-                await FileSystemHelper.AppendAllTextAsync(iniPath, $"xdebug.client_port = 9003\n");
+                iniData.Global["auto_prepend_file"] = autoloadPath;
+                iniData.Global["env[VAR_DUMPER_SERVER]"] = "tcp://127.0.0.1:9912";
+                iniData.Global["env[VAR_DUMPER_FORMAT]"] = "server";
+                iniData.Global["extension_dir"] = "ext";
+                iniData.Global["extension"] = "mysqli";
+
+
+                if (!iniData.Sections.ContainsSection("Xdebug"))
+                {
+                    iniData.Sections.AddSection("Xdebug");
+                }
+
+                var xdebugSection = iniData.Sections["Xdebug"];
+                xdebugSection["zend_extension"] = xDebug;
+                xdebugSection["xdebug.mode"] = "debug";
+                xdebugSection["xdebug.start_with_request"] = "yes";
+                xdebugSection["xdebug.client_host"] = "127.0.0.1";
+                xdebugSection["xdebug.client_port"] = "9003";
+
+                parser.WriteFile(iniPath, iniData);
 
             }
 

@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:DevNest.Core.Models"
     xmlns:wv2="using:Microsoft.UI.Xaml.Controls"
+    x:Name="RootWindow"
     Title="Mail"
     mc:Ignorable="d">
 
@@ -117,29 +118,35 @@
                         <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedEmail.Attachments, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:EmailAttachment">
-                                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
                                         <ImageIcon
                                             Width="12"
                                             Height="12"
                                             Margin="0,0,4,0"
                                             Source="ms-appx:///Assets/Icons/attachment.svg" />
-                                        <TextBlock Margin="0,0,12,0" Foreground="#FFB0B0B0" Text="{x:Bind FileName}" />
+                                        <HyperlinkButton
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Center"
+                                            Command="{Binding DataContext.OpenAttachmentCommand, ElementName=RootWindow}"
+                                            CommandParameter="{Binding}"
+                                            Content="{Binding FileName}"
+                                            Foreground="#FFB0B0B0" />
                                         <ImageIcon
                                             Width="12"
                                             Height="12"
-                                            Margin="0,0,4,0"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,12,0"
                                             Source="ms-appx:///Assets/Icons/document.svg" />
                                         <TextBlock
-                                            Margin="0,0,8,0"
+                                            Margin="0,4,12,0"
                                             Foreground="#FFB0B0B0"
                                             Text="{x:Bind ContentType}" />
                                         <TextBlock
-                                            Margin="0,0,4,0"
-                                            FontSize="12"
+                                            Margin="0,2,4,0"
                                             Foreground="#FFFFFF"
                                             Text="kB" />
                                         <TextBlock
-                                            Margin="0,0,8,0"
+                                            Margin="0,2,8,0"
                                             Foreground="#FFB0B0B0"
                                             Text="{x:Bind Size}" />
                                     </StackPanel>

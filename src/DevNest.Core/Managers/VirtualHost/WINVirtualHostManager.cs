@@ -1,21 +1,23 @@
 using DevNest.Core.Helpers;
-using DevNest.Core.State;
+using DevNest.Core.Models;
+using DevNest.Core.Interfaces;
 using System.Diagnostics;
 
 namespace DevNest.Core.Managers.Sites
 {
-    public class VirtualHostManager
+    public class WINVirtualHostManager : IVirtualHostManager
     {
-        private readonly AppState _appState;
+        private readonly ISettingsRepository _settingsRepository;
 
-        public VirtualHostManager(AppState appState)
+        public WINVirtualHostManager(ISettingsRepository settingsRepository)
         {
-            _appState = appState;
+            _settingsRepository = settingsRepository;
         }
 
         public async Task CreateVirtualHostAsync(string siteName, IProgress<string>? progress = null)
         {
-            var settings = _appState.Settings;
+            var settings = await _settingsRepository.GetSettingsAsync();
+
             if (settings != null && !settings.AutoVirtualHosts)
             {
                 progress?.Report("Virtual host creation disabled.");
@@ -150,6 +152,18 @@ namespace DevNest.Core.Managers.Sites
             {
                 throw new Exception($"Administrator privileges required to modify hosts file. Please manually add: {hostsEntry}. Error: {ex.Message}");
             }
+        }
+
+        public async Task<int> AddVirtualHost(SiteModel site)
+        {
+            await CreateVirtualHostAsync(site.Name);
+            return 0; // Success
+        }
+
+        public Task<string> RemoveVirtualHost(SiteModel site)
+        {
+            // TODO: Implement virtual host removal logic
+            return Task.FromResult("Virtual host removal not implemented yet");
         }
     }
 }

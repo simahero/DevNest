@@ -1,21 +1,27 @@
-using DevNest.Core.Exceptions;
-using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
-using DevNest.Core.Managers.Sites;
 using DevNest.Core.Models;
+using DevNest.Core.Events;
+using DevNest.Core.Helpers;
+using DevNest.Core.Exceptions;
+using DevNest.Core.Services;
 using IniParser.Parser;
+using System.Collections.ObjectModel;
 
-namespace DevNest.Core
+namespace DevNest.Core.Repositories
 {
-    public class SiteManager
-    {
-        private readonly VirtualHostManager _virtualHostManager;
-        private readonly IPlatformServiceFactory _platformServiceFactory;
 
-        public SiteManager(VirtualHostManager virtualHostManager, IPlatformServiceFactory platformServiceFactory)
+    public class SiteRepository : ISiteRepository
+    {
+        private readonly PlatformServiceFactory _platformServiceFactory;
+        private readonly IEventBus _eventBus;
+
+
+        public SiteRepository(
+            PlatformServiceFactory platformServiceFactory,
+            IEventBus eventBus)
         {
-            _virtualHostManager = virtualHostManager;
             _platformServiceFactory = platformServiceFactory;
+            _eventBus = eventBus;
         }
 
         public async Task<IEnumerable<SiteModel>> GetSitesAsync()
@@ -105,14 +111,14 @@ namespace DevNest.Core
             }
         }
 
-        public async Task<SiteModel> InstallSiteAsync(string siteDefinitionName, string name, IProgress<string>? progress = null)
+        public async Task<SiteModel> CreateSiteAsync(string siteDefinitionName, string name, IProgress<string>? progress = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
                 throw new SiteException(name, "Site name cannot be empty.");
             }
 
-            if (await FileSystemHelper.DirectoryExistsAsync(Path.Combine(PathHelper.WwwPath, name)))
+            if (await SiteExistsAsync(name))
             {
                 throw new SiteException(name, $"Site '{name}' already exists.");
             }
@@ -145,16 +151,35 @@ namespace DevNest.Core
                     IsActive = true
                 };
 
+                IVirtualHostManager _virtualHostManager = _platformServiceFactory.GetVirtualHostManager();
                 await _virtualHostManager.CreateVirtualHostAsync(name, progress);
+
+                _eventBus.PublishAppStateChanged(AppStateChangeType.SitesChanged);
 
                 return site;
             }
             catch (Exception ex)
             {
-                var errorMessage = $"Error occurred in SiteService: {ex.Message}";
+                var errorMessage = $"Error occurred in SiteRepository: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine(errorMessage);
-                throw new SiteException("SiteService", errorMessage, ex);
+                throw new SiteException("SiteRepository", errorMessage, ex);
             }
+        }
+
+        public async Task DeleteSiteAsync(string siteName)
+        {
+            var sitePath = Path.Combine(PathHelper.WwwPath, siteName);
+            if (await FileSystemHelper.DirectoryExistsAsync(sitePath))
+            {
+                await FileSystemHelper.DeleteDirectoryAsync(sitePath, recursive: true);
+                _eventBus.PublishAppStateChanged(AppStateChangeType.SitesChanged);
+            }
+        }
+
+        public async Task<bool> SiteExistsAsync(string siteName)
+        {
+            var sitePath = Path.Combine(PathHelper.WwwPath, siteName);
+            return await FileSystemHelper.DirectoryExistsAsync(sitePath);
         }
 
         private async Task CreateSiteStructureAsync(SiteDefinition siteDefinition, string sitePath, IProgress<string>? progress = null)
@@ -202,6 +227,7 @@ namespace DevNest.Core
             {
                 if (!string.IsNullOrEmpty(siteDefinition.InstallUrl))
                 {
+                    progress?.Report("Downloading and extracting files...");
                     var tempFilePath = await DownloadHelper.DownloadToTempAsync(siteDefinition.InstallUrl, progress);
                     await ArchiveHelper.ExtractAsync(tempFilePath, sitePath, siteDefinition.HasAdditionalDir, progress);
 
@@ -213,5 +239,6 @@ namespace DevNest.Core
                 return;
             }
         }
+
     }
 }

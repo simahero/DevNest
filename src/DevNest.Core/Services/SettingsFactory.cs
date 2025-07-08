@@ -1,31 +1,31 @@
 using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
-using DevNest.Core.State;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevNest.Core.Services
 {
     public class SettingsFactory
     {
-        private readonly Dictionary<ServiceType, IServiceSettingsProvider> _providers;
+        private readonly IServiceProvider _serviceProvider;
 
-        public SettingsFactory(AppState appState)
+        public SettingsFactory(IServiceProvider serviceProvider)
         {
-            _providers = new Dictionary<ServiceType, IServiceSettingsProvider>
-            {
-                { ServiceType.Apache, new ApacheSettingsService(appState) },
-                { ServiceType.MySQL, new MySQLSettingsService() },
-                { ServiceType.PHP, new PHPModelService() },
-                { ServiceType.Node, new NodeModelService() },
-                { ServiceType.Redis, new RedisModelService()  },
-                { ServiceType.PostgreSQL, new PostgreSQLModelService() },
-                { ServiceType.Nginx, new NginxSettingsService(appState) },
-                { ServiceType.MongoDB, new MongoDBSettingsService() }
-            };
+            _serviceProvider = serviceProvider;
         }
 
         public IEnumerable<IServiceSettingsProvider> GetAllServiceSettingsProviders()
         {
-            return _providers.Values;
+            return new List<IServiceSettingsProvider>
+            {
+                _serviceProvider.GetRequiredService<ApacheSettingsService>(),
+                _serviceProvider.GetRequiredService<MySQLSettingsService>(),
+                _serviceProvider.GetRequiredService<PHPModelService>(),
+                _serviceProvider.GetRequiredService<NodeModelService>(),
+                _serviceProvider.GetRequiredService<RedisModelService>(),
+                _serviceProvider.GetRequiredService<PostgreSQLModelService>(),
+                _serviceProvider.GetRequiredService<NginxSettingsService>(),
+                _serviceProvider.GetRequiredService<MongoDBSettingsService>()
+            };
         }
     }
 }

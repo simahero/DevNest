@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DevNest.Core;
 using DevNest.Core.Models;
 using DevNest.Core.State;
 using System;
@@ -12,11 +11,10 @@ namespace DevNest.UI.ViewModels
 {
     public partial class SitesViewModel : BaseViewModel
     {
-
         private readonly AppState _appState;
-        private readonly SiteManager _siteManager;
 
-        public AppState AppState => _appState;
+        public ObservableCollection<SiteModel> Sites => _appState.Sites;
+        public ObservableCollection<SiteDefinition> AvailableSites => _appState.AvailableSites;
 
 
         [ObservableProperty]
@@ -34,10 +32,9 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         private bool _showInstallationPanel;
 
-        public SitesViewModel(AppState appState, SiteManager siteManager)
+        public SitesViewModel(AppState appState)
         {
             _appState = appState;
-            _siteManager = siteManager;
             Title = "Sites";
         }
 
@@ -58,11 +55,11 @@ namespace DevNest.UI.ViewModels
                     InstallationStatus = message;
                 });
 
-                await _siteManager.InstallSiteAsync(SelectedSiteDefinition.Name, SelectedSiteName, progress);
+                await _appState.CreateSiteAsync(SelectedSiteDefinition.Name, SelectedSiteName, progress);
 
                 InstallationStatus = "Site created successfully!";
 
-                await _appState.ReloadSites();
+                await LoadSitesAsync();
 
                 SelectedSiteDefinition = null;
                 SelectedSiteName = string.Empty;
@@ -221,6 +218,25 @@ namespace DevNest.UI.ViewModels
                 });
             }
             catch (Exception) { }
+        }
+
+        [RelayCommand]
+        public override async Task LoadAsync()
+        {
+            await LoadSitesAsync();
+        }
+
+        private async Task LoadSitesAsync()
+        {
+            try
+            {
+                await _appState.LoadSitesAsync();
+                await _appState.LoadAvailableSitesAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading sites: {ex.Message}");
+            }
         }
 
     }

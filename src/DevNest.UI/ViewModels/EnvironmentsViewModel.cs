@@ -2,8 +2,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
-using DevNest.Core.Interfaces;
+using System.Collections.ObjectModel;
 using DevNest.Core.Models;
+using DevNest.Core.Services;
 using DevNest.Core.State;
 using DevNest.UI.Windows;
 using System;
@@ -18,7 +19,7 @@ namespace DevNest.UI.ViewModels
     public partial class EnvironmentsViewModel : BaseViewModel
     {
         private readonly AppState _appState;
-        private readonly IPlatformServiceFactory _platformServiceFactory;
+        private readonly PlatformServiceFactory _platformServiceFactory;
 
 
         [ObservableProperty]
@@ -38,9 +39,12 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         public ServiceInstallationStatus _redisStatus = new();
 
-        public AppState AppState => _appState;
+        public SettingsModel? Settings => _appState.Settings;
 
-        public EnvironmentsViewModel(AppState appState, IPlatformServiceFactory platformServiceFactory)
+        public ObservableCollection<ServiceModel> Services => _appState.Services;
+        public ObservableCollection<ServiceDefinition> AvailableServices => _appState.AvailableServices;
+
+        public EnvironmentsViewModel(AppState appState, PlatformServiceFactory platformServiceFactory)
         {
             _appState = appState;
             _platformServiceFactory = platformServiceFactory;
@@ -146,9 +150,9 @@ namespace DevNest.UI.ViewModels
         }
 
         [RelayCommand]
-        public Task Load()
+        public async Task Load()
         {
-            return Task.CompletedTask;
+            await _appState.Reload();
         }
 
         [RelayCommand]
@@ -176,8 +180,7 @@ namespace DevNest.UI.ViewModels
                 return;
             }
 
-            var settings = _appState.Settings;
-            if (settings == null)
+            if (Settings == null)
             {
                 SetInstallationStatus(serviceType, "Settings not loaded.");
                 return;
@@ -185,14 +188,14 @@ namespace DevNest.UI.ViewModels
 
             object? serviceModel = serviceType switch
             {
-                ServiceType.Apache => settings.Apache,
-                ServiceType.Nginx => settings.Nginx,
-                ServiceType.PHP => settings.PHP,
-                ServiceType.MySQL => settings.MySQL,
-                ServiceType.PostgreSQL => settings.PostgreSQL,
-                ServiceType.MongoDB => settings.MongoDB,
-                ServiceType.Node => settings.Node,
-                ServiceType.Redis => settings.Redis,
+                ServiceType.Apache => Settings.Apache,
+                ServiceType.Nginx => Settings.Nginx,
+                ServiceType.PHP => Settings.PHP,
+                ServiceType.MySQL => Settings.MySQL,
+                ServiceType.PostgreSQL => Settings.PostgreSQL,
+                ServiceType.MongoDB => Settings.MongoDB,
+                ServiceType.Node => Settings.Node,
+                ServiceType.Redis => Settings.Redis,
                 _ => null
             };
 
@@ -248,7 +251,6 @@ namespace DevNest.UI.ViewModels
                 await serviceInstaller.InstallServiceAsync(serviceDefinition, progress);
 
                 SetInstallationStatus(serviceType, $"{serviceType} {version} installed successfully.");
-                UpdateVersionCollections(serviceType, serviceDefinition);
             }
             catch (Exception ex)
             {
@@ -257,35 +259,10 @@ namespace DevNest.UI.ViewModels
             finally
             {
                 SetInstallationProgress(serviceType, false, false, null);
-            }
-        }
-
-        private void UpdateVersionCollections(ServiceType serviceType, ServiceDefinition installedService)
-        {
-            var settings = _appState.Settings;
-            if (settings == null) return;
-            object? collection = serviceType switch
-            {
-                ServiceType.Apache => settings.Apache,
-                ServiceType.Nginx => settings.Nginx,
-                ServiceType.PHP => settings.PHP,
-                ServiceType.MySQL => settings.MySQL,
-                ServiceType.PostgreSQL => settings.PostgreSQL,
-                ServiceType.MongoDB => settings.MongoDB,
-                ServiceType.Node => settings.Node,
-                ServiceType.Redis => settings.Redis,
-                _ => null
-            };
-
-            if (collection == null) return;
-
-            dynamic dynCollection = collection;
-
-            dynCollection.InstallableVersions?.Remove(installedService);
-
-            if (dynCollection.AvailableVersions != null && !dynCollection.AvailableVersions.Contains(installedService.Name))
-            {
-                dynCollection.AvailableVersions.Add(installedService.Name);
+                await _appState.Reload();
+                OnPropertyChanged(nameof(Services));
+                OnPropertyChanged(nameof(AvailableServices));
+                OnPropertyChanged(nameof(Settings));
             }
         }
 

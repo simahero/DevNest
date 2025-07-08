@@ -1,12 +1,7 @@
-using System;
 using System.ComponentModel;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using DevNest.Core.State;
 using DevNest.Core.Models;
-using DevNest.Core;
 using DevNest.Core.Helpers;
+using DevNest.Core.State;
 
 namespace DevNest.Core.Managers
 {
@@ -108,19 +103,14 @@ namespace DevNest.Core.Managers
 
             var useWSLValue = _settings.UseWLS;
 
-            // Detach from current settings to avoid conflicts during reload
             DetachFromNestedObjects();
 
-            // Save base settings first
             await SaveBaseSettingsAsync();
 
-            // Set the path helper with the new value
             PathHelper.SetUseWSL(useWSLValue);
 
-            // Reload the entire app state
             await _appState.Reload();
 
-            // After reload, the settings object may have changed, so we need to reattach to the new one
             AttachToSettings();
         }
 
