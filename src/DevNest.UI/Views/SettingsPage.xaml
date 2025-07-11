@@ -146,7 +146,7 @@
                         <ToggleSwitch
                             x:Name="UseWSLToggle"
                             Grid.Column="1"
-                            IsOn="{x:Bind ViewModel.AppState.Settings.UseWLS, Mode=TwoWay}" />
+                            IsOn="{x:Bind ViewModel.AppState.Settings.UseWSL, Mode=TwoWay}" />
                     </Grid>
 
                 </StackPanel>
