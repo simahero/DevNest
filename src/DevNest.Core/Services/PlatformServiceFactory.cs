@@ -21,7 +21,7 @@ namespace DevNest.Core.Services
         public IServiceLoader GetServiceLoader()
         {
             var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
-            if (settings.UseWLS)
+            if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceLoader>();
             }
@@ -34,7 +34,7 @@ namespace DevNest.Core.Services
         public IServiceRunner GetServiceRunner()
         {
             var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
-            if (settings.UseWLS)
+            if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceRunner>();
             }
@@ -47,7 +47,7 @@ namespace DevNest.Core.Services
         public IServiceInstaller GetServiceInstaller()
         {
             var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
-            if (settings.UseWLS)
+            if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceInstaller>();
             }
@@ -60,7 +60,7 @@ namespace DevNest.Core.Services
         public IVirtualHostManager GetVirtualHostManager()
         {
             var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
-            if (settings.UseWLS)
+            if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLVirtualHostManager>();
             }
@@ -73,7 +73,7 @@ namespace DevNest.Core.Services
         public ICommandExecutor GetCommandExecutor()
         {
             var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
-            if (settings.UseWLS)
+            if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLCommandExecutor>();
             }
@@ -86,7 +86,7 @@ namespace DevNest.Core.Services
         public ICommandManager GetCommandManager()
         {
             var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
-            if (settings.UseWLS)
+            if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLCommandManager>();
             }

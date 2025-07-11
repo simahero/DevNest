@@ -1,23 +1,26 @@
-using DevNest.Core.Events;
+using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using DevNest.Core.Enums;
-using System.Linq;
+using DevNest.Core.Services;
 
 namespace DevNest.Core.Repositories
 {
 
     public class SettingsRepository : ISettingsRepository
     {
+        private PlatformServiceFactory? _platformSerciceFacory;
         private readonly SettingsManager _settingsManager;
-        private readonly IEventBus _eventBus;
 
         public SettingsModel? Settings { get; private set; }
 
-        public SettingsRepository(SettingsManager settingsManager, IEventBus eventBus)
+        public SettingsRepository(SettingsManager settingsManager)
         {
             _settingsManager = settingsManager;
-            _eventBus = eventBus;
+        }
+
+        public void SetPlatformServiceFactory(PlatformServiceFactory platformServiceFactory)
+        {
+            _platformSerciceFacory = platformServiceFactory;
         }
 
         public async Task<SettingsModel> GetSettingsAsync()
@@ -38,31 +41,66 @@ namespace DevNest.Core.Repositories
             foreach (var service in sortedInstalled)
             {
                 var targetCollection = GetServiceSettingsCollection(service.ServiceType);
-                if (targetCollection != null && !targetCollection.AvailableVersions.Contains(service.Name))
+                if (targetCollection != null && !targetCollection.AvailableVersions.Any(x => x.Name == service.Name))
                 {
-                    targetCollection.AvailableVersions.Add(service.Name);
+                    service.IsSelected = service.Name == targetCollection.Version;
+                    targetCollection.AvailableVersions.Add(service);
                 }
             }
 
             foreach (var serviceDefinition in sortedAvailable)
             {
                 var targetCollection = GetServiceSettingsCollection(serviceDefinition.ServiceType);
-                if (targetCollection != null && !targetCollection.AvailableVersions.Any(x => x == serviceDefinition.Name))
+                if (targetCollection != null && !targetCollection.AvailableVersions.Any(x => x.Name == serviceDefinition.Name))
                 {
                     targetCollection.InstallableVersions.Add(serviceDefinition);
                 }
             }
 
-            foreach (var serviceType in Enum.GetValues(typeof(ServiceType)).Cast<ServiceType>())
+            await Task.CompletedTask;
+        }
+
+        public async Task PopulateCommandsAsync()
+        {
+            if (Settings == null) return;
+            if (_platformSerciceFacory == null)
             {
-                var targetCollection = GetServiceSettingsCollection(serviceType);
-                if (targetCollection != null && string.IsNullOrEmpty(targetCollection.Version) && targetCollection.AvailableVersions.Any())
+                throw new InvalidOperationException("PlatformServiceFactory must be set before calling this method.");
+            }
+
+            var _commandManager = _platformSerciceFacory.GetCommandManager();
+
+            foreach (ServiceType serviceType in Enum.GetValues(typeof(ServiceType)))
+            {
+                var serviceSettings = GetServiceSettingsCollection(serviceType);
+                if (serviceSettings != null)
                 {
-                    targetCollection.Version = targetCollection.AvailableVersions.First();
+                    foreach (ServiceModel service in serviceSettings.AvailableVersions)
+                    {
+                        var (command, workingDirectory) = await _commandManager.GetCommand(service, Settings);
+                        service.Command = command;
+                        service.WorkingDirectory = workingDirectory;
+                    }
+                }
+            }
+        }
+
+        public async Task SetSelectedVersion(IEnumerable<ServiceModel> installedServices)
+        {
+            if (Settings == null) return;
+
+            foreach (var service in installedServices)
+            {
+                if (service.IsSelected)
+                {
+                    var targetCollection = GetServiceSettingsCollection(service.ServiceType);
+                    if (targetCollection != null)
+                    {
+                        targetCollection.Version = service.Name;
+                    }
                 }
             }
 
-            await Task.CompletedTask;
         }
 
         private void ClearServiceVersionCollections()

@@ -5,6 +5,7 @@ using DevNest.Core.Managers.Commands;
 using DevNest.Core.Models;
 using DevNest.Core.State;
 using IniParser;
+using System.Linq;
 
 namespace DevNest.Core.Installers
 {
@@ -12,12 +13,10 @@ namespace DevNest.Core.Installers
     {
 
         private readonly AppState _appState;
-        private readonly ICommandManager _commandManager;
 
-        public WINServiceLoader(AppState appState, WINCommandManager commandManager)
+        public WINServiceLoader(AppState appState)
         {
             _appState = appState;
-            _commandManager = commandManager;
         }
 
         public async Task<IEnumerable<ServiceDefinition>> GetAvailableServices()
@@ -98,6 +97,7 @@ namespace DevNest.Core.Installers
                     if (Enum.TryParse<ServiceType>(categoryName, out var serviceType))
                     {
                         var serviceDirectories = await FileSystemHelper.GetDirectoriesAsync(categoryDir);
+
                         foreach (var serviceDir in serviceDirectories)
                         {
                             var serviceName = Path.GetFileName(serviceDir);
@@ -106,6 +106,7 @@ namespace DevNest.Core.Installers
                                 Name = serviceName,
                                 DisplayName = GetServiceDisplayName(serviceType),
                                 Command = string.Empty,
+                                WorkingDirectory = string.Empty,
                                 Path = serviceDir,
                                 ServiceType = serviceType,
                                 Status = ServiceStatus.Stopped,
@@ -113,7 +114,8 @@ namespace DevNest.Core.Installers
                                 IsSelected = false
                             };
 
-                            var selectedVersion = service.ServiceType switch
+
+                            var selectedVersion = serviceType switch
                             {
                                 ServiceType.Apache => _appState.Settings.Apache.Version,
                                 ServiceType.MySQL => _appState.Settings.MySQL.Version,
@@ -126,12 +128,6 @@ namespace DevNest.Core.Installers
                                 _ => string.Empty
                             };
 
-                            var (command, workingDirectory) = settings != null
-                                ? await _commandManager.GetCommand(service, settings)
-                                : (string.Empty, string.Empty);
-                            service.Command = command;
-                            service.WorkingDirectory = workingDirectory;
-                            service.IsSelected = !string.IsNullOrEmpty(selectedVersion) && service.Name.Equals(selectedVersion, StringComparison.OrdinalIgnoreCase);
                             allServices.Add(service);
                         }
                     }

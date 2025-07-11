@@ -25,7 +25,7 @@ namespace DevNest.Core.Models
         private string _ngrokApiKey = string.Empty;
 
         [ObservableProperty]
-        private bool _useWLS = false;
+        private bool _useWSL = false;
 
         public ApacheModel Apache { get; set; } = new ApacheModel();
         public MySQLModel MySQL { get; set; } = new MySQLModel();
@@ -48,7 +48,7 @@ namespace DevNest.Core.Models
         [ObservableProperty]
         private bool _autoStart = false;
 
-        public ObservableCollection<string> AvailableVersions { get; set; } = new();
+        public ObservableCollection<ServiceModel> AvailableVersions { get; set; } = new();
         public ObservableCollection<ServiceDefinition> InstallableVersions { get; set; } = new();
     }
 

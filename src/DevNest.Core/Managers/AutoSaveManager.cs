@@ -18,6 +18,13 @@ namespace DevNest.Core.Managers
             _appState = appState;
             _settingsManager = settingsManager;
             _debounceMs = debounceMs;
+
+            // Listen to AppState property changes to detect when Settings object is recreated
+            if (_appState is INotifyPropertyChanged appStateNpc)
+            {
+                appStateNpc.PropertyChanged += AppState_PropertyChanged;
+            }
+
             AttachToSettings();
         }
 
@@ -88,7 +95,7 @@ namespace DevNest.Core.Managers
 
         private void Settings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(SettingsModel.UseWLS))
+            if (e.PropertyName == nameof(SettingsModel.UseWSL))
             {
                 _ = HandleUseWSLChange();
                 return;
@@ -97,11 +104,20 @@ namespace DevNest.Core.Managers
             DebounceSave();
         }
 
+        private void AppState_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(AppState.Settings))
+            {
+                // Settings object was recreated, reattach event listeners
+                AttachToSettings();
+            }
+        }
+
         private async Task HandleUseWSLChange()
         {
             if (_settings == null) return;
 
-            var useWSLValue = _settings.UseWLS;
+            var useWSLValue = _settings.UseWSL;
 
             DetachFromNestedObjects();
 
@@ -160,6 +176,10 @@ namespace DevNest.Core.Managers
             if (_settings is INotifyPropertyChanged npc)
             {
                 npc.PropertyChanged -= Settings_PropertyChanged;
+            }
+            if (_appState is INotifyPropertyChanged appStateNpc)
+            {
+                appStateNpc.PropertyChanged -= AppState_PropertyChanged;
             }
             DetachFromNestedObjects();
             _cts?.Cancel();

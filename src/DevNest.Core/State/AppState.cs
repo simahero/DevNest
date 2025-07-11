@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using DevNest.Core.Enums;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
+using DevNest.Core.Repositories;
+using DevNest.Core.Services;
 using System.Collections.ObjectModel;
 
 namespace DevNest.Core.State
@@ -9,8 +10,12 @@ namespace DevNest.Core.State
     public partial class AppState : ObservableObject, IDisposable
     {
         private readonly ISettingsRepository _settingsRepository;
-        private readonly ISiteRepository _siteRepository;
-        private readonly IServiceRepository _serviceRepository;
+        private readonly IServiceProvider _serviceProvider;
+
+
+        private ISiteRepository? _siteRepository;
+        private IServiceRepository? _serviceRepository;
+        private PlatformServiceFactory? _platformServiceFactory;
 
         public SettingsModel Settings => _settingsRepository.Settings!;
 
@@ -20,27 +25,40 @@ namespace DevNest.Core.State
         public ObservableCollection<ServiceModel> Services { get; } = new();
         public ObservableCollection<ServiceDefinition> AvailableServices { get; } = new();
 
-        public AppState(
-            ISettingsRepository settingsRepository,
-            ISiteRepository siteRepository,
-            IServiceRepository serviceRepository)
+        public AppState(ISettingsRepository settingsRepository, IServiceProvider serviceProvider)
         {
             _settingsRepository = settingsRepository;
-            _siteRepository = siteRepository;
-            _serviceRepository = serviceRepository;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task LoadAsync()
         {
             await LoadSettingsAsync();
 
-            await LoadSitesAsync();
-            await LoadAvailableSitesAsync();
+            _platformServiceFactory = new PlatformServiceFactory(_serviceProvider, _settingsRepository);
+
+            if (_settingsRepository is SettingsRepository concreteSettingsRepo)
+            {
+                concreteSettingsRepo.SetPlatformServiceFactory(_platformServiceFactory);
+            }
+
+            _siteRepository = new SiteRepository(_platformServiceFactory);
+            _serviceRepository = new ServiceRepository(_platformServiceFactory);
 
             await LoadServicesAsync();
             await LoadAvailableServicesAsync();
 
+            await LoadSitesAsync();
+            await LoadAvailableSitesAsync();
+
             await LoadServiceVersions();
+
+            OnPropertyChanged(nameof(Sites));
+            OnPropertyChanged(nameof(AvailableSites));
+            OnPropertyChanged(nameof(Services));
+            OnPropertyChanged(nameof(AvailableServices));
+            OnPropertyChanged(nameof(Settings));
+
         }
 
         public async Task Reload() => await LoadAsync();
@@ -52,6 +70,8 @@ namespace DevNest.Core.State
 
         public async Task LoadSitesAsync()
         {
+            if (_siteRepository == null) return;
+
             var sites = await _siteRepository.GetSitesAsync();
             Sites.Clear();
             foreach (var site in sites)
@@ -62,6 +82,8 @@ namespace DevNest.Core.State
 
         public async Task LoadAvailableSitesAsync()
         {
+            if (_siteRepository == null) return;
+
             var availableSites = await _siteRepository.GetAvailableSitesAsync();
             AvailableSites.Clear();
             foreach (var site in availableSites)
@@ -72,6 +94,8 @@ namespace DevNest.Core.State
 
         public async Task LoadServicesAsync()
         {
+            if (_serviceRepository == null) return;
+
             var services = await _serviceRepository.GetServicesAsync();
             Services.Clear();
             foreach (var service in services)
@@ -82,6 +106,8 @@ namespace DevNest.Core.State
 
         public async Task LoadAvailableServicesAsync()
         {
+            if (_serviceRepository == null) return;
+
             var availableServices = await _serviceRepository.GetAvailableServicesAsync();
             AvailableServices.Clear();
             foreach (var service in availableServices)
@@ -93,10 +119,19 @@ namespace DevNest.Core.State
         public async Task LoadServiceVersions()
         {
             await _settingsRepository.PopulateServiceVersionsAsync(Services, AvailableServices);
+            await _settingsRepository.PopulateCommandsAsync();
+        }
+
+        public async Task LoadSelectedVersion()
+        {
+            await _settingsRepository.SetSelectedVersion(Services);
         }
 
         public async Task CreateSiteAsync(string siteDefinitionName, string siteName, IProgress<string>? progress = null)
         {
+            if (_siteRepository == null)
+                throw new InvalidOperationException("SiteRepository is not initialized. Call LoadAsync first.");
+
             await _siteRepository.CreateSiteAsync(siteDefinitionName, siteName, progress);
             await LoadSitesAsync();
         }

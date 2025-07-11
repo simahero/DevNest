@@ -75,12 +75,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Apache" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.Apache.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Apache.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -104,10 +98,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.Apache.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.Apache.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.Apache.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.Apache.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.Apache.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install Version Selection  -->
@@ -188,12 +184,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Nginx" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.Nginx.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Nginx.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -216,10 +206,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.Nginx.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.Nginx.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.Nginx.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.Nginx.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.Nginx.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->
@@ -299,12 +291,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PHP" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.PHP.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.PHP.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -327,10 +313,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.PHP.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.PHP.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.PHP.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.PHP.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.PHP.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->
@@ -385,12 +373,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="MySQL" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.MySQL.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.MySQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -414,10 +396,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.MySQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.MySQL.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.MySQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.MySQL.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.MySQL.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->
@@ -496,12 +480,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="PostgreSQL" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.PostgreSQL.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.PostgreSQL.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -524,10 +502,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.PostgreSQL.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.PostgreSQL.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.PostgreSQL.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.PostgreSQL.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->
@@ -607,12 +587,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Mongo DB" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.MongoDB.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.MongoDB.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -635,10 +609,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.MongoDB.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.MongoDB.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.MongoDB.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.MongoDB.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->
@@ -718,12 +694,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Node.js" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.Node.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Node.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -747,10 +717,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.Node.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.Node.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.Node.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.Node.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.Node.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->
@@ -793,12 +765,6 @@
                             <!--  Service Info  -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Redis" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Visibility="{x:Bind ViewModel.Settings.Redis.Version, Converter={StaticResource VersionToVisibilityConverter}}">
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.Settings.Redis.Version, Converter={StaticResource NullToNoVersionConverter}, Mode=OneWay}" />
-                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Expander.Header>
@@ -821,10 +787,12 @@
                                 Grid.Column="1"
                                 Margin="0,0,12,0"
                                 HorizontalAlignment="Stretch"
+                                DisplayMemberPath="Name"
                                 IsEnabled="{x:Bind ViewModel.Settings.Redis.AvailableVersions.Count, Converter={StaticResource CountToBooleanConverter}, Mode=OneWay}"
                                 ItemsSource="{x:Bind ViewModel.Settings.Redis.AvailableVersions, Mode=OneWay}"
                                 PlaceholderText="{x:Bind ViewModel.Settings.Redis.AvailableVersions.Count, Converter={StaticResource CountToPlaceholderConverter}, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Settings.Redis.Version, Mode=TwoWay}" />
+                                SelectedValue="{x:Bind ViewModel.Settings.Redis.Version, Mode=TwoWay}"
+                                SelectedValuePath="Name" />
                         </Grid>
 
                         <!--  Install New Version  -->

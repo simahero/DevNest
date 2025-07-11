@@ -28,7 +28,7 @@ namespace DevNest.Core
                     AutoCreateDatabase = false,
                     NgrokDomain = string.Empty,
                     NgrokApiKey = string.Empty,
-                    UseWLS = false,
+                    UseWSL = false,
                 };
 
                 if (await FileSystemHelper.FileExistsAsync(baseSettingsPath))
@@ -42,7 +42,7 @@ namespace DevNest.Core
                     _ = Logger.Log($"{baseSettingsPath} doesn't exist, using defaults.");
                 }
 
-                PathHelper.SetUseWSL(settings.UseWLS);
+                PathHelper.SetUseWSL(settings.UseWSL);
 
                 var platformSettingsPath = PathHelper.SettingsPath;
 
@@ -72,7 +72,7 @@ namespace DevNest.Core
                     AutoCreateDatabase = false,
                     NgrokDomain = string.Empty,
                     NgrokApiKey = string.Empty,
-                    UseWLS = false,
+                    UseWSL = false,
                 };
                 return defaultSettings;
             }
@@ -99,7 +99,7 @@ namespace DevNest.Core
             if (iniData.Sections.ContainsSection("WSL"))
             {
                 var wslSection = iniData.Sections["WSL"];
-                settings.UseWLS = bool.Parse(wslSection["UseWLS"] ?? "false");
+                settings.UseWSL = bool.Parse(wslSection["UseWSL"] ?? "false");
             }
 
             foreach (var serviceProvider in _settingsFactory.GetAllServiceSettingsProviders())
@@ -128,7 +128,7 @@ namespace DevNest.Core
 
             iniData.Sections.AddSection("WSL");
             var wslSection = iniData.Sections["WSL"];
-            wslSection.AddKey("UseWLS", settings.UseWLS.ToString().ToLower());
+            wslSection.AddKey("UseWSL", settings.UseWSL.ToString().ToLower());
 
             return iniData;
         }

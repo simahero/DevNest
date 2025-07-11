@@ -1,75 +1,32 @@
 using CommunityToolkit.Mvvm.Input;
 using DevNest.Core.Helpers;
-using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
+using DevNest.Core.State;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
 {
     public partial class DashboardViewModel : BaseViewModel
     {
-        private readonly IServiceRepository _serviceRepository;
+        private readonly AppState _appState;
         private readonly PlatformServiceFactory _platformServiceFactory;
 
         public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
 
-        public DashboardViewModel(IServiceRepository serviceRepository, PlatformServiceFactory platformServiceFactory)
+        public DashboardViewModel(AppState appState, PlatformServiceFactory platformServiceFactory)
         {
-            _serviceRepository = serviceRepository;
+            _appState = appState;
             _platformServiceFactory = platformServiceFactory;
             Title = "Dashboard";
-        }
 
-        [RelayCommand]
-        private async Task LoadDashboardDataAsync()
-        {
-            IsLoading = true;
-            try
-            {
-                var services = await _serviceRepository.GetServicesAsync();
-
-                var selectedServices = services.Where(s => !string.IsNullOrEmpty(s.ServiceType.ToString()) && s.IsSelected).ToList();
-
-                foreach (var service in selectedServices)
-                {
-                    var existingService = InstalledServices.FirstOrDefault(existing => existing.Name == service.Name);
-                    if (existingService == null)
-                    {
-                        InstalledServices.Add(service);
-                    }
-                    else
-                    {
-                        existingService.Command = service.Command;
-                        existingService.IsSelected = service.IsSelected;
-                        existingService.Path = service.Path;
-                        existingService.WorkingDirectory = service.WorkingDirectory;
-                    }
-                }
-
-                foreach (var installed in InstalledServices.ToList())
-                {
-                    if (!selectedServices.Any(selected => selected.Name == installed.Name))
-                    {
-                        InstalledServices.Remove(installed);
-                    }
-                }
-
-
-            }
-            catch (Exception)
-            {
-
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+            // Subscribe to changes in the AppState Services collection
+            _appState.Services.CollectionChanged += OnServicesCollectionChanged;
         }
 
         [RelayCommand]
@@ -113,7 +70,25 @@ namespace DevNest.UI.ViewModels
 
         protected override async Task OnLoadedAsync()
         {
-            await LoadDashboardDataAsync();
+            await _appState.Reload();
+            PopulateInstalledServices();
+        }
+
+        private void PopulateInstalledServices()
+        {
+            InstalledServices.Clear();
+            foreach (var service in _appState.Services)
+            {
+                if (service.IsSelected)
+                {
+                    InstalledServices.Add(service);
+                }
+            }
+        }
+
+        private void OnServicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            PopulateInstalledServices();
         }
     }
 }

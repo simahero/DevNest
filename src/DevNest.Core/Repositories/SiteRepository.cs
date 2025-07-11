@@ -1,11 +1,9 @@
+using DevNest.Core.Exceptions;
+using DevNest.Core.Helpers;
 using DevNest.Core.Interfaces;
 using DevNest.Core.Models;
-using DevNest.Core.Events;
-using DevNest.Core.Helpers;
-using DevNest.Core.Exceptions;
 using DevNest.Core.Services;
 using IniParser.Parser;
-using System.Collections.ObjectModel;
 
 namespace DevNest.Core.Repositories
 {
@@ -13,15 +11,10 @@ namespace DevNest.Core.Repositories
     public class SiteRepository : ISiteRepository
     {
         private readonly PlatformServiceFactory _platformServiceFactory;
-        private readonly IEventBus _eventBus;
 
-
-        public SiteRepository(
-            PlatformServiceFactory platformServiceFactory,
-            IEventBus eventBus)
+        public SiteRepository(PlatformServiceFactory platformServiceFactory)
         {
             _platformServiceFactory = platformServiceFactory;
-            _eventBus = eventBus;
         }
 
         public async Task<IEnumerable<SiteModel>> GetSitesAsync()
@@ -154,8 +147,6 @@ namespace DevNest.Core.Repositories
                 IVirtualHostManager _virtualHostManager = _platformServiceFactory.GetVirtualHostManager();
                 await _virtualHostManager.CreateVirtualHostAsync(name, progress);
 
-                _eventBus.PublishAppStateChanged(AppStateChangeType.SitesChanged);
-
                 return site;
             }
             catch (Exception ex)
@@ -172,7 +163,6 @@ namespace DevNest.Core.Repositories
             if (await FileSystemHelper.DirectoryExistsAsync(sitePath))
             {
                 await FileSystemHelper.DeleteDirectoryAsync(sitePath, recursive: true);
-                _eventBus.PublishAppStateChanged(AppStateChangeType.SitesChanged);
             }
         }
 

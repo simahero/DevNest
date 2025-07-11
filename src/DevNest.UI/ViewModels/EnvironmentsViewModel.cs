@@ -152,6 +152,11 @@ namespace DevNest.UI.ViewModels
         [RelayCommand]
         public async Task Load()
         {
+            await Reload();
+        }
+
+        private async Task Reload()
+        {
             await _appState.Reload();
         }
 
@@ -259,10 +264,7 @@ namespace DevNest.UI.ViewModels
             finally
             {
                 SetInstallationProgress(serviceType, false, false, null);
-                await _appState.Reload();
-                OnPropertyChanged(nameof(Services));
-                OnPropertyChanged(nameof(AvailableServices));
-                OnPropertyChanged(nameof(Settings));
+                await Reload();
             }
         }
 

@@ -9,5 +9,7 @@ namespace DevNest.Core.Interfaces
 
         Task<SettingsModel> GetSettingsAsync();
         Task PopulateServiceVersionsAsync(IEnumerable<ServiceModel> installedServices, IEnumerable<ServiceDefinition> availableServices);
+        Task PopulateCommandsAsync();
+        Task SetSelectedVersion(IEnumerable<ServiceModel> installedServices);
     }
 }

@@ -35,8 +35,6 @@ namespace DevNest.UI.Services
 
             services.AddSingleton<PlatformServiceFactory>();
 
-            services.AddSingleton<IEventBus, EventBus>();
-
             services.AddSingleton<ISettingsRepository, SettingsRepository>();
             services.AddSingleton<ISiteRepository, SiteRepository>();
             services.AddSingleton<IServiceRepository, ServiceRepository>();

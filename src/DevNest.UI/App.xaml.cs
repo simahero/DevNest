@@ -1,6 +1,5 @@
 using DevNest.Core;
 using DevNest.Core.Helpers;
-using DevNest.Core.Interfaces;
 using DevNest.Core.Managers;
 using DevNest.Core.Managers.Dump;
 using DevNest.Core.Managers.SMTP;
@@ -18,6 +17,7 @@ public partial class App : Application
 {
     private Window? _window;
     private IHost? _host;
+    private AutoSaveManager? _autoSaveManager;
     public Window? Window => _window;
 
     public IServiceProvider? Services => _host?.Services;
@@ -74,12 +74,14 @@ public partial class App : Application
 
                     if (appState.Settings != null)
                     {
-                        PathHelper.SetUseWSL(appState.Settings.UseWLS);
+                        PathHelper.SetUseWSL(appState.Settings.UseWSL);
                     }
 
                     if (Services.GetService(typeof(SettingsManager)) is SettingsManager settingsManager)
                     {
-                        var autoSaveManager = new AutoSaveManager(appState, settingsManager);
+                        //var autoSaveManager = Services.GetService(typeof(AutoSaveManager)) as AutoSaveManager;
+                        //// Create AutoSaveManager with 1000ms debounce delay and store as field to prevent GC
+                        _autoSaveManager = new AutoSaveManager(appState, settingsManager, 0);
                     }
                 }
             });
@@ -99,4 +101,10 @@ public partial class App : Application
         }
     }
 
+    // Properly dispose of AutoSaveManager when app shuts down
+    public void DisposeAutoSaveManager()
+    {
+        _autoSaveManager?.Dispose();
+        _autoSaveManager = null;
+    }
 }
