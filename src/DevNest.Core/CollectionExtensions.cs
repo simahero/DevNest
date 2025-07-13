@@ -43,11 +43,11 @@ namespace DevNest.UI.Services
 
             services.AddSingleton<ArchiveHelper>();
             services.AddSingleton<DownloadHelper>();
-            services.AddSingleton<SettingsManager>();
-            services.AddSingleton<StartupManager>();
             services.AddSingleton<VarDumperServer>();
             services.AddSingleton<SettingsFactory>();
             services.AddSingleton<SMTP>();
+
+            services.AddSingleton<StartupManager>();
 
             services.AddSingleton<ApacheSettingsService>();
             services.AddSingleton<MySQLSettingsService>();

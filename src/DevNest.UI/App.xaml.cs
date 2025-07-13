@@ -1,8 +1,8 @@
-using DevNest.Core;
 using DevNest.Core.Helpers;
 using DevNest.Core.Managers;
 using DevNest.Core.Managers.Dump;
 using DevNest.Core.Managers.SMTP;
+using DevNest.Core.Services;
 using DevNest.Core.State;
 using DevNest.UI.Services;
 using Microsoft.Extensions.Hosting;
@@ -77,11 +77,11 @@ public partial class App : Application
                         PathHelper.SetUseWSL(appState.Settings.UseWSL);
                     }
 
-                    if (Services.GetService(typeof(SettingsManager)) is SettingsManager settingsManager)
+                    if (Services.GetService(typeof(SettingsFactory)) is SettingsFactory settingsFactory)
                     {
                         //var autoSaveManager = Services.GetService(typeof(AutoSaveManager)) as AutoSaveManager;
                         //// Create AutoSaveManager with 1000ms debounce delay and store as field to prevent GC
-                        _autoSaveManager = new AutoSaveManager(appState, settingsManager, 0);
+                        _autoSaveManager = new AutoSaveManager(appState, settingsFactory, 0);
                     }
                 }
             });

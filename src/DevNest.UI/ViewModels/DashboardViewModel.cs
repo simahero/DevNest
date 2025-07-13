@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
@@ -16,6 +17,8 @@ namespace DevNest.UI.ViewModels
     {
         private readonly AppState _appState;
         private readonly PlatformServiceFactory _platformServiceFactory;
+
+        public AppState AppState => _appState;
 
         public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
 
@@ -76,10 +79,9 @@ namespace DevNest.UI.ViewModels
 
         private void PopulateInstalledServices()
         {
-            InstalledServices.Clear();
             foreach (var service in _appState.Services)
             {
-                if (service.IsSelected)
+                if (service.IsSelected && !InstalledServices.Any((s) => s.Name == service.Name))
                 {
                     InstalledServices.Add(service);
                 }

@@ -2,24 +2,26 @@ using System.ComponentModel;
 using DevNest.Core.Models;
 using DevNest.Core.Helpers;
 using DevNest.Core.State;
+using IniParser.Model;
+using IniParser.Parser;
+using DevNest.Core.Services;
 
 namespace DevNest.Core.Managers
 {
     public class AutoSaveManager : IDisposable
     {
         private readonly AppState _appState;
-        private readonly SettingsManager _settingsManager;
+        private readonly SettingsFactory _settingsFactory;
         private readonly int _debounceMs;
         private CancellationTokenSource? _cts;
         private SettingsModel? _settings;
 
-        public AutoSaveManager(AppState appState, SettingsManager settingsManager, int debounceMs = 0)
+        public AutoSaveManager(AppState appState, SettingsFactory settingsFactory, int debounceMs = 0)
         {
             _appState = appState;
-            _settingsManager = settingsManager;
+            _settingsFactory = settingsFactory;
             _debounceMs = debounceMs;
 
-            // Listen to AppState property changes to detect when Settings object is recreated
             if (_appState is INotifyPropertyChanged appStateNpc)
             {
                 appStateNpc.PropertyChanged += AppState_PropertyChanged;
@@ -108,7 +110,6 @@ namespace DevNest.Core.Managers
         {
             if (e.PropertyName == nameof(AppState.Settings))
             {
-                // Settings object was recreated, reattach event listeners
                 AttachToSettings();
             }
         }
@@ -159,16 +160,39 @@ namespace DevNest.Core.Managers
         {
             if (_settings == null) return;
 
-            var baseIniData = _settingsManager.ConvertSettingsToIni(_settings).ToString();
-            await FileSystemHelper.WriteFileWithRetryAsync(PathHelper.BaseSettingsPath, baseIniData);
+            var baseIniData = new IniData();
+
+            baseIniData.Sections.AddSection("General");
+            var generalSection = baseIniData.Sections["General"];
+            generalSection.AddKey("StartWithWindows", _settings.StartWithWindows.ToString().ToLower());
+            generalSection.AddKey("MinimizeToSystemTray", _settings.MinimizeToSystemTray.ToString().ToLower());
+            generalSection.AddKey("AutoVirtualHosts", _settings.AutoVirtualHosts.ToString().ToLower());
+            generalSection.AddKey("AutoCreateDatabase", _settings.AutoCreateDatabase.ToString().ToLower());
+
+            baseIniData.Sections.AddSection("Ngrok");
+            var ngrokSection = baseIniData.Sections["Ngrok"];
+            ngrokSection.AddKey("Domain", _settings.NgrokDomain ?? string.Empty);
+            ngrokSection.AddKey("ApiKey", _settings.NgrokApiKey ?? string.Empty);
+
+            baseIniData.Sections.AddSection("WSL");
+            var wslSection = baseIniData.Sections["WSL"];
+            wslSection.AddKey("UseWSL", _settings.UseWSL.ToString().ToLower());
+
+            await FileSystemHelper.WriteFileWithRetryAsync(PathHelper.BaseSettingsPath, baseIniData.ToString());
         }
 
         private async Task SavePlatformSettingsAsync()
         {
             if (_settings == null) return;
 
-            var platformIniData = _settingsManager.ConvertPlatformSettingsToIni(_settings).ToString();
-            await FileSystemHelper.WriteFileWithRetryAsync(PathHelper.SettingsPath, platformIniData);
+            var platformIniData = new IniData();
+
+            foreach (var serviceProvider in _settingsFactory.GetAllServiceSettingsProviders())
+            {
+                serviceProvider.SaveToIni(platformIniData, _settings);
+            }
+
+            await FileSystemHelper.WriteFileWithRetryAsync(PathHelper.SettingsPath, platformIniData.ToString());
         }
 
         public void Dispose()
