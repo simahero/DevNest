@@ -3,6 +3,7 @@ using DevNest.Core.Interfaces;
 using DevNest.Core.Managers.Commands;
 using DevNest.Core.Managers.ServiceRunners;
 using DevNest.Core.Managers.Sites;
+using DevNest.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DevNest.Core.Services
@@ -10,17 +11,15 @@ namespace DevNest.Core.Services
     public class PlatformServiceFactory
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly ISettingsRepository _settingsRepository;
 
-        public PlatformServiceFactory(IServiceProvider serviceProvider, ISettingsRepository settingsRepository)
+        public PlatformServiceFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _settingsRepository = settingsRepository;
         }
 
-        public IServiceLoader GetServiceLoader()
+        public IServiceLoader GetServiceLoader(SettingsModel settings)
         {
-            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceLoader>();
@@ -31,9 +30,9 @@ namespace DevNest.Core.Services
             }
         }
 
-        public IServiceRunner GetServiceRunner()
+        public IServiceRunner GetServiceRunner(SettingsModel settings)
         {
-            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceRunner>();
@@ -44,9 +43,9 @@ namespace DevNest.Core.Services
             }
         }
 
-        public IServiceInstaller GetServiceInstaller()
+        public IServiceInstaller GetServiceInstaller(SettingsModel settings)
         {
-            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLServiceInstaller>();
@@ -57,9 +56,9 @@ namespace DevNest.Core.Services
             }
         }
 
-        public IVirtualHostManager GetVirtualHostManager()
+        public IVirtualHostManager GetVirtualHostManager(SettingsModel settings)
         {
-            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLVirtualHostManager>();
@@ -70,9 +69,9 @@ namespace DevNest.Core.Services
             }
         }
 
-        public ICommandExecutor GetCommandExecutor()
+        public ICommandExecutor GetCommandExecutor(SettingsModel settings)
         {
-            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLCommandExecutor>();
@@ -83,9 +82,9 @@ namespace DevNest.Core.Services
             }
         }
 
-        public ICommandManager GetCommandManager()
+        public ICommandManager GetCommandManager(SettingsModel settings)
         {
-            var settings = _settingsRepository.Settings ?? throw new InvalidOperationException("Settings are not loaded.");
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (settings.UseWSL)
             {
                 return _serviceProvider.GetRequiredService<WSLCommandManager>();

@@ -16,11 +16,16 @@ namespace DevNest.Core.Repositories
             _platformServiceFactory = platformServiceFactory;
         }
 
-        public async Task<IEnumerable<ServiceModel>> GetServicesAsync()
+        public async Task<IEnumerable<ServiceModel>> GetServicesAsync(SettingsModel settings)
         {
             try
             {
-                var serviceLoader = _platformServiceFactory.GetServiceLoader();
+                if (settings == null)
+                {
+                    throw new ArgumentNullException(nameof(settings));
+                }
+
+                var serviceLoader = _platformServiceFactory.GetServiceLoader(settings);
                 var services = await serviceLoader.GetServicesAsync();
 
                 return services;
@@ -32,11 +37,12 @@ namespace DevNest.Core.Repositories
             }
         }
 
-        public async Task<IEnumerable<ServiceDefinition>> GetAvailableServicesAsync()
+        public async Task<IEnumerable<ServiceDefinition>> GetAvailableServicesAsync(SettingsModel settings)
         {
             try
             {
-                var serviceLoader = _platformServiceFactory.GetServiceLoader();
+                if (settings == null) throw new ArgumentNullException(nameof(settings));
+                var serviceLoader = _platformServiceFactory.GetServiceLoader(settings);
                 return await serviceLoader.GetAvailableServices();
             }
             catch (Exception ex)

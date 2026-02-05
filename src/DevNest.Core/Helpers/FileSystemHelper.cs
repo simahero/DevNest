@@ -63,9 +63,10 @@ namespace DevNest.Core.Helpers
             });
         }
 
-        public static async Task CopyFileAsync(string sourceFile, string destinationFile)
+        public static Task CopyFileAsync(string sourceFile, string destinationFile)
         {
-            await Task.Run(() => File.Copy(sourceFile, destinationFile));
+            File.Copy(sourceFile, destinationFile, overwrite: true);
+            return Task.CompletedTask;
         }
 
         public static async Task MoveFileAsync(string sourceFile, string destinationFile)

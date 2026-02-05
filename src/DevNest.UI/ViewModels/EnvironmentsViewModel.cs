@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DevNest.Core;
 using DevNest.Core.Enums;
 using DevNest.Core.Helpers;
-using System.Collections.ObjectModel;
 using DevNest.Core.Models;
 using DevNest.Core.Services;
 using DevNest.Core.State;
@@ -39,10 +39,7 @@ namespace DevNest.UI.ViewModels
         [ObservableProperty]
         public ServiceInstallationStatus _redisStatus = new();
 
-        public SettingsModel? Settings => _appState.Settings;
-
-        public ObservableCollection<ServiceModel> Services => _appState.Services;
-        public ObservableCollection<ServiceDefinition> AvailableServices => _appState.AvailableServices;
+        public AppState AppState => _appState;
 
         public EnvironmentsViewModel(AppState appState, PlatformServiceFactory platformServiceFactory)
         {
@@ -157,7 +154,15 @@ namespace DevNest.UI.ViewModels
 
         private async Task Reload()
         {
-            await _appState.Reload();
+            try
+            {
+                await _appState.Reload();
+            }
+            catch (Exception ex)
+            {
+                await Logger.Log(ex.ToString());
+                throw;
+            }
         }
 
         [RelayCommand]
@@ -185,7 +190,7 @@ namespace DevNest.UI.ViewModels
                 return;
             }
 
-            if (Settings == null)
+            if (_appState.Settings == null)
             {
                 SetInstallationStatus(serviceType, "Settings not loaded.");
                 return;
@@ -193,14 +198,14 @@ namespace DevNest.UI.ViewModels
 
             object? serviceModel = serviceType switch
             {
-                ServiceType.Apache => Settings.Apache,
-                ServiceType.Nginx => Settings.Nginx,
-                ServiceType.PHP => Settings.PHP,
-                ServiceType.MySQL => Settings.MySQL,
-                ServiceType.PostgreSQL => Settings.PostgreSQL,
-                ServiceType.MongoDB => Settings.MongoDB,
-                ServiceType.Node => Settings.Node,
-                ServiceType.Redis => Settings.Redis,
+                ServiceType.Apache => _appState.Settings.Apache,
+                ServiceType.Nginx => _appState.Settings.Nginx,
+                ServiceType.PHP => _appState.Settings.PHP,
+                ServiceType.MySQL => _appState.Settings.MySQL,
+                ServiceType.PostgreSQL => _appState.Settings.PostgreSQL,
+                ServiceType.MongoDB => _appState.Settings.MongoDB,
+                ServiceType.Node => _appState.Settings.Node,
+                ServiceType.Redis => _appState.Settings.Redis,
                 _ => null
             };
 
@@ -252,7 +257,8 @@ namespace DevNest.UI.ViewModels
                     SetInstallationStatus(serviceType, message);
                 });
 
-                var serviceInstaller = _platformServiceFactory.GetServiceInstaller();
+                if (_appState.Settings == null) throw new InvalidOperationException("Settings are not loaded.");
+                var serviceInstaller = _platformServiceFactory.GetServiceInstaller(_appState.Settings);
                 await serviceInstaller.InstallServiceAsync(serviceDefinition, progress);
 
                 SetInstallationStatus(serviceType, $"{serviceType} {version} installed successfully.");
@@ -264,7 +270,7 @@ namespace DevNest.UI.ViewModels
             finally
             {
                 SetInstallationProgress(serviceType, false, false, null);
-                await Reload();
+                await _appState.Reload();
             }
         }
 

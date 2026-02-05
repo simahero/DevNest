@@ -4,11 +4,8 @@ using DevNest.Core.Models;
 using DevNest.Core.Services;
 using DevNest.Core.State;
 using System;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace DevNest.UI.ViewModels
@@ -20,16 +17,11 @@ namespace DevNest.UI.ViewModels
 
         public AppState AppState => _appState;
 
-        public ObservableCollection<ServiceModel> InstalledServices { get; } = new();
-
         public DashboardViewModel(AppState appState, PlatformServiceFactory platformServiceFactory)
         {
             _appState = appState;
             _platformServiceFactory = platformServiceFactory;
             Title = "Dashboard";
-
-            // Subscribe to changes in the AppState Services collection
-            _appState.Services.CollectionChanged += OnServicesCollectionChanged;
         }
 
         [RelayCommand]
@@ -39,7 +31,8 @@ namespace DevNest.UI.ViewModels
 
             try
             {
-                var serviceRunner = _platformServiceFactory.GetServiceRunner();
+                if (_appState.Settings == null) throw new InvalidOperationException("Settings are not loaded.");
+                var serviceRunner = _platformServiceFactory.GetServiceRunner(_appState.Settings);
                 await serviceRunner.ToggleServiceAsync(service);
             }
             catch (Exception)
@@ -69,28 +62,6 @@ namespace DevNest.UI.ViewModels
                 FileName = "http://localhost/phpmyadmin",
                 UseShellExecute = true
             });
-        }
-
-        protected override async Task OnLoadedAsync()
-        {
-            await _appState.Reload();
-            PopulateInstalledServices();
-        }
-
-        private void PopulateInstalledServices()
-        {
-            foreach (var service in _appState.Services)
-            {
-                if (service.IsSelected && !InstalledServices.Any((s) => s.Name == service.Name))
-                {
-                    InstalledServices.Add(service);
-                }
-            }
-        }
-
-        private void OnServicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            PopulateInstalledServices();
         }
     }
 }

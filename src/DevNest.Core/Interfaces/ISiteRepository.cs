@@ -9,7 +9,7 @@ namespace DevNest.Core.Interfaces
 
         Task<IEnumerable<SiteModel>> GetSitesAsync();
         Task<IEnumerable<SiteDefinition>> GetAvailableSitesAsync();
-        Task<SiteModel> CreateSiteAsync(string siteDefinitionName, string name, IProgress<string>? progress = null);
+        Task<SiteModel> CreateSiteAsync(SettingsModel settings, string siteDefinitionName, string name, IProgress<string>? progress = null);
         Task DeleteSiteAsync(string siteName);
         Task<bool> SiteExistsAsync(string siteName);
 

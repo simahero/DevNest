@@ -25,14 +25,6 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
-
-        // Application.Current.UnhandledException += (sender, e) =>
-        // {
-        //     Debug.WriteLine($"Unhandled: {e.Exception}");
-        //     Debug.WriteLine($"Message: {e.Exception.Message}");
-        //     Debug.WriteLine($"Stack: {e.Exception.StackTrace}");
-        // };
-
         ConfigureServices();
     }
 

@@ -67,6 +67,11 @@ namespace DevNest.Core.Services
             try
             {
 
+                if (string.IsNullOrEmpty(settings.Apache.Version))
+                {
+                    return;
+                }
+
                 if (!await FileSystemHelper.FileExistsAsync(TemplateFilePath))
                 {
                     System.Diagnostics.Debug.WriteLine($"MongoDB template file not found: {TemplateFilePath}");

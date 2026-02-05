@@ -120,17 +120,6 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-
-                <!--  Empty State  -->
-                <TextBlock
-                    x:Name="EmptyStateText"
-                    Margin="0,40,0,0"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    FontSize="16"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="No services available. Click Refresh to load services."
-                    Visibility="{x:Bind ViewModel.InstalledServices.Count, Mode=OneWay, Converter={StaticResource CountToVisibilityConverter}}" />
             </Grid>
         </ScrollViewer>
 

@@ -14,8 +14,6 @@ namespace DevNest.Core.Repositories
         private PlatformServiceFactory? _platformSerciceFacory;
         private readonly SettingsFactory _settingsFactory;
 
-        public SettingsModel? Settings { get; private set; }
-
         public SettingsRepository(SettingsFactory settingsFactory)
         {
             _settingsFactory = settingsFactory;
@@ -27,12 +25,6 @@ namespace DevNest.Core.Repositories
         }
 
         public async Task<SettingsModel> GetSettingsAsync()
-        {
-            Settings = await LoadSettingsAsync();
-            return Settings;
-        }
-
-        private async Task<SettingsModel> LoadSettingsAsync()
         {
             try
             {
@@ -130,28 +122,50 @@ namespace DevNest.Core.Repositories
             return settings;
         }
 
-        public async Task PopulateServiceVersionsAsync(IEnumerable<ServiceModel> installedServices, IEnumerable<ServiceDefinition> availableServices)
+        public async Task PopulateServiceVersionsAsync(SettingsModel settings, IEnumerable<ServiceModel> installedServices, IEnumerable<ServiceDefinition> availableServices)
         {
-            if (Settings == null) return;
+            if (settings == null) return;
 
-            ClearServiceVersionCollections();
+            ClearServiceVersionCollections(settings);
 
             var sortedInstalled = installedServices.OrderByDescending(s => s.Name).ToList();
             var sortedAvailable = availableServices.OrderByDescending(s => s.Name).ToList();
 
             foreach (var service in sortedInstalled)
             {
-                var targetCollection = GetServiceSettingsCollection(service.ServiceType);
+                var targetCollection = GetServiceSettingsCollection(settings, service.ServiceType);
                 if (targetCollection != null && !targetCollection.AvailableVersions.Any(x => x.Name == service.Name))
                 {
-                    service.IsSelected = service.Name == targetCollection.Version;
                     targetCollection.AvailableVersions.Add(service);
+                }
+            }
+
+            foreach (ServiceType serviceType in Enum.GetValues(typeof(ServiceType)))
+            {
+                var targetCollection = GetServiceSettingsCollection(settings, serviceType);
+                if (targetCollection != null && !string.IsNullOrEmpty(targetCollection.Version))
+                {
+                    foreach (var service in targetCollection.AvailableVersions)
+                    {
+                        service.IsSelected = service.Name == targetCollection.Version;
+                    }
+                }
+            }
+
+            foreach (ServiceType serviceType in Enum.GetValues(typeof(ServiceType)))
+            {
+                var targetCollection = GetServiceSettingsCollection(settings, serviceType);
+                if (targetCollection != null && targetCollection.AvailableVersions.Any() && !targetCollection.AvailableVersions.Any(x => x.IsSelected))
+                {
+                    var firstService = targetCollection.AvailableVersions.First();
+                    firstService.IsSelected = true;
+                    targetCollection.Version = firstService.Name;
                 }
             }
 
             foreach (var serviceDefinition in sortedAvailable)
             {
-                var targetCollection = GetServiceSettingsCollection(serviceDefinition.ServiceType);
+                var targetCollection = GetServiceSettingsCollection(settings, serviceDefinition.ServiceType);
                 if (targetCollection != null && !targetCollection.AvailableVersions.Any(x => x.Name == serviceDefinition.Name))
                 {
                     targetCollection.InstallableVersions.Add(serviceDefinition);
@@ -161,24 +175,24 @@ namespace DevNest.Core.Repositories
             await Task.CompletedTask;
         }
 
-        public async Task PopulateCommandsAsync()
+        public async Task PopulateCommandsAsync(SettingsModel settings)
         {
-            if (Settings == null) return;
+            if (settings == null) return;
             if (_platformSerciceFacory == null)
             {
                 throw new InvalidOperationException("PlatformServiceFactory must be set before calling this method.");
             }
 
-            var _commandManager = _platformSerciceFacory.GetCommandManager();
+            var _commandManager = _platformSerciceFacory.GetCommandManager(settings);
 
             foreach (ServiceType serviceType in Enum.GetValues(typeof(ServiceType)))
             {
-                var serviceSettings = GetServiceSettingsCollection(serviceType);
+                var serviceSettings = GetServiceSettingsCollection(settings, serviceType);
                 if (serviceSettings != null)
                 {
                     foreach (ServiceModel service in serviceSettings.AvailableVersions)
                     {
-                        var (command, workingDirectory) = await _commandManager.GetCommand(service, Settings);
+                        var (command, workingDirectory) = await _commandManager.GetCommand(service, settings);
                         service.Command = command;
                         service.WorkingDirectory = workingDirectory;
                     }
@@ -186,15 +200,15 @@ namespace DevNest.Core.Repositories
             }
         }
 
-        public void SetSelectedVersion(IEnumerable<ServiceModel> installedServices)
+        public void SetSelectedVersion(SettingsModel settings, IEnumerable<ServiceModel> installedServices)
         {
-            if (Settings == null) return;
+            if (settings == null) return;
 
             foreach (var service in installedServices)
             {
                 if (service.IsSelected)
                 {
-                    var targetCollection = GetServiceSettingsCollection(service.ServiceType);
+                    var targetCollection = GetServiceSettingsCollection(settings, service.ServiceType);
                     if (targetCollection != null)
                     {
                         targetCollection.Version = service.Name;
@@ -204,42 +218,42 @@ namespace DevNest.Core.Repositories
 
         }
 
-        private void ClearServiceVersionCollections()
+        private void ClearServiceVersionCollections(SettingsModel settings)
         {
-            if (Settings == null) return;
+            if (settings == null) return;
 
-            Settings.Apache.AvailableVersions.Clear();
-            Settings.Apache.InstallableVersions.Clear();
-            Settings.MySQL.AvailableVersions.Clear();
-            Settings.MySQL.InstallableVersions.Clear();
-            Settings.PHP.AvailableVersions.Clear();
-            Settings.PHP.InstallableVersions.Clear();
-            Settings.Nginx.AvailableVersions.Clear();
-            Settings.Nginx.InstallableVersions.Clear();
-            Settings.Node.AvailableVersions.Clear();
-            Settings.Node.InstallableVersions.Clear();
-            Settings.Redis.AvailableVersions.Clear();
-            Settings.Redis.InstallableVersions.Clear();
-            Settings.PostgreSQL.AvailableVersions.Clear();
-            Settings.PostgreSQL.InstallableVersions.Clear();
-            Settings.MongoDB.AvailableVersions.Clear();
-            Settings.MongoDB.InstallableVersions.Clear();
+            settings.Apache.AvailableVersions.Clear();
+            settings.Apache.InstallableVersions.Clear();
+            settings.MySQL.AvailableVersions.Clear();
+            settings.MySQL.InstallableVersions.Clear();
+            settings.PHP.AvailableVersions.Clear();
+            settings.PHP.InstallableVersions.Clear();
+            settings.Nginx.AvailableVersions.Clear();
+            settings.Nginx.InstallableVersions.Clear();
+            settings.Node.AvailableVersions.Clear();
+            settings.Node.InstallableVersions.Clear();
+            settings.Redis.AvailableVersions.Clear();
+            settings.Redis.InstallableVersions.Clear();
+            settings.PostgreSQL.AvailableVersions.Clear();
+            settings.PostgreSQL.InstallableVersions.Clear();
+            settings.MongoDB.AvailableVersions.Clear();
+            settings.MongoDB.InstallableVersions.Clear();
         }
 
-        private ServiceSettingsModel? GetServiceSettingsCollection(ServiceType serviceType)
+        private ServiceSettingsModel? GetServiceSettingsCollection(SettingsModel settings, ServiceType serviceType)
         {
-            if (Settings == null) return null;
+            if (settings == null) return null;
 
             return serviceType switch
             {
-                ServiceType.Apache => Settings.Apache,
-                ServiceType.MySQL => Settings.MySQL,
-                ServiceType.PHP => Settings.PHP,
-                ServiceType.Nginx => Settings.Nginx,
-                ServiceType.Node => Settings.Node,
-                ServiceType.Redis => Settings.Redis,
-                ServiceType.PostgreSQL => Settings.PostgreSQL,
-                ServiceType.MongoDB => Settings.MongoDB,
+                ServiceType.Apache => settings.Apache,
+                ServiceType.MySQL => settings.MySQL,
+                ServiceType.PHP => settings.PHP,
+                ServiceType.Nginx => settings.Nginx,
+                ServiceType.Node => settings.Node,
+                ServiceType.Redis => settings.Redis,
+                ServiceType.PostgreSQL => settings.PostgreSQL,
+                ServiceType.MongoDB => settings.MongoDB,
                 _ => null
             };
         }

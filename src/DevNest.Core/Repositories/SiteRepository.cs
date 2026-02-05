@@ -104,7 +104,7 @@ namespace DevNest.Core.Repositories
             }
         }
 
-        public async Task<SiteModel> CreateSiteAsync(string siteDefinitionName, string name, IProgress<string>? progress = null)
+        public async Task<SiteModel> CreateSiteAsync(SettingsModel settings, string siteDefinitionName, string name, IProgress<string>? progress = null)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -134,7 +134,7 @@ namespace DevNest.Core.Repositories
                     await FileSystemHelper.CreateDirectoryAsync(sitesPath);
                 }
 
-                await CreateSiteStructureAsync(siteDefinition, sitePath, progress);
+                await CreateSiteStructureAsync(settings, siteDefinition, sitePath, progress);
 
                 var site = new SiteModel
                 {
@@ -144,7 +144,7 @@ namespace DevNest.Core.Repositories
                     IsActive = true
                 };
 
-                IVirtualHostManager _virtualHostManager = _platformServiceFactory.GetVirtualHostManager();
+                IVirtualHostManager _virtualHostManager = _platformServiceFactory.GetVirtualHostManager(settings);
                 await _virtualHostManager.CreateVirtualHostAsync(name, progress);
 
                 return site;
@@ -172,7 +172,7 @@ namespace DevNest.Core.Repositories
             return await FileSystemHelper.DirectoryExistsAsync(sitePath);
         }
 
-        private async Task CreateSiteStructureAsync(SiteDefinition siteDefinition, string sitePath, IProgress<string>? progress = null)
+        private async Task CreateSiteStructureAsync(SettingsModel settings, SiteDefinition siteDefinition, string sitePath, IProgress<string>? progress = null)
         {
             if (siteDefinition.InstallType.ToLower() == "none")
             {
@@ -191,7 +191,7 @@ namespace DevNest.Core.Repositories
                     string workingDirectory = Path.GetDirectoryName(PathHelper.WwwPath) ?? throw new ArgumentException("Invalid site path", nameof(sitePath));
 
                     progress?.Report("Installing dependencies and setting up project...");
-                    var commandExecutor = _platformServiceFactory.GetCommandExecutor();
+                    var commandExecutor = _platformServiceFactory.GetCommandExecutor(settings);
                     await commandExecutor.ExecuteCommandAsync(actualCommand, workingDirectory, progress);
                     progress?.Report("Installation completed successfully!");
                 }
@@ -206,7 +206,7 @@ namespace DevNest.Core.Repositories
                     string workingDirectory = Path.GetDirectoryName(sitePath) ?? throw new ArgumentException("Invalid site path", nameof(sitePath));
 
                     progress?.Report("Installing dependencies and setting up project...");
-                    var commandExecutor = _platformServiceFactory.GetCommandExecutor();
+                    var commandExecutor = _platformServiceFactory.GetCommandExecutor(settings);
                     await commandExecutor.ExecuteCommandAsync(actualCommand, workingDirectory, progress);
                     progress?.Report("Installation completed successfully!");
                 }
