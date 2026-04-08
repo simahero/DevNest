@@ -23,21 +23,21 @@ namespace DevNest.UI.ViewModels
 
 
         [ObservableProperty]
-        public ServiceInstallationStatus _apacheStatus = new();
+        private ServiceInstallationStatus _apacheStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _nginxStatus = new();
+        private ServiceInstallationStatus _nginxStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _pHPStatus = new();
+        private ServiceInstallationStatus _pHPStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _mySQLStatus = new();
+        private ServiceInstallationStatus _mySQLStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _postgreSQLStatus = new();
+        private ServiceInstallationStatus _postgreSQLStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _mongoDBStatus = new();
+        private ServiceInstallationStatus _mongoDBStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _nodeStatus = new();
+        private ServiceInstallationStatus _nodeStatus = new();
         [ObservableProperty]
-        public ServiceInstallationStatus _redisStatus = new();
+        private ServiceInstallationStatus _redisStatus = new();
 
         public AppState AppState => _appState;
 
